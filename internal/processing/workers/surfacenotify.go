@@ -22,12 +22,12 @@ import (
 	"errors"
 	"strings"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 )
@@ -727,6 +727,8 @@ func (s *Surface) Notify(
 		return nil
 	}
 
+	var filtered []apimodel.FilterResult
+
 	if status != nil {
 		// Check whether status is muted by the target account.
 		muted, err := s.MuteFilter.StatusNotificationsMuted(ctx,
@@ -741,17 +743,35 @@ func (s *Surface) Notify(
 			// Don't notify.
 			return nil
 		}
+
+		var hide bool
+
+		// Check whether notification status is filtered by requester in notifs.
+		filtered, hide, err = s.StatusFilter.StatusFilterResultsInContext(ctx,
+			targetAccount,
+			status,
+			gtsmodel.FilterContextNotifications,
+		)
+		if err != nil {
+			return gtserror.Newf("error checking status filtering: %w", err)
+		}
+
+		if hide {
+			// Don't notify.
+			return nil
+		}
 	}
 
-	// Convert the notification to frontend API model for streaming / web push.
-	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, true)
-	if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
+	// Convert notification to frontend API model for streaming / web push.
+	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif)
+	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 
-	if apiNotif == nil {
-		// Filtered.
-		return nil
+	if apiNotif.Status != nil {
+		// Set filter results on status,
+		// in case any were set above.
+		apiNotif.Status.Filtered = filtered
 	}
 
 	// Stream notification to the user.

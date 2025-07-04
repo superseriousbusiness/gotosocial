@@ -26,7 +26,6 @@ import (
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
-	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
@@ -56,7 +55,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *apiutil.Auth, 
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account, gtsmodel.FilterContextNone)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

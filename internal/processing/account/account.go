@@ -19,6 +19,7 @@ package account
 
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -39,6 +40,7 @@ type Processor struct {
 	converter    *typeutils.Converter
 	mediaManager *media.Manager
 	visFilter    *visibility.Filter
+	statusFilter *status.Filter
 	formatter    *text.Formatter
 	federator    *federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
@@ -53,6 +55,7 @@ func New(
 	mediaManager *media.Manager,
 	federator *federation.Federator,
 	visFilter *visibility.Filter,
+	statusFilter *status.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
@@ -61,6 +64,7 @@ func New(
 		converter:    converter,
 		mediaManager: mediaManager,
 		visFilter:    visFilter,
+		statusFilter: statusFilter,
 		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,
 		parseMention: parseMention,

@@ -27,7 +27,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -158,26 +157,6 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			continue
 		}
 
-		// Convert the conversation to API representation.
-		apiConversation, err := p.converter.ConversationToAPIConversation(ctx,
-			conversation,
-			localAccount,
-			nil,
-		)
-		if err != nil {
-			// If the conversation's last status matched a hide filter, skip it.
-			// If there was another kind of error, log that and skip it anyway.
-			if !errors.Is(err, typeutils.ErrHideStatus) {
-				log.Errorf(ctx,
-					"error converting conversation %s to API representation for account %s: %v",
-					status.ID,
-					localAccount.ID,
-					err,
-				)
-			}
-			continue
-		}
-
 		// If status was authored by this participant,
 		// don't bother notifying, they already know!
 		if status.AccountID == localAccount.ID {
@@ -197,6 +176,38 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		if muted {
 			continue
 		}
+
+		// Check whether status if filtered by local participant in context.
+		filtered, hide, err := p.statusFilter.StatusFilterResultsInContext(ctx,
+			localAccount,
+			status,
+			gtsmodel.FilterContextNotifications,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error filtering status: %v", err)
+			continue
+		}
+
+		if hide {
+			continue
+		}
+
+		// Convert the conversation to API representation.
+		apiConversation, err := p.converter.ConversationToAPIConversation(ctx,
+			conversation,
+			localAccount,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error converting conversation %s to API representation for account %s: %v",
+				status.ID,
+				localAccount.ID,
+				err,
+			)
+			continue
+		}
+
+		// Set filter results on attached status model.
+		apiConversation.LastStatus.Filtered = filtered
 
 		// Generate a notification,
 		notifications = append(notifications, ConversationNotification{

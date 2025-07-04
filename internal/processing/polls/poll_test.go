@@ -25,6 +25,7 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -60,7 +61,8 @@ func (suite *PollTestSuite) SetupTest() {
 	federator := testrig.NewTestFederator(&suite.state, controller, mediaMgr)
 	suite.visFilter = visibility.NewFilter(&suite.state)
 	suite.muteFilter = mutes.NewFilter(&suite.state)
-	common := common.New(&suite.state, mediaMgr, converter, federator, suite.visFilter, suite.muteFilter)
+	statusFilter := status.NewFilter(&suite.state)
+	common := common.New(&suite.state, mediaMgr, converter, federator, suite.visFilter, suite.muteFilter, statusFilter)
 	suite.polls = polls.New(&common, &suite.state, converter)
 }
 

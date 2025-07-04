@@ -23,6 +23,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/processing"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
@@ -51,6 +52,7 @@ type TestStructs struct {
 	WebPushSender       *WebPushMockSender
 	TransportController transport.Controller
 	InteractionFilter   *interaction.Filter
+	StatusFilter        *status.Filter
 }
 
 func SetupTestStructs(
@@ -71,6 +73,7 @@ func SetupTestStructs(
 	visFilter := visibility.NewFilter(&state)
 	muteFilter := mutes.NewFilter(&state)
 	intFilter := interaction.NewFilter(&state)
+	statusFilter := status.NewFilter(&state)
 
 	httpClient := NewMockHTTPClient(nil, rMediaPath)
 	httpClient.TestRemotePeople = NewTestFediPeople()
@@ -90,6 +93,7 @@ func SetupTestStructs(
 		federator,
 		visFilter,
 		muteFilter,
+		statusFilter,
 	)
 
 	processor := processing.NewProcessor(
@@ -105,6 +109,7 @@ func SetupTestStructs(
 		visFilter,
 		muteFilter,
 		intFilter,
+		statusFilter,
 	)
 
 	StartWorkers(&state, processor.Workers())
@@ -122,6 +127,7 @@ func SetupTestStructs(
 		WebPushSender:       webPushSender,
 		TransportController: transportController,
 		InteractionFilter:   intFilter,
+		StatusFilter:        statusFilter,
 	}
 }
 

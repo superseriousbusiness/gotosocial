@@ -23,6 +23,7 @@ import (
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -31,10 +32,11 @@ import (
 )
 
 type Processor struct {
-	state      *state.State
-	converter  *typeutils.Converter
-	visFilter  *visibility.Filter
-	muteFilter *mutes.Filter
+	state        *state.State
+	converter    *typeutils.Converter
+	visFilter    *visibility.Filter
+	muteFilter   *mutes.Filter
+	statusFilter *status.Filter
 }
 
 func New(
@@ -42,12 +44,14 @@ func New(
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
 	muteFilter *mutes.Filter,
+	statusFilter *status.Filter,
 ) Processor {
 	return Processor{
-		state:      state,
-		converter:  converter,
-		visFilter:  visFilter,
-		muteFilter: muteFilter,
+		state:        state,
+		converter:    converter,
+		visFilter:    visFilter,
+		muteFilter:   muteFilter,
+		statusFilter: statusFilter,
 	}
 }
 
@@ -94,22 +98,4 @@ func (p *Processor) getConversationOwnedBy(
 	}
 
 	return conversation, nil
-}
-
-// getFiltersAndMutes gets the given account's filters and compiled mute list.
-func (p *Processor) getFilters(
-	ctx context.Context,
-	requestingAccount *gtsmodel.Account,
-) ([]*gtsmodel.Filter, gtserror.WithCode) {
-	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf(
-				"DB error getting filters for account %s: %w",
-				requestingAccount.ID,
-				err,
-			),
-		)
-	}
-	return filters, nil
 }

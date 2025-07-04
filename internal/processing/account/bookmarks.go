@@ -74,7 +74,7 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		}
 
 		// Convert the status.
-		item, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, gtsmodel.FilterContextNone)
+		item, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
 		if err != nil {
 			log.Errorf(ctx, "error converting bookmarked status to api: %s", err)
 			continue

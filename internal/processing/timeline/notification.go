@@ -31,7 +31,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -93,8 +92,12 @@ func (p *Processor) NotificationsGet(
 			continue
 		}
 
+		var filtered []apimodel.FilterResult
+
 		if n.Status != nil {
-			// A status is attached, check whether status muted.
+			var hide bool
+
+			// Check whether notification status is muted by requester.
 			muted, err = p.muteFilter.StatusNotificationsMuted(ctx,
 				requester,
 				n.Status,
@@ -107,14 +110,32 @@ func (p *Processor) NotificationsGet(
 			if muted {
 				continue
 			}
+
+			// Check whether notification status is filtered by requester in notifs.
+			filtered, hide, err = p.statusFilter.StatusFilterResultsInContext(ctx,
+				requester,
+				n.Status,
+				gtsmodel.FilterContextNotifications,
+			)
+			if err != nil {
+				log.Errorf(ctx, "error checking status filtering: %v", err)
+				continue
+			}
+
+			if hide {
+				continue
+			}
 		}
 
-		item, err := p.converter.NotificationToAPINotification(ctx, n, true)
+		item, err := p.converter.NotificationToAPINotification(ctx, n)
 		if err != nil {
-			if !errors.Is(err, typeutils.ErrHideStatus) {
-				log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
-			}
 			continue
+		}
+
+		if item.Status != nil {
+			// Set filter results on status,
+			// in case any were set above.
+			item.Status.Filtered = filtered
 		}
 
 		items = append(items, item)
@@ -154,7 +175,7 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 	// or mute checking for a notification directly
 	// fetched by ID. only from timelines etc.
 
-	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, false)
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif)
 	if err != nil {
 		err := gtserror.Newf("error converting to api model: %w", err)
 		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)

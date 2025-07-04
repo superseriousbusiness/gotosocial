@@ -27,7 +27,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // GetOwnStatus fetches the given status with ID,
@@ -213,7 +212,6 @@ func (p *Processor) GetAPIStatus(
 	apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 		target,
 		requester,
-		gtsmodel.FilterContextNone,
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting: %w", err)
@@ -271,22 +269,33 @@ func (p *Processor) GetVisibleAPIStatuses(
 			continue
 		}
 
+		// Check whether status is filtered in context by requesting account.
+		filtered, hide, err := p.statusFilter.StatusFilterResultsInContext(ctx,
+			requester,
+			status,
+			filterCtx,
+		)
+		if err != nil {
+			l.Errorf("error filtering: %v", err)
+			continue
+		}
+
+		if hide {
+			continue
+		}
+
 		// Convert to API status, taking mute / filter into account.
 		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 			status,
 			requester,
-			filterCtx,
 		)
-		if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
+		if err != nil {
 			l.Errorf("error converting: %v", err)
 			continue
 		}
 
-		if apiStatus == nil {
-			// Status was
-			// filtered out.
-			continue
-		}
+		// Set filter results on status.
+		apiStatus.Filtered = filtered
 
 		// Append converted status to return slice.
 		apiStatuses = append(apiStatuses, *apiStatus)

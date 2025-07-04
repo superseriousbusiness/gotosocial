@@ -21,6 +21,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -85,7 +86,8 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	federator := testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
 	visFilter := visibility.NewFilter(&suite.state)
 	muteFilter := mutes.NewFilter(&suite.state)
-	common := common.New(&suite.state, suite.mediaManager, suite.tc, federator, visFilter, muteFilter)
+	statusFilter := status.NewFilter(&suite.state)
+	common := common.New(&suite.state, suite.mediaManager, suite.tc, federator, visFilter, muteFilter, statusFilter)
 
 	suite.mediaProcessor = mediaprocessing.New(&common, &suite.state, suite.tc, federator, suite.mediaManager, suite.transportController)
 	testrig.StandardDBSetup(suite.db, nil)

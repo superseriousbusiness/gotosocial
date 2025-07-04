@@ -96,13 +96,33 @@ func (p *Processor) StatusesGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	for _, s := range filtered {
+	for _, status := range filtered {
+		// ...
+		filtered, hide, err := p.statusFilter.StatusFilterResultsInContext(ctx,
+			requestingAccount,
+			status,
+			gtsmodel.FilterContextAccount,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error filtering status: %v", err)
+			continue
+		}
+
+		if hide {
+			// Don't show.
+			continue
+		}
+
 		// Convert filtered statuses to API statuses.
-		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, gtsmodel.FilterContextAccount)
+		item, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue
 		}
+
+		// Set any filter results.
+		item.Filtered = filtered
+
 		items = append(items, item)
 	}
 

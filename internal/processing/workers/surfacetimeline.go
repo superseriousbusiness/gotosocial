@@ -19,7 +19,6 @@ package workers
 
 import (
 	"context"
-	"errors"
 
 	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -27,7 +26,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/stream"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -350,27 +348,39 @@ func (s *Surface) timelineStatus(
 	streamType string,
 	filterCtx gtsmodel.FilterContext,
 ) bool {
+	// Check whether status is filtered in this context by timeline account.
+	filtered, hide, err := s.StatusFilter.StatusFilterResultsInContext(ctx,
+		account,
+		status,
+		filterCtx,
+	)
+	if err != nil {
+		log.Errorf(ctx, "error filtering status %s: %v", status.URI, err)
+	}
+
+	if hide {
+		// Don't even show to
+		// timeline account.
+		return false
+	}
 
 	// Attempt to convert status to frontend API representation,
 	// this will check whether status is filtered / muted.
 	apiModel, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
-		filterCtx,
 	)
-	if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
+	if err != nil {
 		log.Error(ctx, "error converting status %s to frontend: %v", status.URI, err)
+	} else {
+
+		// Attach any filter results.
+		apiModel.Filtered = filtered
 	}
 
 	// Insert status to timeline cache regardless of
 	// if API model was succesfully prepared or not.
 	repeatBoost := timeline.InsertOne(status, apiModel)
-
-	if apiModel == nil {
-		// Status was
-		// filtered.
-		return false
-	}
 
 	if !repeatBoost {
 		// Only stream if not repeated boost of recent status.
@@ -683,25 +693,33 @@ func (s *Surface) timelineStreamStatusUpdate(
 	status *gtsmodel.Status,
 	streamType string,
 ) (bool, error) {
+	// Check whether status is filtered in this context by timeline account.
+	filtered, hide, err := s.StatusFilter.StatusFilterResultsInContext(ctx,
+		account,
+		status,
+		gtsmodel.FilterContextHome,
+	)
+	if err != nil {
+		return false, gtserror.Newf("error filtering status: %w", err)
+	}
+
+	if hide {
+		// Don't even show to
+		// timeline account.
+		return false, nil
+	}
 
 	// Convert updated database model to frontend model.
 	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
-		gtsmodel.FilterContextHome,
 	)
-
-	switch {
-	case err == nil:
-		// no issue.
-
-	case errors.Is(err, typeutils.ErrHideStatus):
-		// Don't put this status in the stream.
-		return false, nil
-
-	default:
+	if err != nil {
 		return false, gtserror.Newf("error converting status: %w", err)
 	}
+
+	// Attach any filter results.
+	apiStatus.Filtered = filtered
 
 	// The status was updated so stream it to the user.
 	s.Stream.StatusUpdate(ctx, account, apiStatus, streamType)

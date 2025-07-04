@@ -28,6 +28,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -118,7 +119,7 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 
-	suite.conversationsProcessor = conversations.New(&suite.state, suite.tc, suite.visFilter, suite.muteFilter)
+	suite.conversationsProcessor = conversations.New(&suite.state, suite.tc, suite.visFilter, suite.muteFilter, status.NewFilter(&suite.state))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 

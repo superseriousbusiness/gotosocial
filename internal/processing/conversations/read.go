@@ -23,6 +23,7 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -44,20 +45,27 @@ func (p *Processor) Read(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filters, errWithCode := p.getFilters(ctx, requestingAccount)
-	if errWithCode != nil {
-		return nil, errWithCode
+	// Check whether status if filtered by local participant in context.
+	filtered, _, err := p.statusFilter.StatusFilterResultsInContext(ctx,
+		requestingAccount,
+		conversation.LastStatus,
+		gtsmodel.FilterContextNotifications,
+	)
+	if err != nil {
+		log.Errorf(ctx, "error filtering status: %v", err)
 	}
 
 	apiConversation, err := p.converter.ConversationToAPIConversation(ctx,
 		conversation,
 		requestingAccount,
-		filters,
 	)
 	if err != nil {
 		err = gtserror.Newf("error converting conversation %s to API representation: %w", id, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Set filter results on attached status model.
+	apiConversation.LastStatus.Filtered = filtered
 
 	return apiConversation, nil
 }

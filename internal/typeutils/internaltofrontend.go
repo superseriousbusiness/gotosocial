@@ -51,10 +51,6 @@ const (
 	instanceMastodonVersion                  = "3.5.3"
 )
 
-// ErrHideStatus indicates that a status has
-// been filtered and should not be returned at all.
-var ErrHideStatus = errors.New("hide status")
-
 var instanceStatusesSupportedMimeTypes = []string{
 	string(apimodel.StatusContentTypePlain),
 	string(apimodel.StatusContentTypeMarkdown),
@@ -850,13 +846,11 @@ func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterCtx gtsmodel.FilterContext,
 ) (*apimodel.Status, error) {
 	return c.statusToAPIStatus(
 		ctx,
 		status,
 		requestingAccount,
-		filterCtx,
 		true,
 		true,
 	)
@@ -870,7 +864,6 @@ func (c *Converter) statusToAPIStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterCtx gtsmodel.FilterContext,
 	placeholdAttachments bool,
 	addPendingNote bool,
 ) (*apimodel.Status, error) {
@@ -878,7 +871,6 @@ func (c *Converter) statusToAPIStatus(
 		ctx,
 		status,
 		requestingAccount, // Can be nil.
-		filterCtx,         // Can be empty.
 	)
 	if err != nil {
 		return nil, err
@@ -945,8 +937,7 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 ) (*apimodel.WebStatus, error) {
 	apiStatus, err := c.statusToFrontend(ctx, s,
-		nil,                        // No authed requester.
-		gtsmodel.FilterContextNone, // No filters.
+		nil, // No authed requester.
 	)
 	if err != nil {
 		return nil, err
@@ -1115,7 +1106,6 @@ func (c *Converter) statusToFrontend(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterCtx gtsmodel.FilterContext,
 ) (
 	*apimodel.Status,
 	error,
@@ -1123,7 +1113,6 @@ func (c *Converter) statusToFrontend(
 	apiStatus, err := c.baseStatusToFrontend(ctx,
 		status,
 		requestingAccount,
-		filterCtx,
 	)
 	if err != nil {
 		return nil, err
@@ -1133,12 +1122,8 @@ func (c *Converter) statusToFrontend(
 		reblog, err := c.baseStatusToFrontend(ctx,
 			status.BoostOf,
 			requestingAccount,
-			filterCtx,
 		)
-		if errors.Is(err, ErrHideStatus) {
-			// If we'd hide the original status, hide the boost.
-			return nil, err
-		} else if err != nil {
+		if err != nil {
 			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
@@ -1165,7 +1150,6 @@ func (c *Converter) baseStatusToFrontend(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requester *gtsmodel.Account,
-	filterCtx gtsmodel.FilterContext,
 ) (
 	*apimodel.Status,
 	error,
@@ -1338,20 +1322,6 @@ func (c *Converter) baseStatusToFrontend(
 	// reason, provide AP URI as fallback.
 	if apiStatus.URL == "" {
 		apiStatus.URL = apiStatus.URI
-	}
-
-	var hide bool
-
-	// Pass the status through any stored filters of requesting account's, in context.
-	apiStatus.Filtered, hide, err = c.statusFilter.StatusFilterResultsInContext(ctx,
-		requester,
-		status,
-		filterCtx,
-	)
-	if err != nil {
-		return nil, gtserror.Newf("error filtering status %s: %w", status.URI, err)
-	} else if hide {
-		return nil, ErrHideStatus
 	}
 
 	return apiStatus, nil
@@ -1866,7 +1836,6 @@ func (c *Converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 func (c *Converter) NotificationToAPINotification(
 	ctx context.Context,
 	notif *gtsmodel.Notification,
-	filter bool,
 ) (*apimodel.Notification, error) {
 	// Ensure notif populated.
 	if err := c.state.DB.PopulateNotification(ctx, notif); err != nil {
@@ -1882,25 +1851,12 @@ func (c *Converter) NotificationToAPINotification(
 	// Get status that triggered this notif, if set.
 	var apiStatus *apimodel.Status
 	if notif.Status != nil {
-		var filterCtx gtsmodel.FilterContext
-
-		if filter {
-			filterCtx = gtsmodel.FilterContextNotifications
-		}
-
 		apiStatus, err = c.StatusToAPIStatus(ctx,
 			notif.Status,
 			notif.TargetAccount,
-			filterCtx,
 		)
-		if err != nil && !errors.Is(err, ErrHideStatus) {
+		if err != nil {
 			return nil, gtserror.Newf("error converting status to api: %w", err)
-		}
-
-		if apiStatus == nil {
-			// Notif filtered for this
-			// status, nothing to do.
-			return nil, err
 		}
 
 		if apiStatus.Reblog != nil {
@@ -1926,7 +1882,6 @@ func (c *Converter) ConversationToAPIConversation(
 	ctx context.Context,
 	conversation *gtsmodel.Conversation,
 	requester *gtsmodel.Account,
-	filters []*gtsmodel.Filter,
 ) (*apimodel.Conversation, error) {
 	apiConversation := &apimodel.Conversation{
 		ID:     conversation.ID,
@@ -1941,9 +1896,8 @@ func (c *Converter) ConversationToAPIConversation(
 			ctx,
 			conversation.LastStatus,
 			requester,
-			gtsmodel.FilterContextNotifications,
 		)
-		if err != nil && !errors.Is(err, ErrHideStatus) {
+		if err != nil {
 			return nil, gtserror.Newf(
 				"error converting status %s to API representation: %w",
 				conversation.LastStatus.ID,
@@ -2209,7 +2163,6 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 			ctx,
 			s,
 			requestingAccount,
-			gtsmodel.FilterContextNone,
 			true, // Placehold unknown attachments.
 
 			// Don't add note about
@@ -2913,7 +2866,6 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		ctx,
 		req.Status,
 		requestingAcct,
-		gtsmodel.FilterContextNone,
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting interacted status: %w", err)
@@ -2926,7 +2878,6 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 			ctx,
 			req.Reply,
 			requestingAcct,
-			gtsmodel.FilterContextNone,
 			true, // Placehold unknown attachments.
 
 			// Don't add note about pending;

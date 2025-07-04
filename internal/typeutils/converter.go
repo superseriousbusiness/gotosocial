@@ -27,7 +27,6 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
@@ -38,7 +37,6 @@ type Converter struct {
 	defaultAvatars []string
 	randAvatars    sync.Map
 	visFilter      *visibility.Filter
-	statusFilter   *status.Filter
 	intFilter      *interaction.Filter
 	randStats      atomic.Pointer[apimodel.RandomStats]
 }
@@ -48,7 +46,6 @@ func NewConverter(state *state.State) *Converter {
 		state:          state,
 		defaultAvatars: populateDefaultAvatars(),
 		visFilter:      visibility.NewFilter(state),
-		statusFilter:   status.NewFilter(state),
 		intFilter:      interaction.NewFilter(state),
 	}
 }

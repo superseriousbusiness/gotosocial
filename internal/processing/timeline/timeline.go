@@ -19,13 +19,13 @@ package timeline
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	timelinepkg "code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -46,18 +46,26 @@ var (
 )
 
 type Processor struct {
-	state      *state.State
-	converter  *typeutils.Converter
-	visFilter  *visibility.Filter
-	muteFilter *mutes.Filter
+	state        *state.State
+	converter    *typeutils.Converter
+	visFilter    *visibility.Filter
+	muteFilter   *mutes.Filter
+	statusFilter *status.Filter
 }
 
-func New(state *state.State, converter *typeutils.Converter, visFilter *visibility.Filter, muteFilter *mutes.Filter) Processor {
+func New(
+	state *state.State,
+	converter *typeutils.Converter,
+	visFilter *visibility.Filter,
+	muteFilter *mutes.Filter,
+	statusFilter *status.Filter,
+) Processor {
 	return Processor{
-		state:      state,
-		converter:  converter,
-		visFilter:  visFilter,
-		muteFilter: muteFilter,
+		state:        state,
+		converter:    converter,
+		visFilter:    visFilter,
+		muteFilter:   muteFilter,
+		statusFilter: statusFilter,
 	}
 }
 
@@ -116,15 +124,30 @@ func (p *Processor) getStatusTimeline(
 				return nil, nil
 			}
 
+			// Check whether this status is filtered by requester in this context.
+			filters, hide, err := p.statusFilter.StatusFilterResultsInContext(ctx,
+				requester,
+				status,
+				filterCtx,
+			)
+			if err != nil {
+				return nil, err
+			} else if hide {
+				return nil, nil
+			}
+
 			// Finally, pass status to get converted to API model.
 			apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 				status,
 				requester,
-				filterCtx,
 			)
-			if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
+			if err != nil {
 				return nil, err
 			}
+
+			// Set any filters on status.
+			apiStatus.Filtered = filters
+
 			return apiStatus, nil
 		},
 	)

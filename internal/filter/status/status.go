@@ -25,6 +25,7 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/cache"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
@@ -159,6 +160,31 @@ func (f *Filter) getStatusFilterResults(
 		return results, nil
 	}
 
+	// Check if status is boost.
+	if status.BoostOfID != "" {
+		if status.BoostOf == nil {
+			var err error
+
+			// Ensure original status is loaded on boost.
+			status.BoostOf, err = f.state.DB.GetStatusByID(
+				gtscontext.SetBarebones(ctx),
+				status.BoostOfID,
+			)
+			if err != nil {
+				return results, gtserror.Newf("error getting boosted status of %s: %w", status.URI, err)
+			}
+		}
+
+		// From here look at details
+		// for original boosted status.
+		status = status.BoostOf
+	}
+
+	// For proper status filtering we need all fields populated.
+	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
+		return results, gtserror.Newf("error populating status: %w", err)
+	}
+
 	// Get the string fields status is
 	// filterable on for keyword matching.
 	fields := getFilterableFields(status)
@@ -167,11 +193,6 @@ func (f *Filter) getStatusFilterResults(
 	filters, err := f.state.DB.GetFiltersByAccountID(ctx, requester.ID)
 	if err != nil {
 		return results, gtserror.Newf("error getting account filters: %w", err)
-	}
-
-	// For proper status filtering we need all fields populated.
-	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return results, gtserror.Newf("error populating status: %w", err)
 	}
 
 	// Generate result for each filter.

@@ -43,6 +43,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/spam"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
@@ -271,6 +272,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	visFilter := visibility.NewFilter(state)
 	muteFilter := mutes.NewFilter(state)
 	intFilter := interaction.NewFilter(state)
+	statusFilter := status.NewFilter(state)
 	spamFilter := spam.NewFilter(state)
 	federatingDB := federatingdb.New(state, typeConverter, visFilter, intFilter, spamFilter)
 	transportController := transport.NewController(state, federatingDB, client)
@@ -352,6 +354,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		visFilter,
 		muteFilter,
 		intFilter,
+		statusFilter,
 	)
 
 	// Schedule background cleaning tasks.

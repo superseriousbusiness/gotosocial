@@ -26,6 +26,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -107,8 +108,9 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	visFilter := visibility.NewFilter(&suite.state)
 	mutesFilter := mutes.NewFilter(&suite.state)
-	common := common.New(&suite.state, suite.mediaManager, suite.tc, suite.federator, visFilter, mutesFilter)
-	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.federator, visFilter, processing.GetParseMentionFunc(&suite.state, suite.federator))
+	statusFilter := status.NewFilter(&suite.state)
+	common := common.New(&suite.state, suite.mediaManager, suite.tc, suite.federator, visFilter, mutesFilter, statusFilter)
+	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.federator, visFilter, statusFilter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
