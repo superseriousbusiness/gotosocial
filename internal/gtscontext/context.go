@@ -57,7 +57,16 @@ func DryRun(ctx context.Context) bool {
 // SetDryRun sets the "dryrun" context flag and returns this wrapped context.
 // See DryRun() for further information on the "dryrun" context flag.
 func SetDryRun(ctx context.Context) context.Context {
-	return context.WithValue(ctx, dryRunKey, struct{}{})
+	return dryRunContext{ctx}
+}
+
+type dryRunContext struct{ context.Context }
+
+func (ctx dryRunContext) Value(key any) any {
+	if key == dryRunKey {
+		return struct{}{}
+	}
+	return ctx.Context.Value(key)
 }
 
 // RequestID returns the request ID associated with context. This value will usually
@@ -72,7 +81,19 @@ func RequestID(ctx context.Context) string {
 // SetRequestID stores the given request ID value and returns the wrapped
 // context. See RequestID() for further information on the request ID value.
 func SetRequestID(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, requestIDKey, id)
+	return requestIDContext{Context: ctx, requestID: id}
+}
+
+type requestIDContext struct {
+	context.Context
+	requestID string
+}
+
+func (ctx requestIDContext) Value(key any) any {
+	if key == requestIDKey {
+		return ctx.requestID
+	}
+	return ctx.Context.Value(key)
 }
 
 // OutgoingPublicKeyID returns the public key ID (URI) associated with context. This
@@ -86,7 +107,19 @@ func OutgoingPublicKeyID(ctx context.Context) string {
 // SetOutgoingPublicKeyID stores the given public key ID value and returns the wrapped
 // context. See PublicKeyID() for further information on the public key ID value.
 func SetOutgoingPublicKeyID(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, outgoingPubKeyIDKey, id)
+	return outgoingPublicKeyIDKeyContext{Context: ctx, pubKeyID: id}
+}
+
+type outgoingPublicKeyIDKeyContext struct {
+	context.Context
+	pubKeyID string
+}
+
+func (ctx outgoingPublicKeyIDKeyContext) Value(key any) any {
+	if key == outgoingPubKeyIDKey {
+		return ctx.pubKeyID
+	}
+	return ctx.Context.Value(key)
 }
 
 // ReceivingAccount returns the local account who owns the resource being
@@ -99,7 +132,19 @@ func ReceivingAccount(ctx context.Context) *gtsmodel.Account {
 // SetReceivingAccount stores the given receiving account value and returns the wrapped
 // context. See ReceivingAccount() for further information on the receiving account value.
 func SetReceivingAccount(ctx context.Context, acct *gtsmodel.Account) context.Context {
-	return context.WithValue(ctx, receivingAccountKey, acct)
+	return receivingAccountContext{Context: ctx, account: acct}
+}
+
+type receivingAccountContext struct {
+	context.Context
+	account *gtsmodel.Account
+}
+
+func (ctx receivingAccountContext) Value(key any) any {
+	if key == receivingAccountKey {
+		return ctx.account
+	}
+	return ctx.Context.Value(key)
 }
 
 // RequestingAccount returns the remote account interacting with a local
@@ -112,7 +157,19 @@ func RequestingAccount(ctx context.Context) *gtsmodel.Account {
 // SetRequestingAccount stores the given requesting account value and returns the wrapped
 // context. See RequestingAccount() for further information on the requesting account value.
 func SetRequestingAccount(ctx context.Context, acct *gtsmodel.Account) context.Context {
-	return context.WithValue(ctx, requestingAccountKey, acct)
+	return requestingAccountContext{Context: ctx, account: acct}
+}
+
+type requestingAccountContext struct {
+	context.Context
+	account *gtsmodel.Account
+}
+
+func (ctx requestingAccountContext) Value(key any) any {
+	if key == requestingAccountKey {
+		return ctx.account
+	}
+	return ctx.Context.Value(key)
 }
 
 // OtherIRIs returns other IRIs which are involved in the current ActivityPub request
@@ -126,7 +183,19 @@ func OtherIRIs(ctx context.Context) []*url.URL {
 // SetOtherIRIs stores the given IRIs slice and returns the wrapped context.
 // See OtherIRIs() for further information on the IRIs slice value.
 func SetOtherIRIs(ctx context.Context, iris []*url.URL) context.Context {
-	return context.WithValue(ctx, otherIRIsKey, iris)
+	return otherIRIsContext{Context: ctx, iris: iris}
+}
+
+type otherIRIsContext struct {
+	context.Context
+	iris []*url.URL
+}
+
+func (ctx otherIRIsContext) Value(key any) any {
+	if key == otherIRIsKey {
+		return ctx.iris
+	}
+	return ctx.Context.Value(key)
 }
 
 // HTTPClientSignFunc returns an httpclient signing function for the current client
@@ -139,7 +208,19 @@ func HTTPClientSignFunc(ctx context.Context) func(*http.Request) error {
 // SetHTTPClientSignFunc stores the given httpclient signing function and returns the wrapped
 // context. See HTTPClientSignFunc() for further information on the signing function value.
 func SetHTTPClientSignFunc(ctx context.Context, fn func(*http.Request) error) context.Context {
-	return context.WithValue(ctx, httpClientSignFnKey, fn)
+	return httpClientSignFuncContext{Context: ctx, signfn: fn}
+}
+
+type httpClientSignFuncContext struct {
+	context.Context
+	signfn func(*http.Request) error
+}
+
+func (ctx httpClientSignFuncContext) Value(key any) any {
+	if key == httpClientSignFnKey {
+		return ctx.signfn
+	}
+	return ctx.Context.Value(key)
 }
 
 // HTTPSignatureVerifier returns an http signature verifier for the current ActivityPub
@@ -152,7 +233,19 @@ func HTTPSignatureVerifier(ctx context.Context) httpsig.VerifierWithOptions {
 // SetHTTPSignatureVerifier stores the given http signature verifier and returns the
 // wrapped context. See HTTPSignatureVerifier() for further information on the verifier value.
 func SetHTTPSignatureVerifier(ctx context.Context, verifier httpsig.VerifierWithOptions) context.Context {
-	return context.WithValue(ctx, httpSigVerifierKey, verifier)
+	return httpSignatureVerifierContext{Context: ctx, verifier: verifier}
+}
+
+type httpSignatureVerifierContext struct {
+	context.Context
+	verifier httpsig.VerifierWithOptions
+}
+
+func (ctx httpSignatureVerifierContext) Value(key any) any {
+	if key == httpSigVerifierKey {
+		return ctx.verifier
+	}
+	return ctx.Context.Value(key)
 }
 
 // HTTPSignature returns the http signature string
@@ -165,7 +258,19 @@ func HTTPSignature(ctx context.Context) string {
 // SetHTTPSignature stores the given http signature string and returns the wrapped
 // context. See HTTPSignature() for further information on the verifier value.
 func SetHTTPSignature(ctx context.Context, signature string) context.Context {
-	return context.WithValue(ctx, httpSigKey, signature)
+	return httpSignatureContext{Context: ctx, signature: signature}
+}
+
+type httpSignatureContext struct {
+	context.Context
+	signature string
+}
+
+func (ctx httpSignatureContext) Value(key any) any {
+	if key == httpSigKey {
+		return ctx.signature
+	}
+	return ctx.Context.Value(key)
 }
 
 // HTTPSignaturePubKeyID returns the public key id of the http signature
@@ -178,7 +283,19 @@ func HTTPSignaturePubKeyID(ctx context.Context) *url.URL {
 // SetHTTPSignaturePubKeyID stores the given http signature public key id and returns
 // the wrapped context. See HTTPSignaturePubKeyID() for further information on the value.
 func SetHTTPSignaturePubKeyID(ctx context.Context, pubKeyID *url.URL) context.Context {
-	return context.WithValue(ctx, httpSigPubKeyIDKey, pubKeyID)
+	return httpSigPubKeyIDContext{Context: ctx, pubKeyID: pubKeyID}
+}
+
+type httpSigPubKeyIDContext struct {
+	context.Context
+	pubKeyID *url.URL
+}
+
+func (ctx httpSigPubKeyIDContext) Value(key any) any {
+	if key == httpSigPubKeyIDKey {
+		return ctx.pubKeyID
+	}
+	return ctx.Context.Value(key)
 }
 
 // IsFastFail returns whether the "fastfail" context key has been set. This
@@ -192,7 +309,16 @@ func IsFastfail(ctx context.Context) bool {
 // SetFastFail sets the "fastfail" context flag and returns this wrapped context.
 // See IsFastFail() for further information on the "fastfail" context flag.
 func SetFastFail(ctx context.Context) context.Context {
-	return context.WithValue(ctx, fastFailKey, struct{}{})
+	return fastFailContext{ctx}
+}
+
+type fastFailContext struct{ context.Context }
+
+func (ctx fastFailContext) Value(key any) any {
+	if key == fastFailKey {
+		return struct{}{}
+	}
+	return ctx.Context.Value(key)
 }
 
 // Barebones returns whether the "barebones" context key has been set. This
@@ -206,5 +332,14 @@ func Barebones(ctx context.Context) bool {
 // SetBarebones sets the "barebones" context flag and returns this wrapped context.
 // See Barebones() for further information on the "barebones" context flag.
 func SetBarebones(ctx context.Context) context.Context {
-	return context.WithValue(ctx, barebonesKey, struct{}{})
+	return barebonesContext{ctx}
+}
+
+type barebonesContext struct{ context.Context }
+
+func (ctx barebonesContext) Value(key any) any {
+	if key == barebonesKey {
+		return struct{}{}
+	}
+	return ctx.Context.Value(key)
 }
