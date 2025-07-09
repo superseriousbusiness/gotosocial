@@ -128,7 +128,7 @@ func testDefaults() config.Configuration {
 			ThumbMaxPixels:      512,
 		},
 
-		// the testrig only uses in-memory storage, so we can
+		// the testrig uses in-memory storage by default, so we can
 		// safely set this value to 'test' to avoid running storage
 		// migrations, and other silly things like that
 		StorageBackend:       "test",
@@ -191,6 +191,10 @@ func testDefaults() config.Configuration {
 
 		// simply use cache defaults.
 		Cache: config.Defaults.Cache,
+
+		// Testrig-specific flags.
+		TestrigSkipDBSetup:    envBool("GTS_TESTRIG_SKIP_DB_SETUP", false),
+		TestrigSkipDBTeardown: envBool("GTS_TESTRIG_SKIP_DB_TEARDOWN", false),
 	}
 }
 

@@ -19,6 +19,7 @@ package main
 
 import (
 	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/testrig"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +39,7 @@ func testrigCommands() *cobra.Command {
 		}
 
 		testrigCmd.AddCommand(testrigStartCmd)
+		config.AddTestrig(testrigCmd)
 		return testrigCmd
 	}
 	return nil

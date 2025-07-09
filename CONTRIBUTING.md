@@ -25,6 +25,7 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
   - [Style / Linting / Formatting](#style-linting-formatting)
   - [Testing](#testing)
     - [Standalone Testrig with Pinafore](#standalone-testrig-with-pinafore)
+      - [Configuring the Standalone Testrig](#configuring-the-standalone-testrig)
     - [Running automated tests](#running-automated-tests)
       - [SQLite](#sqlite)
       - [Postgres](#postgres)
@@ -422,9 +423,35 @@ At the login screen, enter the email address `zork@example.org` and password `pa
 
 Note the following constraints:
 
-- Since the testrig uses an in-memory database, the database will be destroyed when the testrig is stopped.
-- If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
+- Since the testrig uses an in-memory database by default, the database will be destroyed when the testrig is stopped.
+- If you stop the testrig and start it again, by default any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
 - The testrig does not make any actual external HTTP calls, so federation will not work from a testrig.
+
+##### Configuring the Standalone Testrig
+
+By default the standalone testrig uses an in-memory SQLite database, which is filled with test data when starting up, and is cleared when shutting down, but you can tweak this (and a few other settings) with environment variables:
+
+- `GTS_LOG_LEVEL` - you can set this to `trace` if you want to see all DB queries.
+- `GTS_TESTRIG_SKIP_DB_SETUP` - set this to any value to skip the creation of tables and population of test data when the testrig starts.
+- `GTS_TESTRIG_SKIP_DB_TEARDOWN` - set this to any value to skip the deletion of tables and test data when the testrig stops.
+- `GTS_STORAGE_BACKEND` - this uses in-memory storage by default, but you can set this to `s3` to use a locally-running Minio etc for testing.
+- `GTS_DB_TYPE` - you can change this to `postgres` to test against a locally-running Postgres intance.
+- `GTS_DB_ADDRESS` - this is set to `:memory:` by default. You can change this to use an sqlite.db file somewhere, or set it to a Postgres address.
+- `GTS_DB_PORT`, `GTS_DB_USER`, `GTS_DB_PASSWORD`, `GTS_DB_DATABASE`, `GTS_DB_TLS_MODE`, `GTS_DB_TLS_CA_CERT` - you can set these if you change `GTS_DB_ADDRESS` to `postgres` and don't use `GTS_DB_POSTGRES_CONNECTION_STRING`.
+- `GTS_DB_POSTGRES_CONNECTION_STRING` - use this to provide a Postgres connection string if you don't want to set all the db env variables mentioned in the previous point.
+- `GTS_ADVANCED_SCRAPER_DETERRENCE_ENABLED`, `GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY` - set these if you want to try out the PoW scraper deterrence locally.
+
+Using these variables you can also (albeit awkwardly) test migrations from one schema to another.
+
+For example, to test SQLite migrations:
+
+1. Switch to main branch.
+2. Build the debug binary, and then start the testrig with `DEBUG=1 GTS_LOG_LEVEL=trace GTS_DB_ADDRESS=./sqlite.test.db GTS_TESTRIG_SKIP_DB_TEARDOWN=1 ./gotosocial testrig start`. This instructs the testrig to use trace logging, use an actual file for the SQLite db, and to skip tearing it down when finished.
+3. Stop the testrig.
+4. The file `sqlite.test.db` now contains the schema and test models from the main branch.
+5. Switch to the branch with the migration you want to test.
+6. Build the debug binary, and then start the testrig with `DEBUG=1 GTS_LOG_LEVEL=trace GTS_DB_ADDRESS=./sqlite.test.db GTS_TESTRIG_SKIP_DB_SETUP=1 ./gotosocial testrig start`. This instructs the testrig to use trace logging, and to use the already-populated sqlite.test.db file.
+7. You should see logging for migrations.
 
 #### Running automated tests
 

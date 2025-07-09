@@ -182,6 +182,8 @@ type Configuration struct {
 	AdminMediaPruneDryRun    bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning" ephemeral:"yes"`
 	AdminMediaListLocalOnly  bool   `name:"local-only" usage:"list only local attachments/emojis; if specified then remote-only cannot also be true" ephemeral:"yes"`
 	AdminMediaListRemoteOnly bool   `name:"remote-only" usage:"list only remote attachments/emojis; if specified then local-only cannot also be true" ephemeral:"yes"`
+	TestrigSkipDBSetup       bool   `name:"skip-db-setup" usage:"skip testrig database setup with population of test models" ephemeral:"yes"`
+	TestrigSkipDBTeardown    bool   `name:"skip-db-teardown" usage:"skip testrig database teardown (i.e. data deletion and tables dropped)" ephemeral:"yes"`
 }
 
 type HTTPClientConfiguration struct {

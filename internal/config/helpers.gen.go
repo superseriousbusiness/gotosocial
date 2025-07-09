@@ -220,6 +220,8 @@ const (
 	AdminMediaPruneDryRunFlag                      = "dry-run"
 	AdminMediaListLocalOnlyFlag                    = "local-only"
 	AdminMediaListRemoteOnlyFlag                   = "remote-only"
+	TestrigSkipDBSetupFlag                         = "skip-db-setup"
+	TestrigSkipDBTeardownFlag                      = "skip-db-teardown"
 )
 
 func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
@@ -410,7 +412,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 191)
+	cfgmap := make(map[string]any, 193)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -602,6 +604,8 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["dry-run"] = cfg.AdminMediaPruneDryRun
 	cfgmap["local-only"] = cfg.AdminMediaListLocalOnly
 	cfgmap["remote-only"] = cfg.AdminMediaListRemoteOnly
+	cfgmap["skip-db-setup"] = cfg.TestrigSkipDBSetup
+	cfgmap["skip-db-teardown"] = cfg.TestrigSkipDBTeardown
 	return cfgmap
 }
 
@@ -2170,6 +2174,22 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.AdminMediaListRemoteOnly, err = cast.ToBoolE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> bool for 'remote-only': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["skip-db-setup"]; ok {
+		var err error
+		cfg.TestrigSkipDBSetup, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'skip-db-setup': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["skip-db-teardown"]; ok {
+		var err error
+		cfg.TestrigSkipDBTeardown, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'skip-db-teardown': %w", ival, err)
 		}
 	}
 
@@ -6405,6 +6425,50 @@ func GetAdminMediaListRemoteOnly() bool { return global.GetAdminMediaListRemoteO
 
 // SetAdminMediaListRemoteOnly safely sets the value for global configuration 'AdminMediaListRemoteOnly' field
 func SetAdminMediaListRemoteOnly(v bool) { global.SetAdminMediaListRemoteOnly(v) }
+
+// GetTestrigSkipDBSetup safely fetches the Configuration value for state's 'TestrigSkipDBSetup' field
+func (st *ConfigState) GetTestrigSkipDBSetup() (v bool) {
+	st.mutex.RLock()
+	v = st.config.TestrigSkipDBSetup
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTestrigSkipDBSetup safely sets the Configuration value for state's 'TestrigSkipDBSetup' field
+func (st *ConfigState) SetTestrigSkipDBSetup(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TestrigSkipDBSetup = v
+	st.reloadToViper()
+}
+
+// GetTestrigSkipDBSetup safely fetches the value for global configuration 'TestrigSkipDBSetup' field
+func GetTestrigSkipDBSetup() bool { return global.GetTestrigSkipDBSetup() }
+
+// SetTestrigSkipDBSetup safely sets the value for global configuration 'TestrigSkipDBSetup' field
+func SetTestrigSkipDBSetup(v bool) { global.SetTestrigSkipDBSetup(v) }
+
+// GetTestrigSkipDBTeardown safely fetches the Configuration value for state's 'TestrigSkipDBTeardown' field
+func (st *ConfigState) GetTestrigSkipDBTeardown() (v bool) {
+	st.mutex.RLock()
+	v = st.config.TestrigSkipDBTeardown
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTestrigSkipDBTeardown safely sets the Configuration value for state's 'TestrigSkipDBTeardown' field
+func (st *ConfigState) SetTestrigSkipDBTeardown(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TestrigSkipDBTeardown = v
+	st.reloadToViper()
+}
+
+// GetTestrigSkipDBTeardown safely fetches the value for global configuration 'TestrigSkipDBTeardown' field
+func GetTestrigSkipDBTeardown() bool { return global.GetTestrigSkipDBTeardown() }
+
+// SetTestrigSkipDBTeardown safely sets the value for global configuration 'TestrigSkipDBTeardown' field
+func SetTestrigSkipDBTeardown(v bool) { global.SetTestrigSkipDBTeardown(v) }
 
 // GetTotalOfMemRatios safely fetches the combined value for all the state's mem ratio fields
 func (st *ConfigState) GetTotalOfMemRatios() (total float64) {

@@ -84,3 +84,14 @@ func AddAdminMediaPrune(cmd *cobra.Command) {
 	usage := fieldtag("AdminMediaPruneDryRun", "usage")
 	cmd.Flags().Bool(name, true, usage)
 }
+
+// AddTestrig attaches flags pertaining to testrig commands.
+func AddTestrig(cmd *cobra.Command) {
+	skipDBSetup := TestrigSkipDBSetupFlag
+	skipDBSetupUsage := fieldtag("TestrigSkipDBSetup", "usage")
+	cmd.Flags().Bool(skipDBSetup, false, skipDBSetupUsage)
+
+	skipDBTeardown := TestrigSkipDBTeardownFlag
+	skipDBTeardownUsage := fieldtag("TestrigSkipDBTeardown", "usage")
+	cmd.Flags().Bool(skipDBTeardown, false, skipDBTeardownUsage)
+}

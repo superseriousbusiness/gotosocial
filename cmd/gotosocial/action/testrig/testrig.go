@@ -92,9 +92,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 
 		if state.DB != nil {
+			// Clean up database by
+			// dropping tables if required.
+			if !config.GetTestrigSkipDBTeardown() {
+				testrig.StandardDBTeardown(state.DB)
+			}
+
 			// Lastly, if database service was started,
 			// ensure it gets closed now all else stopped.
-			testrig.StandardDBTeardown(state.DB)
 			if err := state.DB.Close(); err != nil {
 				log.Errorf(ctx, "error stopping database: %v", err)
 			}
@@ -125,7 +130,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// that twice, we can just start the initialized caches.
 	state.Caches.Start()
 
-	testrig.StandardDBSetup(state.DB, nil)
+	// Populate database tables + data if required.
+	if !config.GetTestrigSkipDBSetup() {
+		testrig.StandardDBSetup(state.DB, nil)
+	}
 
 	// Get the instance account (we'll need this later).
 	instanceAccount, err := state.DB.GetInstanceAccount(ctx, "")

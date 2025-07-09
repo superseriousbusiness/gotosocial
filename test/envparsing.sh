@@ -176,6 +176,8 @@ EXPECT=$(cat << "EOF"
     "protocol": "http",
     "remote-only": false,
     "request-id-header": "X-Trace-Id",
+    "skip-db-setup": false,
+    "skip-db-teardown": false,
     "smtp-disclose-recipients": true,
     "smtp-from": "queen.rip.in.piss@terfisland.org",
     "smtp-host": "example.com",
