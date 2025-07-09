@@ -36,6 +36,7 @@ type ActivityStreamsDescribesProperty struct {
 	activitystreamsDislikeMember               vocab.ActivityStreamsDislike
 	activitystreamsDocumentMember              vocab.ActivityStreamsDocument
 	tootEmojiMember                            vocab.TootEmoji
+	litepubEmojiReactMember                    vocab.LitePubEmojiReact
 	activitystreamsEventMember                 vocab.ActivityStreamsEvent
 	activitystreamsFlagMember                  vocab.ActivityStreamsFlag
 	activitystreamsFollowMember                vocab.ActivityStreamsFollow
@@ -245,6 +246,12 @@ func DeserializeDescribesProperty(m map[string]interface{}, aliasMap map[string]
 				this := &ActivityStreamsDescribesProperty{
 					alias:           alias,
 					tootEmojiMember: v,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeEmojiReactLitePub()(m, aliasMap); err == nil {
+				this := &ActivityStreamsDescribesProperty{
+					alias:                   alias,
+					litepubEmojiReactMember: v,
 				}
 				return this, nil
 			} else if v, err := mgr.DeserializeEventActivityStreams()(m, aliasMap); err == nil {
@@ -564,6 +571,7 @@ func (this *ActivityStreamsDescribesProperty) Clear() {
 	this.activitystreamsDislikeMember = nil
 	this.activitystreamsDocumentMember = nil
 	this.tootEmojiMember = nil
+	this.litepubEmojiReactMember = nil
 	this.activitystreamsEventMember = nil
 	this.activitystreamsFlagMember = nil
 	this.activitystreamsFollowMember = nil
@@ -1071,6 +1079,13 @@ func (this ActivityStreamsDescribesProperty) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetLitePubEmojiReact returns the value of this property. When
+// IsLitePubEmojiReact returns false, GetLitePubEmojiReact will return an
+// arbitrary value.
+func (this ActivityStreamsDescribesProperty) GetLitePubEmojiReact() vocab.LitePubEmojiReact {
+	return this.litepubEmojiReactMember
+}
+
 // GetSchemaPropertyValue returns the value of this property. When
 // IsSchemaPropertyValue returns false, GetSchemaPropertyValue will return an
 // arbitrary value.
@@ -1159,6 +1174,9 @@ func (this ActivityStreamsDescribesProperty) GetType() vocab.Type {
 	}
 	if this.IsTootEmoji() {
 		return this.GetTootEmoji()
+	}
+	if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact()
 	}
 	if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent()
@@ -1326,6 +1344,7 @@ func (this ActivityStreamsDescribesProperty) HasAny() bool {
 		this.IsActivityStreamsDislike() ||
 		this.IsActivityStreamsDocument() ||
 		this.IsTootEmoji() ||
+		this.IsLitePubEmojiReact() ||
 		this.IsActivityStreamsEvent() ||
 		this.IsActivityStreamsFlag() ||
 		this.IsActivityStreamsFollow() ||
@@ -1842,6 +1861,13 @@ func (this ActivityStreamsDescribesProperty) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsLitePubEmojiReact returns true if this property has a type of "EmojiReact".
+// When true, use the GetLitePubEmojiReact and SetLitePubEmojiReact methods to
+// access and set this property.
+func (this ActivityStreamsDescribesProperty) IsLitePubEmojiReact() bool {
+	return this.litepubEmojiReactMember != nil
+}
+
 // IsSchemaPropertyValue returns true if this property has a type of
 // "PropertyValue". When true, use the GetSchemaPropertyValue and
 // SetSchemaPropertyValue methods to access and set this property.
@@ -1912,6 +1938,8 @@ func (this ActivityStreamsDescribesProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsDocument().JSONLDContext()
 	} else if this.IsTootEmoji() {
 		child = this.GetTootEmoji().JSONLDContext()
+	} else if this.IsLitePubEmojiReact() {
+		child = this.GetLitePubEmojiReact().JSONLDContext()
 	} else if this.IsActivityStreamsEvent() {
 		child = this.GetActivityStreamsEvent().JSONLDContext()
 	} else if this.IsActivityStreamsFlag() {
@@ -2086,143 +2114,146 @@ func (this ActivityStreamsDescribesProperty) KindIndex() int {
 	if this.IsTootEmoji() {
 		return 21
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsLitePubEmojiReact() {
 		return 22
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsActivityStreamsEvent() {
 		return 23
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsFlag() {
 		return 24
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFollow() {
 		return 25
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsActivityStreamsGroup() {
 		return 26
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootIdentityProof() {
 		return 27
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsActivityStreamsIgnore() {
 		return 28
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsImage() {
 		return 29
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 30
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsInvite() {
 		return 31
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsJoin() {
 		return 32
 	}
-	if this.IsFunkwhaleLibrary() {
+	if this.IsActivityStreamsLeave() {
 		return 33
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsFunkwhaleLibrary() {
 		return 34
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsActivityStreamsLike() {
 		return 35
 	}
-	if this.IsGoToSocialLikeAuthorization() {
+	if this.IsGoToSocialLikeApproval() {
 		return 36
 	}
-	if this.IsGoToSocialLikeRequest() {
+	if this.IsGoToSocialLikeAuthorization() {
 		return 37
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsGoToSocialLikeRequest() {
 		return 38
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsActivityStreamsListen() {
 		return 39
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsActivityStreamsMove() {
 		return 40
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsNote() {
 		return 41
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsOffer() {
 		return 42
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 43
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 44
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOrganization() {
 		return 45
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsPage() {
 		return 46
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsPerson() {
 		return 47
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsPlace() {
 		return 48
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsProfile() {
 		return 49
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsSchemaPropertyValue() {
 		return 50
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsQuestion() {
 		return 51
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsRead() {
 		return 52
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsReject() {
 		return 53
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRelationship() {
 		return 54
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsRemove() {
 		return 55
 	}
-	if this.IsGoToSocialReplyAuthorization() {
+	if this.IsGoToSocialReplyApproval() {
 		return 56
 	}
-	if this.IsGoToSocialReplyRequest() {
+	if this.IsGoToSocialReplyAuthorization() {
 		return 57
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsGoToSocialReplyRequest() {
 		return 58
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsService() {
 		return 59
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 60
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 61
 	}
-	if this.IsFunkwhaleTrack() {
+	if this.IsActivityStreamsTombstone() {
 		return 62
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsFunkwhaleTrack() {
 		return 63
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTravel() {
 		return 64
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsUndo() {
 		return 65
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsUpdate() {
 		return 66
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsVideo() {
 		return 67
+	}
+	if this.IsActivityStreamsView() {
+		return 68
 	}
 	if this.IsIRI() {
 		return -2
@@ -2285,6 +2316,8 @@ func (this ActivityStreamsDescribesProperty) LessThan(o vocab.ActivityStreamsDes
 		return this.GetActivityStreamsDocument().LessThan(o.GetActivityStreamsDocument())
 	} else if this.IsTootEmoji() {
 		return this.GetTootEmoji().LessThan(o.GetTootEmoji())
+	} else if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact().LessThan(o.GetLitePubEmojiReact())
 	} else if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent().LessThan(o.GetActivityStreamsEvent())
 	} else if this.IsActivityStreamsFlag() {
@@ -2441,6 +2474,8 @@ func (this ActivityStreamsDescribesProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsDocument().Serialize()
 	} else if this.IsTootEmoji() {
 		return this.GetTootEmoji().Serialize()
+	} else if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact().Serialize()
 	} else if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent().Serialize()
 	} else if this.IsActivityStreamsFlag() {
@@ -3000,6 +3035,13 @@ func (this *ActivityStreamsDescribesProperty) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetLitePubEmojiReact sets the value of this property. Calling
+// IsLitePubEmojiReact afterwards returns true.
+func (this *ActivityStreamsDescribesProperty) SetLitePubEmojiReact(v vocab.LitePubEmojiReact) {
+	this.Clear()
+	this.litepubEmojiReactMember = v
+}
+
 // SetSchemaPropertyValue sets the value of this property. Calling
 // IsSchemaPropertyValue afterwards returns true.
 func (this *ActivityStreamsDescribesProperty) SetSchemaPropertyValue(v vocab.SchemaPropertyValue) {
@@ -3110,6 +3152,10 @@ func (this *ActivityStreamsDescribesProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.TootEmoji); ok {
 		this.SetTootEmoji(v)
+		return nil
+	}
+	if v, ok := t.(vocab.LitePubEmojiReact); ok {
+		this.SetLitePubEmojiReact(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsEvent); ok {

@@ -89,6 +89,10 @@ type privateManager interface {
 	// for the "ActivityStreamsDocument" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeDocumentActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsDocument, error)
+	// DeserializeEmojiReactLitePub returns the deserialization method for the
+	// "LitePubEmojiReact" non-functional property in the vocabulary
+	// "LitePub"
+	DeserializeEmojiReactLitePub() func(map[string]interface{}, map[string]string) (vocab.LitePubEmojiReact, error)
 	// DeserializeEmojiToot returns the deserialization method for the
 	// "TootEmoji" non-functional property in the vocabulary "Toot"
 	DeserializeEmojiToot() func(map[string]interface{}, map[string]string) (vocab.TootEmoji, error)

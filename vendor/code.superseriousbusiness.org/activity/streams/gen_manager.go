@@ -147,6 +147,8 @@ import (
 	propertycanlike "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike"
 	propertycanquote "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply"
+	propertyhidesccpublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb"
+	propertyhidestopublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb"
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
@@ -167,6 +169,7 @@ import (
 	typereplyrequest "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_replyrequest"
 	propertyid "code.superseriousbusiness.org/activity/streams/impl/jsonld/property_id"
 	propertytype "code.superseriousbusiness.org/activity/streams/impl/jsonld/property_type"
+	typeemojireact "code.superseriousbusiness.org/activity/streams/impl/litepub/type_emojireact"
 	propertyvalue "code.superseriousbusiness.org/activity/streams/impl/schema/property_value"
 	typepropertyvalue "code.superseriousbusiness.org/activity/streams/impl/schema/type_propertyvalue"
 	propertyblurhash "code.superseriousbusiness.org/activity/streams/impl/toot/property_blurhash"
@@ -862,6 +865,18 @@ func (this Manager) DeserializeDurationPropertyActivityStreams() func(map[string
 	}
 }
 
+// DeserializeEmojiReactLitePub returns the deserialization method for the
+// "LitePubEmojiReact" non-functional property in the vocabulary "LitePub"
+func (this Manager) DeserializeEmojiReactLitePub() func(map[string]interface{}, map[string]string) (vocab.LitePubEmojiReact, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.LitePubEmojiReact, error) {
+		i, err := typeemojireact.DeserializeEmojiReact(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
 // DeserializeEmojiToot returns the deserialization method for the "TootEmoji"
 // non-functional property in the vocabulary "Toot"
 func (this Manager) DeserializeEmojiToot() func(map[string]interface{}, map[string]string) (vocab.TootEmoji, error) {
@@ -1072,6 +1087,34 @@ func (this Manager) DeserializeHashtagToot() func(map[string]interface{}, map[st
 func (this Manager) DeserializeHeightPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsHeightProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsHeightProperty, error) {
 		i, err := propertyheight.DeserializeHeightProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial returns the
+// deserialization method for the
+// "GoToSocialHidesCcPublicFromUnauthedWebProperty" non-functional property in
+// the vocabulary "GoToSocial"
+func (this Manager) DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty, error) {
+		i, err := propertyhidesccpublicfromunauthedweb.DeserializeHidesCcPublicFromUnauthedWebProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial returns the
+// deserialization method for the
+// "GoToSocialHidesToPublicFromUnauthedWebProperty" non-functional property in
+// the vocabulary "GoToSocial"
+func (this Manager) DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesToPublicFromUnauthedWebProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialHidesToPublicFromUnauthedWebProperty, error) {
+		i, err := propertyhidestopublicfromunauthedweb.DeserializeHidesToPublicFromUnauthedWebProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

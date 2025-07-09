@@ -227,6 +227,8 @@ type Accountable interface {
 	WithMovedTo
 	WithAlsoKnownAs
 	WithManuallyApprovesFollowers
+	WithHidesToPublicFromUnauthedWeb
+	WithHidesCcPublicFromUnauthedWeb
 	WithEndpoints
 	WithTag
 	WithPublished
@@ -709,6 +711,18 @@ type WithItems interface {
 type WithManuallyApprovesFollowers interface {
 	GetActivityStreamsManuallyApprovesFollowers() vocab.ActivityStreamsManuallyApprovesFollowersProperty
 	SetActivityStreamsManuallyApprovesFollowers(vocab.ActivityStreamsManuallyApprovesFollowersProperty)
+}
+
+// WithHidesToPublicFromUnauthedWeb represents a Person or profile with the hidesToPublicFromUnauthedWeb property.
+type WithHidesToPublicFromUnauthedWeb interface {
+	GetGoToSocialHidesToPublicFromUnauthedWeb() vocab.GoToSocialHidesToPublicFromUnauthedWebProperty
+	SetGoToSocialHidesToPublicFromUnauthedWeb(vocab.GoToSocialHidesToPublicFromUnauthedWebProperty)
+}
+
+// WithHidesCcPublicFromUnauthedWeb represents a Person or profile with the hidesCcPublicFromUnauthedWeb property.
+type WithHidesCcPublicFromUnauthedWeb interface {
+	GetGoToSocialHidesCcPublicFromUnauthedWeb() vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty
+	SetGoToSocialHidesCcPublicFromUnauthedWeb(vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty)
 }
 
 // WithEndpoints represents a Person or profile with the endpoints property

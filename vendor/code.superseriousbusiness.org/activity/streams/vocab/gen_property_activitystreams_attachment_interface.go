@@ -280,6 +280,10 @@ type ActivityStreamsAttachmentPropertyIterator interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetLitePubEmojiReact returns the value of this property. When
+	// IsLitePubEmojiReact returns false, GetLitePubEmojiReact will return
+	// an arbitrary value.
+	GetLitePubEmojiReact() LitePubEmojiReact
 	// GetSchemaPropertyValue returns the value of this property. When
 	// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will
 	// return an arbitrary value.
@@ -593,6 +597,10 @@ type ActivityStreamsAttachmentPropertyIterator interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsLitePubEmojiReact returns true if this property has a type of
+	// "EmojiReact". When true, use the GetLitePubEmojiReact and
+	// SetLitePubEmojiReact methods to access and set this property.
+	IsLitePubEmojiReact() bool
 	// IsSchemaPropertyValue returns true if this property has a type of
 	// "PropertyValue". When true, use the GetSchemaPropertyValue and
 	// SetSchemaPropertyValue methods to access and set this property.
@@ -836,6 +844,9 @@ type ActivityStreamsAttachmentPropertyIterator interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetLitePubEmojiReact sets the value of this property. Calling
+	// IsLitePubEmojiReact afterwards returns true.
+	SetLitePubEmojiReact(v LitePubEmojiReact)
 	// SetSchemaPropertyValue sets the value of this property. Calling
 	// IsSchemaPropertyValue afterwards returns true.
 	SetSchemaPropertyValue(v SchemaPropertyValue)
@@ -1140,6 +1151,10 @@ type ActivityStreamsAttachmentProperty interface {
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "attachment"
 	AppendIRI(v *url.URL)
+	// AppendLitePubEmojiReact appends a EmojiReact value to the back of a
+	// list of the property "attachment". Invalidates iterators that are
+	// traversing using Prev.
+	AppendLitePubEmojiReact(v LitePubEmojiReact)
 	// AppendSchemaPropertyValue appends a PropertyValue value to the back of
 	// a list of the property "attachment". Invalidates iterators that are
 	// traversing using Prev.
@@ -1466,6 +1481,10 @@ type ActivityStreamsAttachmentProperty interface {
 	// "attachment". Existing elements at that index and higher are
 	// shifted back once. Invalidates all iterators.
 	InsertIRI(idx int, v *url.URL)
+	// InsertLitePubEmojiReact inserts a EmojiReact value at the specified
+	// index for a property "attachment". Existing elements at that index
+	// and higher are shifted back once. Invalidates all iterators.
+	InsertLitePubEmojiReact(idx int, v LitePubEmojiReact)
 	// InsertSchemaPropertyValue inserts a PropertyValue value at the
 	// specified index for a property "attachment". Existing elements at
 	// that index and higher are shifted back once. Invalidates all
@@ -1732,6 +1751,9 @@ type ActivityStreamsAttachmentProperty interface {
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "attachment".
 	PrependIRI(v *url.URL)
+	// PrependLitePubEmojiReact prepends a EmojiReact value to the front of a
+	// list of the property "attachment". Invalidates all iterators.
+	PrependLitePubEmojiReact(v LitePubEmojiReact)
 	// PrependSchemaPropertyValue prepends a PropertyValue value to the front
 	// of a list of the property "attachment". Invalidates all iterators.
 	PrependSchemaPropertyValue(v SchemaPropertyValue)
@@ -2029,6 +2051,10 @@ type ActivityStreamsAttachmentProperty interface {
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "attachment". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)
+	// SetLitePubEmojiReact sets a EmojiReact value to be at the specified
+	// index for the property "attachment". Panics if the index is out of
+	// bounds. Invalidates all iterators.
+	SetLitePubEmojiReact(idx int, v LitePubEmojiReact)
 	// SetSchemaPropertyValue sets a PropertyValue value to be at the
 	// specified index for the property "attachment". Panics if the index
 	// is out of bounds. Invalidates all iterators.

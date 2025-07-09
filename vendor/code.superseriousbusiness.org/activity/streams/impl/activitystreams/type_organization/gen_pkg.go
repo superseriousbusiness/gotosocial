@@ -84,6 +84,16 @@ type privateManager interface {
 	// method for the "ActivityStreamsGeneratorProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeGeneratorPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsGeneratorProperty, error)
+	// DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial returns the
+	// deserialization method for the
+	// "GoToSocialHidesCcPublicFromUnauthedWebProperty" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty, error)
+	// DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial returns the
+	// deserialization method for the
+	// "GoToSocialHidesToPublicFromUnauthedWebProperty" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesToPublicFromUnauthedWebProperty, error)
 	// DeserializeIconPropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsIconProperty" non-functional
 	// property in the vocabulary "ActivityStreams"

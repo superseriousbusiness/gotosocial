@@ -562,6 +562,48 @@ func SetManuallyApprovesFollowers(with WithManuallyApprovesFollowers, manuallyAp
 	mafProp.Set(manuallyApprovesFollowers)
 }
 
+// GetHidesToPublicFromUnauthedWeb returns the boolean contained in the hidesToPublicFromUnauthedWeb property of 'with'.
+//
+// Returns default 'false' if property unusable or not set.
+func GetHidesToPublicFromUnauthedWeb(with WithHidesToPublicFromUnauthedWeb) bool {
+	hidesProp := with.GetGoToSocialHidesToPublicFromUnauthedWeb()
+	if hidesProp == nil || !hidesProp.IsXMLSchemaBoolean() {
+		return false
+	}
+	return hidesProp.Get()
+}
+
+// SetHidesToPublicFromUnauthedWeb sets the given boolean on the hidesToPublicFromUnauthedWeb property of 'with'.
+func SetHidesToPublicFromUnauthedWeb(with WithHidesToPublicFromUnauthedWeb, hidesToPublicFromUnauthedWeb bool) {
+	hidesProp := with.GetGoToSocialHidesToPublicFromUnauthedWeb()
+	if hidesProp == nil {
+		hidesProp = streams.NewGoToSocialHidesToPublicFromUnauthedWebProperty()
+		with.SetGoToSocialHidesToPublicFromUnauthedWeb(hidesProp)
+	}
+	hidesProp.Set(hidesToPublicFromUnauthedWeb)
+}
+
+// GetHidesCcPublicFromUnauthedWeb returns the boolean contained in the hidesCcPublicFromUnauthedWeb property of 'with'.
+//
+// Returns default 'true' if property unusable or not set.
+func GetHidesCcPublicFromUnauthedWeb(with WithHidesCcPublicFromUnauthedWeb) bool {
+	hidesProp := with.GetGoToSocialHidesCcPublicFromUnauthedWeb()
+	if hidesProp == nil || !hidesProp.IsXMLSchemaBoolean() {
+		return true
+	}
+	return hidesProp.Get()
+}
+
+// SetHidesCcPublicFromUnauthedWeb sets the given boolean on the hidesCcPublicFromUnauthedWeb property of 'with'.
+func SetHidesCcPublicFromUnauthedWeb(with WithHidesCcPublicFromUnauthedWeb, hidesCcPublicFromUnauthedWeb bool) {
+	hidesProp := with.GetGoToSocialHidesCcPublicFromUnauthedWeb()
+	if hidesProp == nil {
+		hidesProp = streams.NewGoToSocialHidesCcPublicFromUnauthedWebProperty()
+		with.SetGoToSocialHidesCcPublicFromUnauthedWeb(hidesProp)
+	}
+	hidesProp.Set(hidesCcPublicFromUnauthedWeb)
+}
+
 // GetApprovedBy returns the URL contained in
 // the ApprovedBy property of 'with', if set.
 func GetApprovedBy(with WithApprovedBy) *url.URL {

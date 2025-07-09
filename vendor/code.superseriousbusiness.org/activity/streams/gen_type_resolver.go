@@ -78,6 +78,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.TootEmoji) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.LitePubEmojiReact) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsEndpoints) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsEvent) error:
@@ -418,6 +420,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "http://joinmastodon.org/ns" && o.GetTypeName() == "Emoji" {
 			if fn, ok := i.(func(context.Context, vocab.TootEmoji) error); ok {
 				if v, ok := o.(vocab.TootEmoji); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "http://litepub.social/ns" && o.GetTypeName() == "EmojiReact" {
+			if fn, ok := i.(func(context.Context, vocab.LitePubEmojiReact) error); ok {
+				if v, ok := o.(vocab.LitePubEmojiReact); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.

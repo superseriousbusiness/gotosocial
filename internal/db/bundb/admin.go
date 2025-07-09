@@ -120,20 +120,21 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		}
 
 		account = &gtsmodel.Account{
-			ID:                    accountID,
-			Username:              newSignup.Username,
-			DisplayName:           newSignup.Username,
-			URI:                   uris.UserURI,
-			URL:                   uris.UserURL,
-			InboxURI:              uris.InboxURI,
-			OutboxURI:             uris.OutboxURI,
-			FollowingURI:          uris.FollowingURI,
-			FollowersURI:          uris.FollowersURI,
-			FeaturedCollectionURI: uris.FeaturedCollectionURI,
-			ActorType:             gtsmodel.AccountActorTypePerson,
-			PrivateKey:            privKey,
-			PublicKey:             &privKey.PublicKey,
-			PublicKeyURI:          uris.PublicKeyURI,
+			ID:                           accountID,
+			Username:                     newSignup.Username,
+			DisplayName:                  newSignup.Username,
+			URI:                          uris.UserURI,
+			URL:                          uris.UserURL,
+			InboxURI:                     uris.InboxURI,
+			OutboxURI:                    uris.OutboxURI,
+			FollowingURI:                 uris.FollowingURI,
+			FollowersURI:                 uris.FollowersURI,
+			FeaturedCollectionURI:        uris.FeaturedCollectionURI,
+			ActorType:                    gtsmodel.AccountActorTypePerson,
+			PrivateKey:                   privKey,
+			PublicKey:                    &privKey.PublicKey,
+			PublicKeyURI:                 uris.PublicKeyURI,
+			HidesCcPublicFromUnauthedWeb: util.Ptr(true), // GtS default to hide unlisted.
 		}
 
 		// Insert the new account!

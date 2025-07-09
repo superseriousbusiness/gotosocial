@@ -115,15 +115,15 @@ Some examples:
 
 #### Visibility Level of Posts to Show on Your Profile
 
-Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web views of your profile, of your statuses, and in your RSS feed (if you have enabled RSS).
+Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web views of your profile and posts, and in your RSS feed (if enabled).
 
 **By default, GoToSocial shows only Public visibility posts on its web views, not Unlisted.** You can adjust this setting to also show Unlisted visibility posts, which is similar to the default for other ActivityPub softwares like Mastodon etc.
 
-You can also choose to show no posts at all on GoToSocial's web views. This allows you to write posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
+You can also choose to show no posts at all on the web view of your profile. This allows you to post without having to worry about scrapers, rubberneckers, and other nosy parkers being able to easily look through your posts by opening your profile in a browser.
 
-This setting only applies to the visibility of your own posts. Other user's Unlisted posts are never shown.
+Please bear in mind that this setting only applies to the logged-out (unauthenticated) web view of your profile and threads that people visit in their web browser, and RSS feed (if enabled). It does not change the visibility of your posts over the ActivityPub protocol. So even if you choose to show no posts to logged-out visitors to your web profile, folks on instances you federate with will be able to see your posts via ActivityPub if they follow you, have your posts boosted onto their timeline by other people, use a link to search a post of yours, etc.
 
-This setting does not affect visibility of your posts over the ActivityPub protocol, so even if you choose to show no posts on your public web profile, others will be able to see your posts in their client if they follow you, and/or have your posts boosted onto their timeline, use a link to search a post of yours, etc.
+Furthermore, while GoToSocial does [transmit a flag to other instances](../federation/actors.md) indicating your preference of what post visibility level to show to logged-out visitors, not all servers will respect this flag; indeed, many servers allow logged-out visitors to look up remote profiles, which can expose your public and unlisted posts. If you require stricter control over who sees your posts, consider posting things at the [followers-only](./posts.md#privatefollowers-only) visibility level, which almost all server softwares respect and properly gate behind authorization.
 
 !!! warning
     Be aware that changes to this setting also apply retroactively.

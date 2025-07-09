@@ -81,6 +81,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.TootEmoji) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.LitePubEmojiReact) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsEndpoints) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsEvent) error:
@@ -286,6 +288,13 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 		}
 		if len(TootAlias) > 0 {
 			TootAlias += ":"
+		}
+		LitePubAlias, ok := aliasMap["https://litepub.social/ns"]
+		if !ok {
+			LitePubAlias = aliasMap["http://litepub.social/ns"]
+		}
+		if len(LitePubAlias) > 0 {
+			LitePubAlias += ":"
 		}
 		SchemaAlias, ok := aliasMap["https://schema.org"]
 		if !ok {
@@ -573,6 +582,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.TootEmoji) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == LitePubAlias+"EmojiReact" {
+			v, err := mgr.DeserializeEmojiReactLitePub()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.LitePubEmojiReact) error); ok {
 					return fn(ctx, v)
 				}
 			}

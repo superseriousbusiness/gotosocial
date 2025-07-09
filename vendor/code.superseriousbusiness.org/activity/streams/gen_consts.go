@@ -77,6 +77,9 @@ var ActivityStreamsDocumentName string = "Document"
 // TootEmojiName is the string literal of the name for the Emoji type in the Toot vocabulary.
 var TootEmojiName string = "Emoji"
 
+// LitePubEmojiReactName is the string literal of the name for the EmojiReact type in the LitePub vocabulary.
+var LitePubEmojiReactName string = "EmojiReact"
+
 // ActivityStreamsEndpointsName is the string literal of the name for the Endpoints type in the ActivityStreams vocabulary.
 var ActivityStreamsEndpointsName string = "Endpoints"
 
@@ -352,6 +355,12 @@ var ActivityStreamsGeneratorPropertyName string = "generator"
 
 // ActivityStreamsHeightPropertyName is the string literal of the name for the height property in the ActivityStreams vocabulary.
 var ActivityStreamsHeightPropertyName string = "height"
+
+// GoToSocialHidesCcPublicFromUnauthedWebPropertyName is the string literal of the name for the hidesCcPublicFromUnauthedWeb property in the GoToSocial vocabulary.
+var GoToSocialHidesCcPublicFromUnauthedWebPropertyName string = "hidesCcPublicFromUnauthedWeb"
+
+// GoToSocialHidesToPublicFromUnauthedWebPropertyName is the string literal of the name for the hidesToPublicFromUnauthedWeb property in the GoToSocial vocabulary.
+var GoToSocialHidesToPublicFromUnauthedWebPropertyName string = "hidesToPublicFromUnauthedWeb"
 
 // ActivityStreamsHrefPropertyName is the string literal of the name for the href property in the ActivityStreams vocabulary.
 var ActivityStreamsHrefPropertyName string = "href"

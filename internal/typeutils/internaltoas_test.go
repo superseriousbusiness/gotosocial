@@ -48,6 +48,7 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -64,6 +65,8 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
   "icon": {
     "mediaType": "image/jpeg",
     "name": "a green goblin looking nasty",
@@ -116,6 +119,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -132,6 +136,8 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
   "icon": {
     "mediaType": "image/jpeg",
     "name": "a green goblin looking nasty",
@@ -178,6 +184,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -209,6 +216,8 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
   "featured": "http://localhost:8080/users/1happyturtle/collections/featured",
   "followers": "http://localhost:8080/users/1happyturtle/followers",
   "following": "http://localhost:8080/users/1happyturtle/following",
+  "hidesCcPublicFromUnauthedWeb": true,
+  "hidesToPublicFromUnauthedWeb": false,
   "id": "http://localhost:8080/users/1happyturtle",
   "inbox": "http://localhost:8080/users/1happyturtle/inbox",
   "manuallyApprovesFollowers": true,
@@ -256,6 +265,7 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -279,6 +289,8 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
   "icon": {
     "mediaType": "image/jpeg",
     "name": "a green goblin looking nasty",
@@ -328,6 +340,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	// Despite only one field being set, attachments should still be a slice/array.
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -354,6 +367,8 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
   "featured": "http://localhost:8080/users/1happyturtle/collections/featured",
   "followers": "http://localhost:8080/users/1happyturtle/followers",
   "following": "http://localhost:8080/users/1happyturtle/following",
+  "hidesCcPublicFromUnauthedWeb": true,
+  "hidesToPublicFromUnauthedWeb": false,
   "id": "http://localhost:8080/users/1happyturtle",
   "inbox": "http://localhost:8080/users/1happyturtle/inbox",
   "manuallyApprovesFollowers": true,
@@ -389,6 +404,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -406,6 +422,8 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
   "icon": {
     "mediaType": "image/jpeg",
     "name": "a green goblin looking nasty",
@@ -464,6 +482,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -483,6 +502,8 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
   "icon": {
     "mediaType": "image/jpeg",
     "name": "a green goblin looking nasty",

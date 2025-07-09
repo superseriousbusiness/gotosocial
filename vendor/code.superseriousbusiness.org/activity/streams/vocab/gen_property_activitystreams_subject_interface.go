@@ -300,6 +300,10 @@ type ActivityStreamsSubjectProperty interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetLitePubEmojiReact returns the value of this property. When
+	// IsLitePubEmojiReact returns false, GetLitePubEmojiReact will return
+	// an arbitrary value.
+	GetLitePubEmojiReact() LitePubEmojiReact
 	// GetSchemaPropertyValue returns the value of this property. When
 	// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will
 	// return an arbitrary value.
@@ -613,6 +617,10 @@ type ActivityStreamsSubjectProperty interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsLitePubEmojiReact returns true if this property has a type of
+	// "EmojiReact". When true, use the GetLitePubEmojiReact and
+	// SetLitePubEmojiReact methods to access and set this property.
+	IsLitePubEmojiReact() bool
 	// IsSchemaPropertyValue returns true if this property has a type of
 	// "PropertyValue". When true, use the GetSchemaPropertyValue and
 	// SetSchemaPropertyValue methods to access and set this property.
@@ -857,6 +865,9 @@ type ActivityStreamsSubjectProperty interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetLitePubEmojiReact sets the value of this property. Calling
+	// IsLitePubEmojiReact afterwards returns true.
+	SetLitePubEmojiReact(v LitePubEmojiReact)
 	// SetSchemaPropertyValue sets the value of this property. Calling
 	// IsSchemaPropertyValue afterwards returns true.
 	SetSchemaPropertyValue(v SchemaPropertyValue)

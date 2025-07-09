@@ -44,6 +44,7 @@ type ActivityStreamsClosedPropertyIterator struct {
 	activitystreamsDislikeMember               vocab.ActivityStreamsDislike
 	activitystreamsDocumentMember              vocab.ActivityStreamsDocument
 	tootEmojiMember                            vocab.TootEmoji
+	litepubEmojiReactMember                    vocab.LitePubEmojiReact
 	activitystreamsEventMember                 vocab.ActivityStreamsEvent
 	activitystreamsFlagMember                  vocab.ActivityStreamsFlag
 	activitystreamsFollowMember                vocab.ActivityStreamsFollow
@@ -261,6 +262,12 @@ func deserializeActivityStreamsClosedPropertyIterator(i interface{}, aliasMap ma
 			this := &ActivityStreamsClosedPropertyIterator{
 				alias:           alias,
 				tootEmojiMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeEmojiReactLitePub()(m, aliasMap); err == nil {
+			this := &ActivityStreamsClosedPropertyIterator{
+				alias:                   alias,
+				litepubEmojiReactMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeEventActivityStreams()(m, aliasMap); err == nil {
@@ -1046,6 +1053,13 @@ func (this ActivityStreamsClosedPropertyIterator) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetLitePubEmojiReact returns the value of this property. When
+// IsLitePubEmojiReact returns false, GetLitePubEmojiReact will return an
+// arbitrary value.
+func (this ActivityStreamsClosedPropertyIterator) GetLitePubEmojiReact() vocab.LitePubEmojiReact {
+	return this.litepubEmojiReactMember
+}
+
 // GetSchemaPropertyValue returns the value of this property. When
 // IsSchemaPropertyValue returns false, GetSchemaPropertyValue will return an
 // arbitrary value.
@@ -1143,6 +1157,9 @@ func (this ActivityStreamsClosedPropertyIterator) GetType() vocab.Type {
 	}
 	if this.IsTootEmoji() {
 		return this.GetTootEmoji()
+	}
+	if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact()
 	}
 	if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent()
@@ -1332,6 +1349,7 @@ func (this ActivityStreamsClosedPropertyIterator) HasAny() bool {
 		this.IsActivityStreamsDislike() ||
 		this.IsActivityStreamsDocument() ||
 		this.IsTootEmoji() ||
+		this.IsLitePubEmojiReact() ||
 		this.IsActivityStreamsEvent() ||
 		this.IsActivityStreamsFlag() ||
 		this.IsActivityStreamsFollow() ||
@@ -1864,6 +1882,13 @@ func (this ActivityStreamsClosedPropertyIterator) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsLitePubEmojiReact returns true if this property has a type of "EmojiReact".
+// When true, use the GetLitePubEmojiReact and SetLitePubEmojiReact methods to
+// access and set this property.
+func (this ActivityStreamsClosedPropertyIterator) IsLitePubEmojiReact() bool {
+	return this.litepubEmojiReactMember != nil
+}
+
 // IsSchemaPropertyValue returns true if this property has a type of
 // "PropertyValue". When true, use the GetSchemaPropertyValue and
 // SetSchemaPropertyValue methods to access and set this property.
@@ -1957,6 +1982,8 @@ func (this ActivityStreamsClosedPropertyIterator) JSONLDContext() map[string]str
 		child = this.GetActivityStreamsDocument().JSONLDContext()
 	} else if this.IsTootEmoji() {
 		child = this.GetTootEmoji().JSONLDContext()
+	} else if this.IsLitePubEmojiReact() {
+		child = this.GetLitePubEmojiReact().JSONLDContext()
 	} else if this.IsActivityStreamsEvent() {
 		child = this.GetActivityStreamsEvent().JSONLDContext()
 	} else if this.IsActivityStreamsFlag() {
@@ -2144,149 +2171,152 @@ func (this ActivityStreamsClosedPropertyIterator) KindIndex() int {
 	if this.IsTootEmoji() {
 		return 24
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsLitePubEmojiReact() {
 		return 25
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsActivityStreamsEvent() {
 		return 26
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsFlag() {
 		return 27
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFollow() {
 		return 28
 	}
-	if this.IsTootHashtag() {
+	if this.IsActivityStreamsGroup() {
 		return 29
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsTootHashtag() {
 		return 30
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootIdentityProof() {
 		return 31
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsActivityStreamsIgnore() {
 		return 32
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsImage() {
 		return 33
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 34
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsInvite() {
 		return 35
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsJoin() {
 		return 36
 	}
-	if this.IsFunkwhaleLibrary() {
+	if this.IsActivityStreamsLeave() {
 		return 37
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsFunkwhaleLibrary() {
 		return 38
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsActivityStreamsLike() {
 		return 39
 	}
-	if this.IsGoToSocialLikeAuthorization() {
+	if this.IsGoToSocialLikeApproval() {
 		return 40
 	}
-	if this.IsGoToSocialLikeRequest() {
+	if this.IsGoToSocialLikeAuthorization() {
 		return 41
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsGoToSocialLikeRequest() {
 		return 42
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsActivityStreamsListen() {
 		return 43
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsActivityStreamsMention() {
 		return 44
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsActivityStreamsMove() {
 		return 45
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsNote() {
 		return 46
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsOffer() {
 		return 47
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 48
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 49
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOrganization() {
 		return 50
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsPage() {
 		return 51
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsPerson() {
 		return 52
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsPlace() {
 		return 53
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsProfile() {
 		return 54
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsSchemaPropertyValue() {
 		return 55
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsQuestion() {
 		return 56
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsRead() {
 		return 57
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsReject() {
 		return 58
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRelationship() {
 		return 59
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsRemove() {
 		return 60
 	}
-	if this.IsGoToSocialReplyAuthorization() {
+	if this.IsGoToSocialReplyApproval() {
 		return 61
 	}
-	if this.IsGoToSocialReplyRequest() {
+	if this.IsGoToSocialReplyAuthorization() {
 		return 62
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsGoToSocialReplyRequest() {
 		return 63
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsService() {
 		return 64
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 65
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 66
 	}
-	if this.IsFunkwhaleTrack() {
+	if this.IsActivityStreamsTombstone() {
 		return 67
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsFunkwhaleTrack() {
 		return 68
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTravel() {
 		return 69
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsUndo() {
 		return 70
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsUpdate() {
 		return 71
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsVideo() {
 		return 72
+	}
+	if this.IsActivityStreamsView() {
+		return 73
 	}
 	if this.IsIRI() {
 		return -2
@@ -2355,6 +2385,8 @@ func (this ActivityStreamsClosedPropertyIterator) LessThan(o vocab.ActivityStrea
 		return this.GetActivityStreamsDocument().LessThan(o.GetActivityStreamsDocument())
 	} else if this.IsTootEmoji() {
 		return this.GetTootEmoji().LessThan(o.GetTootEmoji())
+	} else if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact().LessThan(o.GetLitePubEmojiReact())
 	} else if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent().LessThan(o.GetActivityStreamsEvent())
 	} else if this.IsActivityStreamsFlag() {
@@ -2959,6 +2991,13 @@ func (this *ActivityStreamsClosedPropertyIterator) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetLitePubEmojiReact sets the value of this property. Calling
+// IsLitePubEmojiReact afterwards returns true.
+func (this *ActivityStreamsClosedPropertyIterator) SetLitePubEmojiReact(v vocab.LitePubEmojiReact) {
+	this.clear()
+	this.litepubEmojiReactMember = v
+}
+
 // SetSchemaPropertyValue sets the value of this property. Calling
 // IsSchemaPropertyValue afterwards returns true.
 func (this *ActivityStreamsClosedPropertyIterator) SetSchemaPropertyValue(v vocab.SchemaPropertyValue) {
@@ -3080,6 +3119,10 @@ func (this *ActivityStreamsClosedPropertyIterator) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.TootEmoji); ok {
 		this.SetTootEmoji(v)
+		return nil
+	}
+	if v, ok := t.(vocab.LitePubEmojiReact); ok {
+		this.SetLitePubEmojiReact(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsEvent); ok {
@@ -3322,6 +3365,7 @@ func (this *ActivityStreamsClosedPropertyIterator) clear() {
 	this.activitystreamsDislikeMember = nil
 	this.activitystreamsDocumentMember = nil
 	this.tootEmojiMember = nil
+	this.litepubEmojiReactMember = nil
 	this.activitystreamsEventMember = nil
 	this.activitystreamsFlagMember = nil
 	this.activitystreamsFollowMember = nil
@@ -3429,6 +3473,8 @@ func (this ActivityStreamsClosedPropertyIterator) serialize() (interface{}, erro
 		return this.GetActivityStreamsDocument().Serialize()
 	} else if this.IsTootEmoji() {
 		return this.GetTootEmoji().Serialize()
+	} else if this.IsLitePubEmojiReact() {
+		return this.GetLitePubEmojiReact().Serialize()
 	} else if this.IsActivityStreamsEvent() {
 		return this.GetActivityStreamsEvent().Serialize()
 	} else if this.IsActivityStreamsFlag() {
@@ -4350,6 +4396,17 @@ func (this *ActivityStreamsClosedProperty) AppendIRI(v *url.URL) {
 		iri:    v,
 		myIdx:  this.Len(),
 		parent: this,
+	})
+}
+
+// AppendLitePubEmojiReact appends a EmojiReact value to the back of a list of the
+// property "closed". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsClosedProperty) AppendLitePubEmojiReact(v vocab.LitePubEmojiReact) {
+	this.properties = append(this.properties, &ActivityStreamsClosedPropertyIterator{
+		alias:                   this.alias,
+		litepubEmojiReactMember: v,
+		myIdx:                   this.Len(),
+		parent:                  this,
 	})
 }
 
@@ -5623,6 +5680,23 @@ func (this *ActivityStreamsClosedProperty) InsertIRI(idx int, v *url.URL) {
 	}
 }
 
+// InsertLitePubEmojiReact inserts a EmojiReact value at the specified index for a
+// property "closed". Existing elements at that index and higher are shifted
+// back once. Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) InsertLitePubEmojiReact(idx int, v vocab.LitePubEmojiReact) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                   this.alias,
+		litepubEmojiReactMember: v,
+		myIdx:                   idx,
+		parent:                  this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // InsertSchemaPropertyValue inserts a PropertyValue value at the specified index
 // for a property "closed". Existing elements at that index and higher are
 // shifted back once. Invalidates all iterators.
@@ -5889,194 +5963,198 @@ func (this ActivityStreamsClosedProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetTootEmoji()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 25 {
+			lhs := this.properties[i].GetLitePubEmojiReact()
+			rhs := this.properties[j].GetLitePubEmojiReact()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 26 {
 			lhs := this.properties[i].GetActivityStreamsEvent()
 			rhs := this.properties[j].GetActivityStreamsEvent()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 26 {
+		} else if idx1 == 27 {
 			lhs := this.properties[i].GetActivityStreamsFlag()
 			rhs := this.properties[j].GetActivityStreamsFlag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 27 {
+		} else if idx1 == 28 {
 			lhs := this.properties[i].GetActivityStreamsFollow()
 			rhs := this.properties[j].GetActivityStreamsFollow()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 28 {
+		} else if idx1 == 29 {
 			lhs := this.properties[i].GetActivityStreamsGroup()
 			rhs := this.properties[j].GetActivityStreamsGroup()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 29 {
+		} else if idx1 == 30 {
 			lhs := this.properties[i].GetTootHashtag()
 			rhs := this.properties[j].GetTootHashtag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 30 {
+		} else if idx1 == 31 {
 			lhs := this.properties[i].GetTootIdentityProof()
 			rhs := this.properties[j].GetTootIdentityProof()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 31 {
+		} else if idx1 == 32 {
 			lhs := this.properties[i].GetActivityStreamsIgnore()
 			rhs := this.properties[j].GetActivityStreamsIgnore()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 32 {
+		} else if idx1 == 33 {
 			lhs := this.properties[i].GetActivityStreamsImage()
 			rhs := this.properties[j].GetActivityStreamsImage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 33 {
+		} else if idx1 == 34 {
 			lhs := this.properties[i].GetActivityStreamsIntransitiveActivity()
 			rhs := this.properties[j].GetActivityStreamsIntransitiveActivity()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 34 {
+		} else if idx1 == 35 {
 			lhs := this.properties[i].GetActivityStreamsInvite()
 			rhs := this.properties[j].GetActivityStreamsInvite()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 35 {
+		} else if idx1 == 36 {
 			lhs := this.properties[i].GetActivityStreamsJoin()
 			rhs := this.properties[j].GetActivityStreamsJoin()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 36 {
+		} else if idx1 == 37 {
 			lhs := this.properties[i].GetActivityStreamsLeave()
 			rhs := this.properties[j].GetActivityStreamsLeave()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 37 {
+		} else if idx1 == 38 {
 			lhs := this.properties[i].GetFunkwhaleLibrary()
 			rhs := this.properties[j].GetFunkwhaleLibrary()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 38 {
+		} else if idx1 == 39 {
 			lhs := this.properties[i].GetActivityStreamsLike()
 			rhs := this.properties[j].GetActivityStreamsLike()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 39 {
+		} else if idx1 == 40 {
 			lhs := this.properties[i].GetGoToSocialLikeApproval()
 			rhs := this.properties[j].GetGoToSocialLikeApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 40 {
+		} else if idx1 == 41 {
 			lhs := this.properties[i].GetGoToSocialLikeAuthorization()
 			rhs := this.properties[j].GetGoToSocialLikeAuthorization()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 41 {
+		} else if idx1 == 42 {
 			lhs := this.properties[i].GetGoToSocialLikeRequest()
 			rhs := this.properties[j].GetGoToSocialLikeRequest()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 42 {
+		} else if idx1 == 43 {
 			lhs := this.properties[i].GetActivityStreamsListen()
 			rhs := this.properties[j].GetActivityStreamsListen()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 43 {
+		} else if idx1 == 44 {
 			lhs := this.properties[i].GetActivityStreamsMention()
 			rhs := this.properties[j].GetActivityStreamsMention()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 44 {
+		} else if idx1 == 45 {
 			lhs := this.properties[i].GetActivityStreamsMove()
 			rhs := this.properties[j].GetActivityStreamsMove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 45 {
+		} else if idx1 == 46 {
 			lhs := this.properties[i].GetActivityStreamsNote()
 			rhs := this.properties[j].GetActivityStreamsNote()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 46 {
+		} else if idx1 == 47 {
 			lhs := this.properties[i].GetActivityStreamsOffer()
 			rhs := this.properties[j].GetActivityStreamsOffer()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 47 {
+		} else if idx1 == 48 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollection()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollection()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 48 {
+		} else if idx1 == 49 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollectionPage()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollectionPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 49 {
+		} else if idx1 == 50 {
 			lhs := this.properties[i].GetActivityStreamsOrganization()
 			rhs := this.properties[j].GetActivityStreamsOrganization()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 50 {
+		} else if idx1 == 51 {
 			lhs := this.properties[i].GetActivityStreamsPage()
 			rhs := this.properties[j].GetActivityStreamsPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 51 {
+		} else if idx1 == 52 {
 			lhs := this.properties[i].GetActivityStreamsPerson()
 			rhs := this.properties[j].GetActivityStreamsPerson()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 52 {
+		} else if idx1 == 53 {
 			lhs := this.properties[i].GetActivityStreamsPlace()
 			rhs := this.properties[j].GetActivityStreamsPlace()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 53 {
+		} else if idx1 == 54 {
 			lhs := this.properties[i].GetActivityStreamsProfile()
 			rhs := this.properties[j].GetActivityStreamsProfile()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 54 {
+		} else if idx1 == 55 {
 			lhs := this.properties[i].GetSchemaPropertyValue()
 			rhs := this.properties[j].GetSchemaPropertyValue()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 55 {
+		} else if idx1 == 56 {
 			lhs := this.properties[i].GetActivityStreamsQuestion()
 			rhs := this.properties[j].GetActivityStreamsQuestion()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 56 {
+		} else if idx1 == 57 {
 			lhs := this.properties[i].GetActivityStreamsRead()
 			rhs := this.properties[j].GetActivityStreamsRead()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 57 {
+		} else if idx1 == 58 {
 			lhs := this.properties[i].GetActivityStreamsReject()
 			rhs := this.properties[j].GetActivityStreamsReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 58 {
+		} else if idx1 == 59 {
 			lhs := this.properties[i].GetActivityStreamsRelationship()
 			rhs := this.properties[j].GetActivityStreamsRelationship()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 59 {
+		} else if idx1 == 60 {
 			lhs := this.properties[i].GetActivityStreamsRemove()
 			rhs := this.properties[j].GetActivityStreamsRemove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 60 {
+		} else if idx1 == 61 {
 			lhs := this.properties[i].GetGoToSocialReplyApproval()
 			rhs := this.properties[j].GetGoToSocialReplyApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 61 {
+		} else if idx1 == 62 {
 			lhs := this.properties[i].GetGoToSocialReplyAuthorization()
 			rhs := this.properties[j].GetGoToSocialReplyAuthorization()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 62 {
+		} else if idx1 == 63 {
 			lhs := this.properties[i].GetGoToSocialReplyRequest()
 			rhs := this.properties[j].GetGoToSocialReplyRequest()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 63 {
+		} else if idx1 == 64 {
 			lhs := this.properties[i].GetActivityStreamsService()
 			rhs := this.properties[j].GetActivityStreamsService()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 64 {
+		} else if idx1 == 65 {
 			lhs := this.properties[i].GetActivityStreamsTentativeAccept()
 			rhs := this.properties[j].GetActivityStreamsTentativeAccept()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 65 {
+		} else if idx1 == 66 {
 			lhs := this.properties[i].GetActivityStreamsTentativeReject()
 			rhs := this.properties[j].GetActivityStreamsTentativeReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 66 {
+		} else if idx1 == 67 {
 			lhs := this.properties[i].GetActivityStreamsTombstone()
 			rhs := this.properties[j].GetActivityStreamsTombstone()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 67 {
+		} else if idx1 == 68 {
 			lhs := this.properties[i].GetFunkwhaleTrack()
 			rhs := this.properties[j].GetFunkwhaleTrack()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 68 {
+		} else if idx1 == 69 {
 			lhs := this.properties[i].GetActivityStreamsTravel()
 			rhs := this.properties[j].GetActivityStreamsTravel()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 69 {
+		} else if idx1 == 70 {
 			lhs := this.properties[i].GetActivityStreamsUndo()
 			rhs := this.properties[j].GetActivityStreamsUndo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 70 {
+		} else if idx1 == 71 {
 			lhs := this.properties[i].GetActivityStreamsUpdate()
 			rhs := this.properties[j].GetActivityStreamsUpdate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 71 {
+		} else if idx1 == 72 {
 			lhs := this.properties[i].GetActivityStreamsVideo()
 			rhs := this.properties[j].GetActivityStreamsVideo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 72 {
+		} else if idx1 == 73 {
 			lhs := this.properties[i].GetActivityStreamsView()
 			rhs := this.properties[j].GetActivityStreamsView()
 			return lhs.LessThan(rhs)
@@ -7067,6 +7145,20 @@ func (this *ActivityStreamsClosedProperty) PrependIRI(v *url.URL) {
 		iri:    v,
 		myIdx:  0,
 		parent: this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependLitePubEmojiReact prepends a EmojiReact value to the front of a list of
+// the property "closed". Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) PrependLitePubEmojiReact(v vocab.LitePubEmojiReact) {
+	this.properties = append([]*ActivityStreamsClosedPropertyIterator{{
+		alias:                   this.alias,
+		litepubEmojiReactMember: v,
+		myIdx:                   0,
+		parent:                  this,
 	}}, this.properties...)
 	for i := 1; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -8091,6 +8183,19 @@ func (this *ActivityStreamsClosedProperty) SetIRI(idx int, v *url.URL) {
 		iri:    v,
 		myIdx:  idx,
 		parent: this,
+	}
+}
+
+// SetLitePubEmojiReact sets a EmojiReact value to be at the specified index for
+// the property "closed". Panics if the index is out of bounds. Invalidates
+// all iterators.
+func (this *ActivityStreamsClosedProperty) SetLitePubEmojiReact(idx int, v vocab.LitePubEmojiReact) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                   this.alias,
+		litepubEmojiReactMember: v,
+		myIdx:                   idx,
+		parent:                  this,
 	}
 }
 

@@ -244,6 +244,10 @@ func (c *Converter) ASRepresentationToAccount(
 	acct.PublicKey = pkey
 	acct.PublicKeyURI = pkeyURL.String()
 
+	// Web visibility for statuses.
+	acct.HidesToPublicFromUnauthedWeb = util.Ptr(ap.GetHidesToPublicFromUnauthedWeb(accountable))
+	acct.HidesCcPublicFromUnauthedWeb = util.Ptr(ap.GetHidesCcPublicFromUnauthedWeb(accountable))
+
 	return &acct, nil
 }
 

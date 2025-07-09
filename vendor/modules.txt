@@ -1,4 +1,4 @@
-# code.superseriousbusiness.org/activity v1.15.1
+# code.superseriousbusiness.org/activity v1.16.0
 ## explicit; go 1.23
 code.superseriousbusiness.org/activity/pub
 code.superseriousbusiness.org/activity/streams
@@ -146,6 +146,8 @@ code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canannou
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget
@@ -166,6 +168,7 @@ code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_replyauthori
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_replyrequest
 code.superseriousbusiness.org/activity/streams/impl/jsonld/property_id
 code.superseriousbusiness.org/activity/streams/impl/jsonld/property_type
+code.superseriousbusiness.org/activity/streams/impl/litepub/type_emojireact
 code.superseriousbusiness.org/activity/streams/impl/schema/property_value
 code.superseriousbusiness.org/activity/streams/impl/schema/type_propertyvalue
 code.superseriousbusiness.org/activity/streams/impl/toot/property_blurhash
