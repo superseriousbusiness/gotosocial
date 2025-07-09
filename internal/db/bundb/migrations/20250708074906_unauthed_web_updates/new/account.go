@@ -69,7 +69,7 @@ type Account struct {
 
 	// Added in this migration:
 	HidesToPublicFromUnauthedWeb *bool `bun:",nullzero,notnull,default:false"`
-	HidesCcPublicFromUnauthedWeb *bool `bun:",nullzero,notnull,default:false"`
+	HidesCcPublicFromUnauthedWeb *bool `bun:",nullzero,notnull,default:true"`
 }
 
 type Field struct {
