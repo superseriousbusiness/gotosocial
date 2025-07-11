@@ -683,6 +683,12 @@ type WithObject interface {
 	SetActivityStreamsObject(vocab.ActivityStreamsObjectProperty)
 }
 
+// WithInstrument represents an activity with ActivityStreamsInstrumentProperty
+type WithInstrument interface {
+	GetActivityStreamsInstrument() vocab.ActivityStreamsInstrumentProperty
+	SetActivityStreamsInstrument(vocab.ActivityStreamsInstrumentProperty)
+}
+
 // WithTarget represents an activity with ActivityStreamsTargetProperty
 type WithTarget interface {
 	GetActivityStreamsTarget() vocab.ActivityStreamsTargetProperty
