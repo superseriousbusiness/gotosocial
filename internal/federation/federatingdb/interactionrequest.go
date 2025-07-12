@@ -26,19 +26,40 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
-func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeRequest) error {
-	log.DebugKV(ctx, "like", serialize{likeReq})
+// firstPassIntReq represents a partially-parsed
+// interaction request returned from the util
+// function parseInteractionReq.
+type firstPassIntReq struct {
+	requesting *gtsmodel.Account
+	receiving  *gtsmodel.Account
+	object     *gtsmodel.Status
+	instrument vocab.Type
+}
 
+// parseIntReq does some first-pass parsing
+// of the given InteractionRequestable (LikeRequest,
+// ReplyRequest, AnnounceRequest), checking stuff like:
+//
+//   - interaction request has a single object
+//   - interaction request object is a status
+//   - object status belongs to receiving account
+//   - interaction request has a single instrument
+//
+// It returns a firstPassIntReq struct, or an error
+// if something goes wrong.
+func (f *DB) parseIntReq(ctx context.Context, intReq ap.InteractionRequestable) (*firstPassIntReq, error) {
 	// Mark activity as handled.
-	f.storeActivityID(likeReq)
+	f.storeActivityID(intReq)
 
 	// Extract relevant values from passed ctx.
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
-		return nil // Already processed.
+		// Already processed.
+		return nil, nil
 	}
 
 	requesting := activityContext.requestingAcct
@@ -47,22 +68,22 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 	if requesting.IsMoving() {
 		// A Moving account
 		// can't do this.
-		return nil
+		return nil, nil
 	}
 
 	if receiving.IsMoving() {
 		// Moving accounts can't
 		// do anything with interaction
 		// requests, so ignore it.
-		return nil
+		return nil, nil
 	}
 
 	// Make sure we have a single
 	// object of the interaction request.
-	objectIRIs := ap.GetObjectIRIs(likeReq)
+	objectIRIs := ap.GetObjectIRIs(intReq)
 	if l := len(objectIRIs); l != 1 {
 		err := gtserror.Newf("invalid object len %d, wanted 1", l)
-		return gtserror.WrapWithCode(http.StatusBadRequest, err)
+		return nil, gtserror.WrapWithCode(http.StatusBadRequest, err)
 	}
 	statusIRI := objectIRIs[0]
 	statusIRIStr := statusIRI.String()
@@ -70,50 +91,61 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 	// Object should be a status.
 	status, err := f.state.DB.GetStatusByURI(ctx, statusIRIStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting like object status %s: %w", statusIRIStr, err)
-		return err
+		err := gtserror.Newf("db error getting object status %s: %w", statusIRIStr, err)
+		return nil, err
 	}
 
-	if status == nil {
-		// Status doesn't exist
-		// (anymore); do nothing.
-		return nil
-	}
-
-	// Ensure like req received by correct account.
+	// Ensure int req received by correct account.
 	if status.AccountID != receiving.ID {
 		err := gtserror.NewfWithCode(
 			http.StatusForbidden,
-			"receiver %s is not owner of like-requested status",
+			"receiver %s is not owner of interaction-requested status",
 			receiving.URI,
 		)
+		return nil, err
+	}
+
+	// We should have one instrument.
+	instruments := ap.ExtractInstruments(intReq)
+	if l := len(instruments); l != 1 {
+		err := gtserror.Newf("invalid instrument len %d, wanted 1", l)
+		return nil, gtserror.WrapWithCode(http.StatusBadRequest, err)
+	}
+
+	// Instrument should be a
+	// type and not just an IRI.
+	instrument := instruments[0].GetType()
+	if instrument == nil {
+		err := gtserror.New("instrument was not a type")
+		return nil, gtserror.WrapWithCode(http.StatusBadRequest, err)
+	}
+
+	return &firstPassIntReq{
+		requesting: requesting,
+		receiving:  receiving,
+		object:     status,
+		instrument: instrument,
+	}, nil
+}
+
+func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeRequest) error {
+	log.DebugKV(ctx, "like", serialize{likeReq})
+
+	// Parse out basic interaction request stuff.
+	fpir, err := f.parseIntReq(ctx, likeReq)
+	if err != nil {
 		return err
 	}
 
-	// We should have one instrument,
-	// and it should be a fave.
-	instrs := ap.ExtractInstruments(likeReq)
-	if l := len(instrs); l != 1 {
-		err := gtserror.Newf("invalid instrument len %d, wanted 1", l)
+	// Parse instrument vocab.Type to Like.
+	if fpir.instrument.GetTypeName() != ap.ActivityLike {
+		err := gtserror.New("instrument of LikeRequest was not a Like")
 		return gtserror.WrapWithCode(http.StatusBadRequest, err)
 	}
 
-	// Ensure type and not just IRI.
-	instrType := instrs[0].GetType()
-	if instrType == nil {
-		err := gtserror.New("instrument was not a type")
-		return gtserror.WrapWithCode(http.StatusBadRequest, err)
-	}
-
-	// Make sure it's a Like.
-	if instrType.GetTypeName() != ap.ActivityLike {
-		err := gtserror.New("instrument type was not Like")
-		return gtserror.WrapWithCode(http.StatusBadRequest, err)
-	}
-
-	likeable, ok := instrType.(vocab.ActivityStreamsLike)
+	likeable, ok := fpir.instrument.(vocab.ActivityStreamsLike)
 	if !ok {
-		err := gtserror.New("instrument was not a Like")
+		err := gtserror.New("could not parse instrument of LikeRequest to Like")
 		return gtserror.WrapWithCode(http.StatusBadRequest, err)
 	}
 
@@ -125,18 +157,22 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 	}
 
 	// Ensure fave enacted by correct account.
-	if fave.AccountID != requesting.ID {
+	if fave.AccountID != fpir.requesting.ID {
 		return gtserror.NewfWithCode(http.StatusForbidden, "requester %s is not expected actor %s",
-			requesting.URI, fave.Account.URI)
+			fpir.requesting.URI, fave.Account.URI)
 	}
 
 	// Ensure fave received by correct account.
-	if fave.TargetAccountID != receiving.ID {
-		return gtserror.NewfWithCode(http.StatusForbidden, "receiver %s is not expected object %s",
-			receiving.URI, fave.TargetAccount.URI)
+	if fave.TargetAccountID != fpir.receiving.ID {
+		err := gtserror.NewfWithCode(
+			http.StatusForbidden,
+			"receiver %s is not expected %s",
+			fpir.receiving.URI, fave.TargetAccount.URI,
+		)
+		return err
 	}
 
-	// Make sure Like target is the same as the 
+	
 
 	return nil
 }

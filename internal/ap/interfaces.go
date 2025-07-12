@@ -392,6 +392,13 @@ type ReplyToable interface {
 	WithInReplyTo
 }
 
+type InteractionRequestable interface {
+	vocab.Type
+
+	WithInstrument
+	WithObject
+}
+
 // CollectionIterator represents the minimum interface for interacting with a
 // wrapped Collection or OrderedCollection in order to access next / prev items.
 type CollectionIterator interface {
