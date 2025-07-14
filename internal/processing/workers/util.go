@@ -561,7 +561,7 @@ func (u *utils) requestFave(
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
 
-	// Notify *local* account of pending announce.
+	// Notify *local* account of pending fave.
 	if err := u.surface.notifyPendingFave(ctx, fave); err != nil {
 		return gtserror.Newf("error notifying pending fave: %w", err)
 	}
