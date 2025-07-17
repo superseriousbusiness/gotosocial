@@ -789,6 +789,62 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-png-alphachannel-thumbnail.jpeg")
 }
 
+func (suite *ManagerTestSuite) TestAvifProcess() {
+	ctx := suite.T().Context()
+
+	data := func(_ context.Context) (io.ReadCloser, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/gotosocial.avif")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(processing.ID(), attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Width: 1038, Height: 980, Size: 1017240, Aspect: 1.0591837,
+	}, attachment.FileMeta.Original)
+	suite.EqualValues(gtsmodel.Small{
+		Width: 512, Height: 483, Size: 247296, Aspect: 1.0591837,
+	}, attachment.FileMeta.Small)
+	suite.Equal("image/avif", attachment.File.ContentType)
+	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
+	suite.Equal(3815, attachment.File.FileSize)
+	suite.Equal(4198, attachment.Thumbnail.FileSize)
+	suite.Equal("LNQJQ7%M?w-;-pj[bbj[?^ofDiWB", attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/gotosocial-processed.avif")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/gotosocial-thumbnail.webp")
+}
+
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	ctx := suite.T().Context()
 
