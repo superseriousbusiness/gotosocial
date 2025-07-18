@@ -546,8 +546,8 @@ func (s *stmt) setupBindings(args []driver.NamedValue) (err error) {
 				err = s.Stmt.BindTime(id, a, s.tmWrite)
 			case util.JSON:
 				err = s.Stmt.BindJSON(id, a.Value)
-			case util.PointerUnwrap:
-				err = s.Stmt.BindPointer(id, util.UnwrapPointer(a))
+			case util.Pointer:
+				err = s.Stmt.BindPointer(id, a.Value)
 			case nil:
 				err = s.Stmt.BindNull(id)
 			default:
@@ -565,7 +565,7 @@ func (s *stmt) CheckNamedValue(arg *driver.NamedValue) error {
 	switch arg.Value.(type) {
 	case bool, int, int64, float64, string, []byte,
 		time.Time, sqlite3.ZeroBlob,
-		util.JSON, util.PointerUnwrap,
+		util.JSON, util.Pointer,
 		nil:
 		return nil
 	default:

@@ -631,7 +631,6 @@ func (s *Stmt) ColumnValue(col int) Value {
 		stk_t(s.handle), stk_t(col)))
 	return Value{
 		c:      s.c,
-		unprot: true,
 		handle: ptr,
 	}
 }

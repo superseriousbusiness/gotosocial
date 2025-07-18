@@ -2,7 +2,6 @@ package memdb
 
 import (
 	"io"
-	"runtime"
 	"sync"
 	"time"
 
@@ -85,9 +84,10 @@ type memDB struct {
 	// +checklocks:memoryMtx
 	refs int32
 
-	shared   int32 // +checklocks:lockMtx
-	pending  bool  // +checklocks:lockMtx
-	reserved bool  // +checklocks:lockMtx
+	shared   int32      // +checklocks:lockMtx
+	pending  bool       // +checklocks:lockMtx
+	reserved bool       // +checklocks:lockMtx
+	waiter   *sync.Cond // +checklocks:lockMtx
 
 	lockMtx sync.Mutex
 	dataMtx sync.RWMutex
@@ -195,8 +195,6 @@ func (m *memFile) Size() (int64, error) {
 	return m.size, nil
 }
 
-const spinWait = 25 * time.Microsecond
-
 func (m *memFile) Lock(lock vfs.LockLevel) error {
 	if m.lock >= lock {
 		return nil
@@ -228,13 +226,18 @@ func (m *memFile) Lock(lock vfs.LockLevel) error {
 			m.pending = true
 		}
 
-		for before := time.Now(); m.shared > 1; {
-			if time.Since(before) > spinWait {
-				return sqlite3.BUSY
+		if m.shared > 1 {
+			before := time.Now()
+			if m.waiter == nil {
+				m.waiter = sync.NewCond(&m.lockMtx)
 			}
-			m.lockMtx.Unlock()
-			runtime.Gosched()
-			m.lockMtx.Lock()
+			defer time.AfterFunc(time.Millisecond, m.waiter.Broadcast).Stop()
+			for m.shared > 1 {
+				if time.Since(before) > time.Millisecond {
+					return sqlite3.BUSY
+				}
+				m.waiter.Wait()
+			}
 		}
 	}
 
@@ -257,7 +260,9 @@ func (m *memFile) Unlock(lock vfs.LockLevel) error {
 		m.pending = false
 	}
 	if lock < vfs.LOCK_SHARED {
-		m.shared--
+		if m.shared--; m.pending && m.shared <= 1 && m.waiter != nil {
+			m.waiter.Broadcast()
+		}
 	}
 	m.lock = lock
 	return nil

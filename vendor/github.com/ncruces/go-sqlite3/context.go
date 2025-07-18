@@ -227,6 +227,14 @@ func (ctx Context) ResultError(err error) {
 	}
 }
 
+// ResultSubtype sets the subtype of the result of the function.
+//
+// https://sqlite.org/c3ref/result_subtype.html
+func (ctx Context) ResultSubtype(t uint) {
+	ctx.c.call("sqlite3_result_subtype",
+		stk_t(ctx.handle), stk_t(uint32(t)))
+}
+
 // VTabNoChange may return true if a column is being fetched as part
 // of an update during which the column value will not change.
 //

@@ -15,15 +15,6 @@ import (
 type Value struct {
 	c      *Conn
 	handle ptr_t
-	unprot bool
-	copied bool
-}
-
-func (v Value) protected() stk_t {
-	if v.unprot {
-		panic(util.ValueErr)
-	}
-	return stk_t(v.handle)
 }
 
 // Dup makes a copy of the SQL value and returns a pointer to that copy.
@@ -33,7 +24,6 @@ func (v Value) Dup() *Value {
 	ptr := ptr_t(v.c.call("sqlite3_value_dup", stk_t(v.handle)))
 	return &Value{
 		c:      v.c,
-		copied: true,
 		handle: ptr,
 	}
 }
@@ -42,9 +32,6 @@ func (v Value) Dup() *Value {
 //
 // https://sqlite.org/c3ref/value_dup.html
 func (dup *Value) Close() error {
-	if !dup.copied {
-		panic(util.ValueErr)
-	}
 	dup.c.call("sqlite3_value_free", stk_t(dup.handle))
 	dup.handle = 0
 	return nil
@@ -54,14 +41,21 @@ func (dup *Value) Close() error {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Type() Datatype {
-	return Datatype(v.c.call("sqlite3_value_type", v.protected()))
+	return Datatype(v.c.call("sqlite3_value_type", stk_t(v.handle)))
 }
 
-// Type returns the numeric datatype of the value.
+// Subtype returns the subtype of the value.
+//
+// https://sqlite.org/c3ref/value_subtype.html
+func (v Value) Subtype() uint {
+	return uint(uint32(v.c.call("sqlite3_value_subtype", stk_t(v.handle))))
+}
+
+// NumericType returns the numeric datatype of the value.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) NumericType() Datatype {
-	return Datatype(v.c.call("sqlite3_value_numeric_type", v.protected()))
+	return Datatype(v.c.call("sqlite3_value_numeric_type", stk_t(v.handle)))
 }
 
 // Bool returns the value as a bool.
@@ -85,14 +79,14 @@ func (v Value) Int() int {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Int64() int64 {
-	return int64(v.c.call("sqlite3_value_int64", v.protected()))
+	return int64(v.c.call("sqlite3_value_int64", stk_t(v.handle)))
 }
 
 // Float returns the value as a float64.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Float() float64 {
-	f := uint64(v.c.call("sqlite3_value_double", v.protected()))
+	f := uint64(v.c.call("sqlite3_value_double", stk_t(v.handle)))
 	return math.Float64frombits(f)
 }
 
@@ -138,7 +132,7 @@ func (v Value) Blob(buf []byte) []byte {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawText() []byte {
-	ptr := ptr_t(v.c.call("sqlite3_value_text", v.protected()))
+	ptr := ptr_t(v.c.call("sqlite3_value_text", stk_t(v.handle)))
 	return v.rawBytes(ptr, 1)
 }
 
@@ -148,7 +142,7 @@ func (v Value) RawText() []byte {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawBlob() []byte {
-	ptr := ptr_t(v.c.call("sqlite3_value_blob", v.protected()))
+	ptr := ptr_t(v.c.call("sqlite3_value_blob", stk_t(v.handle)))
 	return v.rawBytes(ptr, 0)
 }
 
@@ -157,14 +151,14 @@ func (v Value) rawBytes(ptr ptr_t, nul int32) []byte {
 		return nil
 	}
 
-	n := int32(v.c.call("sqlite3_value_bytes", v.protected()))
+	n := int32(v.c.call("sqlite3_value_bytes", stk_t(v.handle)))
 	return util.View(v.c.mod, ptr, int64(n+nul))[:n]
 }
 
 // Pointer gets the pointer associated with this value,
 // or nil if it has no associated pointer.
 func (v Value) Pointer() any {
-	ptr := ptr_t(v.c.call("sqlite3_value_pointer_go", v.protected()))
+	ptr := ptr_t(v.c.call("sqlite3_value_pointer_go", stk_t(v.handle)))
 	return util.GetHandle(v.c.ctx, ptr)
 }
 
@@ -194,7 +188,7 @@ func (v Value) JSON(ptr any) error {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) NoChange() bool {
-	b := int32(v.c.call("sqlite3_value_nochange", v.protected()))
+	b := int32(v.c.call("sqlite3_value_nochange", stk_t(v.handle)))
 	return b != 0
 }
 
@@ -202,7 +196,7 @@ func (v Value) NoChange() bool {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) FromBind() bool {
-	b := int32(v.c.call("sqlite3_value_frombind", v.protected()))
+	b := int32(v.c.call("sqlite3_value_frombind", stk_t(v.handle)))
 	return b != 0
 }
 

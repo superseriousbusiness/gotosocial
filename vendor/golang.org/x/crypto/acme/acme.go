@@ -35,6 +35,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -589,8 +590,9 @@ func (c *Client) TLSSNI02ChallengeCert(token string, opt ...CertOption) (tls.Cer
 
 // TLSALPN01ChallengeCert creates a certificate for TLS-ALPN-01 challenge response.
 // Servers can present the certificate to validate the challenge and prove control
-// over a domain name. For more details on TLS-ALPN-01 see
-// https://tools.ietf.org/html/draft-shoemaker-acme-tls-alpn-00#section-3
+// over an identifier (either a DNS name or the textual form of an IPv4 or IPv6
+// address). For more details on TLS-ALPN-01 see
+// https://www.rfc-editor.org/rfc/rfc8737 and https://www.rfc-editor.org/rfc/rfc8738
 //
 // The token argument is a Challenge.Token value.
 // If a WithKey option is provided, its private part signs the returned cert,
@@ -598,9 +600,13 @@ func (c *Client) TLSSNI02ChallengeCert(token string, opt ...CertOption) (tls.Cer
 // If no WithKey option is provided, a new ECDSA key is generated using P-256 curve.
 //
 // The returned certificate is valid for the next 24 hours and must be presented only when
-// the server name in the TLS ClientHello matches the domain, and the special acme-tls/1 ALPN protocol
+// the server name in the TLS ClientHello matches the identifier, and the special acme-tls/1 ALPN protocol
 // has been specified.
-func (c *Client) TLSALPN01ChallengeCert(token, domain string, opt ...CertOption) (cert tls.Certificate, err error) {
+//
+// Validation requests for IP address identifiers will use the reverse DNS form in the server name
+// in the TLS ClientHello since the SNI extension is not supported for IP addresses.
+// See RFC 8738 Section 6 for more information.
+func (c *Client) TLSALPN01ChallengeCert(token, identifier string, opt ...CertOption) (cert tls.Certificate, err error) {
 	ka, err := keyAuth(c.Key.Public(), token)
 	if err != nil {
 		return tls.Certificate{}, err
@@ -630,7 +636,7 @@ func (c *Client) TLSALPN01ChallengeCert(token, domain string, opt ...CertOption)
 	}
 	tmpl.ExtraExtensions = append(tmpl.ExtraExtensions, acmeExtension)
 	newOpt = append(newOpt, WithTemplate(tmpl))
-	return tlsChallengeCert([]string{domain}, newOpt)
+	return tlsChallengeCert(identifier, newOpt)
 }
 
 // popNonce returns a nonce value previously stored with c.addNonce
@@ -749,10 +755,14 @@ func defaultTLSChallengeCertTemplate() *x509.Certificate {
 }
 
 // tlsChallengeCert creates a temporary certificate for TLS-ALPN challenges
-// with the given SANs and auto-generated public/private key pair.
-// The Subject Common Name is set to the first SAN to aid debugging.
+// for the given identifier, using an auto-generated public/private key pair.
+//
+// If the provided identifier is a domain name, it will be used as a DNS type SAN and for the
+// subject common name. If the provided identifier is an IP address it will be used as an IP type
+// SAN.
+//
 // To create a cert with a custom key pair, specify WithKey option.
-func tlsChallengeCert(san []string, opt []CertOption) (tls.Certificate, error) {
+func tlsChallengeCert(identifier string, opt []CertOption) (tls.Certificate, error) {
 	var key crypto.Signer
 	tmpl := defaultTLSChallengeCertTemplate()
 	for _, o := range opt {
@@ -776,9 +786,12 @@ func tlsChallengeCert(san []string, opt []CertOption) (tls.Certificate, error) {
 			return tls.Certificate{}, err
 		}
 	}
-	tmpl.DNSNames = san
-	if len(san) > 0 {
-		tmpl.Subject.CommonName = san[0]
+
+	if ip := net.ParseIP(identifier); ip != nil {
+		tmpl.IPAddresses = []net.IP{ip}
+	} else {
+		tmpl.DNSNames = []string{identifier}
+		tmpl.Subject.CommonName = identifier
 	}
 
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, key.Public(), key)

@@ -185,12 +185,12 @@ const (
 type FunctionFlag uint32
 
 const (
-	DETERMINISTIC FunctionFlag = 0x000000800
-	DIRECTONLY    FunctionFlag = 0x000080000
-	INNOCUOUS     FunctionFlag = 0x000200000
-	SELFORDER1    FunctionFlag = 0x002000000
-	// SUBTYPE        FunctionFlag = 0x000100000
-	// RESULT_SUBTYPE FunctionFlag = 0x001000000
+	DETERMINISTIC  FunctionFlag = 0x000000800
+	DIRECTONLY     FunctionFlag = 0x000080000
+	SUBTYPE        FunctionFlag = 0x000100000
+	INNOCUOUS      FunctionFlag = 0x000200000
+	RESULT_SUBTYPE FunctionFlag = 0x001000000
+	SELFORDER1     FunctionFlag = 0x002000000
 )
 
 // StmtStatus name counter values associated with the [Stmt.Status] method.
