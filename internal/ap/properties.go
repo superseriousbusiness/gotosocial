@@ -226,6 +226,18 @@ func AppendObjectIRIs(with WithObject, object ...*url.URL) {
 	}, object...)
 }
 
+// AppendInstrumentIRIs appends the given IRIs to the Instrument property of 'with'.
+func AppendInstrumentIRIs(with WithInstrument, instrument ...*url.URL) {
+	appendIRIs(func() Property[vocab.ActivityStreamsInstrumentPropertyIterator] {
+		instrumentProp := with.GetActivityStreamsInstrument()
+		if instrumentProp == nil {
+			instrumentProp = streams.NewActivityStreamsInstrumentProperty()
+			with.SetActivityStreamsInstrument(instrumentProp)
+		}
+		return instrumentProp
+	}, instrument...)
+}
+
 // GetTargetIRIs returns the IRIs contained in the Target property of 'with'.
 func GetTargetIRIs(with WithTarget) []*url.URL {
 	targetProp := with.GetActivityStreamsTarget()

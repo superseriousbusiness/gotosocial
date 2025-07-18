@@ -67,12 +67,12 @@ func (p *Processor) Accept(
 	// Mark the request as accepted
 	// and generate a URI for it.
 	req.AcceptedAt = time.Now()
-	req.URI = uris.GenerateURIForAccept(acct.Username, req.ID)
+	req.ResponseURI = uris.GenerateURIForAccept(acct.Username, req.ID)
 	if err := p.state.DB.UpdateInteractionRequest(
 		ctx,
 		req,
 		"accepted_at",
-		"uri",
+		"response_uri",
 	); err != nil {
 		err := gtserror.Newf("db error updating interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -132,7 +132,7 @@ func (p *Processor) acceptLike(
 	// Update the Like.
 	req.Like.PendingApproval = util.Ptr(false)
 	req.Like.PreApproved = false
-	req.Like.ApprovedByURI = req.URI
+	req.Like.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatusFave(
 		ctx,
 		req.Like,
@@ -173,7 +173,7 @@ func (p *Processor) acceptReply(
 	// Update the Reply.
 	req.Reply.PendingApproval = util.Ptr(false)
 	req.Reply.PreApproved = false
-	req.Reply.ApprovedByURI = req.URI
+	req.Reply.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Reply,
@@ -214,7 +214,7 @@ func (p *Processor) acceptAnnounce(
 	// Update the Announce.
 	req.Announce.PendingApproval = util.Ptr(false)
 	req.Announce.PreApproved = false
-	req.Announce.ApprovedByURI = req.URI
+	req.Announce.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Announce,

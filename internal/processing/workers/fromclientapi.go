@@ -313,7 +313,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             status.InReplyToID,
+			TargetStatusID:       status.InReplyToID,
 			TargetAccountID:      status.InReplyToAccountID,
 			TargetAccount:        status.InReplyToAccount,
 			InteractingAccountID: status.AccountID,
@@ -321,7 +321,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 			InteractionURI:       status.URI,
 			InteractionType:      gtsmodel.InteractionReply,
 			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -331,7 +331,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -520,7 +520,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             fave.StatusID,
+			TargetStatusID:       fave.StatusID,
 			TargetAccountID:      fave.TargetAccountID,
 			TargetAccount:        fave.TargetAccount,
 			InteractingAccountID: fave.AccountID,
@@ -528,7 +528,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 			InteractionURI:       fave.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -538,7 +538,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -615,7 +615,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             boost.BoostOfID,
+			TargetStatusID:       boost.BoostOfID,
 			TargetAccountID:      boost.BoostOfAccountID,
 			TargetAccount:        boost.BoostOfAccount,
 			InteractingAccountID: boost.AccountID,
@@ -623,7 +623,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 			InteractionURI:       boost.URI,
 			InteractionType:      gtsmodel.InteractionAnnounce,
 			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -633,7 +633,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,

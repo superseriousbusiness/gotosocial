@@ -1326,16 +1326,15 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 
 	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetStatusID:       "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:         &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
 		TargetAccountID:      acceptingAccount.ID,
 		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionAnnounce,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
@@ -1378,16 +1377,15 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
 
 	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetStatusID:       "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:         &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
 		TargetAccountID:      acceptingAccount.ID,
 		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionLike,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
@@ -1415,6 +1413,62 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
   "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
   "target": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Accept"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLikePolite() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
+		suite.T().Context(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "object": {
+    "actor": "http://fossbros-anonymous.io/users/foss_satan",
+    "id": "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+    "instrument": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+    "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+    "type": "LikeRequest"
+  },
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Accept"
 }`, string(b))

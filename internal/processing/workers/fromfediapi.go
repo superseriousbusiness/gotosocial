@@ -214,6 +214,15 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ActivityLike:
 			return p.fediAPI.UndoFave(ctx, fMsg)
 		}
+
+	// REQUEST TO LIKE A STATUS
+	case ap.ActivityLikeRequest:
+
+	// REQUEST TO REPLY TO A STATUS
+	case ap.ActivityReplyRequest:
+
+	// REQUEST TO BOOST A STATUS
+	case ap.ActivityAnnounceRequest:
 	}
 
 	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)
@@ -310,7 +319,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             status.InReplyToID,
+			TargetStatusID:       status.InReplyToID,
 			TargetAccountID:      status.InReplyToAccountID,
 			TargetAccount:        status.InReplyToAccount,
 			InteractingAccountID: status.AccountID,
@@ -318,7 +327,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 			InteractionURI:       status.URI,
 			InteractionType:      gtsmodel.InteractionReply,
 			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -328,7 +337,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -544,7 +553,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             fave.StatusID,
+			TargetStatusID:       fave.StatusID,
 			TargetAccountID:      fave.TargetAccountID,
 			TargetAccount:        fave.TargetAccount,
 			InteractingAccountID: fave.AccountID,
@@ -552,7 +561,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 			InteractionURI:       fave.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -562,7 +571,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -651,7 +660,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		id := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
 			ID:                   id,
-			StatusID:             boost.BoostOfID,
+			TargetStatusID:       boost.BoostOfID,
 			TargetAccountID:      boost.BoostOfAccountID,
 			TargetAccount:        boost.BoostOfAccount,
 			InteractingAccountID: boost.AccountID,
@@ -659,7 +668,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 			InteractionURI:       boost.URI,
 			InteractionType:      gtsmodel.InteractionAnnounce,
 			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -669,7 +678,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,
@@ -1312,6 +1321,71 @@ func (p *fediAPI) UndoFave(ctx context.Context, fMsg *messages.FromFediAPI) erro
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
+
+	return nil
+}
+
+func (p *fediAPI) LikeRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the not-yet-approved
+	// interaction request is in the database.
+	//
+	// We must update it + handle side effects.
+
+	if req.Like.PreApproved {
+		// If it's pre-approved we can
+		// handle everything immediately.
+
+		// Mark the request as accepted.
+		req.AcceptedAt = time.Now()
+		req.ResponseURI = uris.GenerateURIForAccept(
+			req.TargetAccount.Username,
+			id.NewULID(),
+		)
+
+		// Update in the db.
+		if err := p.state.DB.UpdateInteractionRequest(
+			ctx,
+			req,
+			"accepted_at",
+			"response_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating interaction request: %w", err)
+		}
+
+		// Send out the accept.
+		if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+			log.Errorf(ctx, "error federating accept: %v", err)
+		}
+
+		// Store the approved fave.
+		req.Like.PendingApproval = util.Ptr(false)
+		req.Like.ApprovedByURI = req.ResponseURI
+		req.Like.PreApproved = false
+		if err := p.state.DB.PutStatusFave(ctx, req.Like); err != nil {
+			return gtserror.Newf("db error storing status fave")
+		}
+
+		// Notify the faved account.
+		if err := p.surface.notifyFave(ctx, req.Like); err != nil {
+			log.Errorf(ctx, "error notifying fave: %v", err)
+		}
+
+		// Interaction counts changed on the faved status;
+		// uncache the prepared version from all timelines.
+		p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
+
+		// Done.
+		return nil
+	}
+
+	// Fave is not pre-approved, so just
+	// store the not-yet-handled fave.
+	aaaaaaaaaaa
 
 	return nil
 }

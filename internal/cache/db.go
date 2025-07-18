@@ -940,7 +940,7 @@ func (c *Caches) initInteractionRequest() {
 		// Don't include ptr fields that
 		// will be populated separately.
 		// See internal/db/bundb/interaction.go.
-		i2.Status = nil
+		i2.TargetStatus = nil
 		i2.TargetAccount = nil
 		i2.InteractingAccount = nil
 		i2.Like = nil
@@ -954,7 +954,8 @@ func (c *Caches) initInteractionRequest() {
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
 			{Fields: "InteractionURI"},
-			{Fields: "URI"},
+			{Fields: "InteractionRequestURI"},
+			{Fields: "ResponseURI"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

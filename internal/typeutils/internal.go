@@ -137,9 +137,8 @@ func StatusToInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRe
 
 	return &gtsmodel.InteractionRequest{
 		ID:                   reqID,
-		CreatedAt:            status.CreatedAt,
-		StatusID:             targetID,
-		Status:               target,
+		TargetStatusID:       targetID,
+		TargetStatus:         target,
 		TargetAccountID:      targetAccountID,
 		TargetAccount:        targetAccount,
 		InteractingAccountID: status.AccountID,
@@ -156,9 +155,8 @@ func StatusFaveToInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel.Interac
 
 	return &gtsmodel.InteractionRequest{
 		ID:                   reqID,
-		CreatedAt:            fave.CreatedAt,
-		StatusID:             fave.StatusID,
-		Status:               fave.Status,
+		TargetStatusID:       fave.StatusID,
+		TargetStatus:         fave.Status,
 		TargetAccountID:      fave.TargetAccountID,
 		TargetAccount:        fave.TargetAccount,
 		InteractingAccountID: fave.AccountID,

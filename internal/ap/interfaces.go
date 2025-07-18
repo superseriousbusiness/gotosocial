@@ -392,6 +392,16 @@ type ReplyToable interface {
 	WithInReplyTo
 }
 
+// InteractionRequestable represents the minimum interface for an interaction request
+// activity, eg., LikeRequest, ReplyRequest, AnnounceRequest, QuoteRequest, etc..
+type InteractionRequestable interface {
+	vocab.Type
+
+	WithActor
+	WithObject
+	WithInstrument
+}
+
 // CollectionIterator represents the minimum interface for interacting with a
 // wrapped Collection or OrderedCollection in order to access next / prev items.
 type CollectionIterator interface {
@@ -681,6 +691,12 @@ type WithActor interface {
 type WithObject interface {
 	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
 	SetActivityStreamsObject(vocab.ActivityStreamsObjectProperty)
+}
+
+// WithInstrument represents an activity with ActivityStreamsInstrumentProperty
+type WithInstrument interface {
+	GetActivityStreamsInstrument() vocab.ActivityStreamsInstrumentProperty
+	SetActivityStreamsInstrument(vocab.ActivityStreamsInstrumentProperty)
 }
 
 // WithTarget represents an activity with ActivityStreamsTargetProperty

@@ -173,11 +173,11 @@ func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gts
 		errs = gtserror.NewMultiError(4)
 	)
 
-	if req.Status == nil {
+	if req.TargetStatus == nil {
 		// Target status is not set, fetch from the database.
-		req.Status, err = i.state.DB.GetStatusByID(
+		req.TargetStatus, err = i.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			req.StatusID,
+			req.TargetStatusID,
 		)
 		if err != nil {
 			errs.Appendf("error populating interactionRequest target: %w", err)
