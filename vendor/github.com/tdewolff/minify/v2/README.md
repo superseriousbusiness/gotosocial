@@ -381,6 +381,24 @@ m.AddFunc("image/svg+xml", svg.Minify)
 m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
 m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
+
+m.AddFunc("importmap", json.Minify)
+m.AddFunc("speculationrules", json.Minify)
+
+aspMinifier := &html.Minifier{}
+aspMinifier.TemplateDelims = [2]string{"<%", "%>"}
+m.Add("text/asp", aspMinifier)
+m.Add("text/x-ejs-template", aspMinifier)
+
+phpMinifier := &html.Minifier{}
+phpMinifier.TemplateDelims = [2]string{"<?", "?>"} // also handles <?php
+m.Add("application/x-httpd-php", phpMinifier)
+
+tmplMinifier := &html.Minifier{}
+tmplMinifier.TemplateDelims = [2]string{"{{", "}}"}
+m.Add("text/x-go-template", tmplMinifier)
+m.Add("text/x-mustache-template", tmplMinifier)
+m.Add("text/x-handlebars-template", tmplMinifier)
 ```
 
 You can set options to several minifiers.
@@ -514,6 +532,24 @@ func main() {
 	m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
 	m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
 
+    m.AddFunc("importmap", json.Minify)
+    m.AddFunc("speculationrules", json.Minify)
+
+    aspMinifier := &html.Minifier{}
+    aspMinifier.TemplateDelims = [2]string{"<%", "%>"}
+    m.Add("text/asp", aspMinifier)
+    m.Add("text/x-ejs-template", aspMinifier)
+
+    phpMinifier := &html.Minifier{}
+    phpMinifier.TemplateDelims = [2]string{"<?", "?>"} // also handles <?php
+    m.Add("application/x-httpd-php", phpMinifier)
+
+    tmplMinifier := &html.Minifier{}
+    tmplMinifier.TemplateDelims = [2]string{"{{", "}}"}
+    m.Add("text/x-go-template", tmplMinifier)
+    m.Add("text/x-mustache-template", tmplMinifier)
+    m.Add("text/x-handlebars-template", tmplMinifier)
+
 	if err := m.Minify("text/html", os.Stdout, os.Stdin); err != nil {
 		panic(err)
 	}
@@ -603,6 +639,24 @@ func main() {
 	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
 	m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
 	m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
+
+    m.AddFunc("importmap", json.Minify)
+    m.AddFunc("speculationrules", json.Minify)
+
+    aspMinifier := &html.Minifier{}
+    aspMinifier.TemplateDelims = [2]string{"<%", "%>"}
+    m.Add("text/asp", aspMinifier)
+    m.Add("text/x-ejs-template", aspMinifier)
+
+    phpMinifier := &html.Minifier{}
+    phpMinifier.TemplateDelims = [2]string{"<?", "?>"} // also handles <?php
+    m.Add("application/x-httpd-php", phpMinifier)
+
+    tmplMinifier := &html.Minifier{}
+    tmplMinifier.TemplateDelims = [2]string{"{{", "}}"}
+    m.Add("text/x-go-template", tmplMinifier)
+    m.Add("text/x-mustache-template", tmplMinifier)
+    m.Add("text/x-handlebars-template", tmplMinifier)
 
 	fs := http.FileServer(http.Dir("www/"))
 	http.Handle("/", m.MiddlewareWithError(fs))

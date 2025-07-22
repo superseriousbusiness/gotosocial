@@ -292,7 +292,7 @@ codeberg.org/gruf/go-structr
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size
-# github.com/KimMachineGun/automemlimit v0.7.3
+# github.com/KimMachineGun/automemlimit v0.7.4
 ## explicit; go 1.22.0
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
@@ -586,6 +586,9 @@ github.com/gorilla/sessions
 # github.com/gorilla/websocket v1.5.3
 ## explicit; go 1.12
 github.com/gorilla/websocket
+# github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc
+## explicit; go 1.21
+github.com/grafana/regexp
 # github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 ## explicit; go 1.23.0
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
@@ -644,7 +647,7 @@ github.com/k3a/html2text
 github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/race
 github.com/klauspost/compress/s2
-# github.com/klauspost/cpuid/v2 v2.2.10
+# github.com/klauspost/cpuid/v2 v2.2.11
 ## explicit; go 1.22
 github.com/klauspost/cpuid/v2
 # github.com/kr/pretty v0.3.1
@@ -669,16 +672,16 @@ github.com/mattn/go-isatty
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.66
+# github.com/miekg/dns v1.1.67
 ## explicit; go 1.23.0
 github.com/miekg/dns
-# github.com/minio/crc64nvme v1.0.1
+# github.com/minio/crc64nvme v1.0.2
 ## explicit; go 1.22
 github.com/minio/crc64nvme
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.94
+# github.com/minio/minio-go/v7 v7.0.95
 ## explicit; go 1.23.0
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/internal/json
@@ -688,6 +691,7 @@ github.com/minio/minio-go/v7/pkg/encrypt
 github.com/minio/minio-go/v7/pkg/kvcache
 github.com/minio/minio-go/v7/pkg/lifecycle
 github.com/minio/minio-go/v7/pkg/notification
+github.com/minio/minio-go/v7/pkg/peeker
 github.com/minio/minio-go/v7/pkg/replication
 github.com/minio/minio-go/v7/pkg/s3utils
 github.com/minio/minio-go/v7/pkg/set
@@ -695,7 +699,6 @@ github.com/minio/minio-go/v7/pkg/signer
 github.com/minio/minio-go/v7/pkg/singleflight
 github.com/minio/minio-go/v7/pkg/sse
 github.com/minio/minio-go/v7/pkg/tags
-github.com/minio/minio-go/v7/pkg/utils
 # github.com/mitchellh/copystructure v1.2.0
 ## explicit; go 1.15
 github.com/mitchellh/copystructure
@@ -744,7 +747,7 @@ github.com/pelletier/go-toml/v2/internal/characters
 github.com/pelletier/go-toml/v2/internal/danger
 github.com/pelletier/go-toml/v2/internal/tracker
 github.com/pelletier/go-toml/v2/unstable
-# github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c
+# github.com/philhofer/fwd v1.2.0
 ## explicit; go 1.20
 github.com/philhofer/fwd
 # github.com/pkg/errors v0.9.1
@@ -774,7 +777,10 @@ github.com/prometheus/client_model/go
 ## explicit; go 1.23.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.16.1
+# github.com/prometheus/otlptranslator v0.0.0-20250717125610-8549f4ab4f8f
+## explicit; go 1.23.0
+github.com/prometheus/otlptranslator
+# github.com/prometheus/procfs v0.17.0
 ## explicit; go 1.23.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
@@ -821,7 +827,7 @@ github.com/spf13/cast/internal
 # github.com/spf13/cobra v1.9.1
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.6
+# github.com/spf13/pflag v1.0.7
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/spf13/viper v1.20.1
@@ -841,7 +847,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tdewolff/minify/v2 v2.23.8
+# github.com/tdewolff/minify/v2 v2.23.9
 ## explicit; go 1.17
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
@@ -933,7 +939,7 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.2.14
+# github.com/uptrace/bun v1.2.15
 ## explicit; go 1.23.0
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -947,13 +953,13 @@ github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/migrate/sqlschema
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.2.14
+# github.com/uptrace/bun/dialect/pgdialect v1.2.15
 ## explicit; go 1.23.0
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.2.14
+# github.com/uptrace/bun/dialect/sqlitedialect v1.2.15
 ## explicit; go 1.23.0
 github.com/uptrace/bun/dialect/sqlitedialect
-# github.com/uptrace/bun/extra/bunotel v1.2.14
+# github.com/uptrace/bun/extra/bunotel v1.2.15
 ## explicit; go 1.23.0
 github.com/uptrace/bun/extra/bunotel
 # github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2
@@ -1069,7 +1075,7 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/envconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/retry
-# go.opentelemetry.io/otel/exporters/prometheus v0.59.0
+# go.opentelemetry.io/otel/exporters/prometheus v0.59.1
 ## explicit; go 1.23.0
 go.opentelemetry.io/otel/exporters/prometheus
 # go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.13.0
@@ -1162,7 +1168,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 ## explicit; go 1.23.0
 golang.org/x/exp/constraints
-# golang.org/x/image v0.28.0
+# golang.org/x/image v0.29.0
 ## explicit; go 1.23.0
 golang.org/x/image/riff
 golang.org/x/image/vp8
@@ -1173,7 +1179,7 @@ golang.org/x/image/webp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.41.0
+# golang.org/x/net v0.42.0
 ## explicit; go 1.23.0
 golang.org/x/net/bpf
 golang.org/x/net/context
