@@ -212,14 +212,18 @@ function ReportActionForm({ report }) {
 				An optional comment can be included while resolving this report.
 				This is useful for providing an explanation about what action was
 				taken (if any) before the report was marked as resolved.
-				<br />
-				<div className="info">
-					<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-					<b>
-						If the report was created by a local account, then any
-						comment made here will be emailed to that account's user!
-					</b>
-				</div>
+				{report.account.domain == null && (
+					<>
+						<br />
+						<div className="info">
+							<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
+							<b>
+								As the report was created by a local account, the
+								comment will be emailed to that account's user!
+							</b>
+						</div>
+					</>
+				)}
 			</>
 			<TextArea
 				field={form.comment}
