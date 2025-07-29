@@ -29,8 +29,8 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
-	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
+	"codeberg.org/gruf/go-kv/v2"
 	"codeberg.org/gruf/go-structr"
 	"github.com/stretchr/testify/assert"
 )
@@ -440,7 +440,8 @@ func loadStatusIDsFrom(data []*StatusMeta) func(ids []string) ([]*gtsmodel.Statu
 				return s.ID == id
 			})
 			if i < 0 || i >= len(data) {
-				panic(fmt.Sprintf("could not find %s in %v", id, log.VarDump(data)))
+				kv := kv.Field{K: "data", V: data} // use kv.Field for formatting
+				panic(fmt.Sprintf("could not find %s in %v", id, kv))
 			}
 			statuses = append(statuses, &gtsmodel.Status{
 				ID:               data[i].ID,

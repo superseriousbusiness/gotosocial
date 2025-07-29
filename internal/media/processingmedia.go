@@ -22,7 +22,7 @@ import (
 	"os"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 	"codeberg.org/gruf/go-runners"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"

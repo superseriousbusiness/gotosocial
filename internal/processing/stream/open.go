@@ -24,7 +24,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/stream"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 // Open returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.

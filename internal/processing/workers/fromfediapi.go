@@ -29,7 +29,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"

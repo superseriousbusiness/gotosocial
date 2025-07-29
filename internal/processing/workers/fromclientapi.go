@@ -36,7 +36,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 // clientAPI wraps processing functions

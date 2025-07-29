@@ -255,6 +255,10 @@ codeberg.org/gruf/go-iotools
 ## explicit; go 1.20
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
+# codeberg.org/gruf/go-kv/v2 v2.0.3
+## explicit; go 1.24
+codeberg.org/gruf/go-kv/v2
+codeberg.org/gruf/go-kv/v2/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 ## explicit; go 1.21.3
 codeberg.org/gruf/go-list

@@ -22,7 +22,7 @@ import (
 	"errors"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/config"

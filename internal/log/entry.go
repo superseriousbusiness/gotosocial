@@ -21,7 +21,7 @@ import (
 	"context"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 type Entry struct {

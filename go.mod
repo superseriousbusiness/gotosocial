@@ -24,7 +24,7 @@ require (
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-ffmpreg v0.6.7
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
-	codeberg.org/gruf/go-kv v1.6.5
+	codeberg.org/gruf/go-kv/v2 v2.0.3
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 	codeberg.org/gruf/go-mutexes v1.5.2
@@ -99,6 +99,7 @@ require (
 	code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0 // indirect
 	code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
+	codeberg.org/gruf/go-kv v1.6.5 // indirect
 	codeberg.org/gruf/go-mangler v1.4.4 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect

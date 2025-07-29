@@ -30,7 +30,7 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"

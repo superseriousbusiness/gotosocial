@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/log"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 	"github.com/oklog/ulid"
 )
 

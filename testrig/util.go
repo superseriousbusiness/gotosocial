@@ -31,8 +31,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/workers"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
-	"codeberg.org/gruf/go-byteutil"
-	"codeberg.org/gruf/go-kv/format"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 // Starts workers on the provided state using noop processing functions.
@@ -283,7 +282,7 @@ func WaitFor(condition func() bool) bool {
 
 // dump returns debug output of 'v'.
 func dump(v any) string {
-	var buf byteutil.Buffer
-	format.Append(&buf, v)
-	return buf.String()
+	var kv kv.Field
+	kv.V = v
+	return kv.Value(false)
 }

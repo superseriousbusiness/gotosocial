@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"

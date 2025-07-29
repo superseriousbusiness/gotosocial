@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
-	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 var (
