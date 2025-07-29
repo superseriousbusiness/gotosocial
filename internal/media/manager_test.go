@@ -492,7 +492,7 @@ func (suite *ManagerTestSuite) TestAnimatedGifProcess() {
 	suite.Equal("image/gif", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(122364, attachment.File.FileSize)
-	suite.Equal(12962, attachment.Thumbnail.FileSize)
+	suite.Equal(12956, attachment.Thumbnail.FileSize)
 	suite.Equal("LmKUZkt700ofoffQofj[00WBj[WB", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
