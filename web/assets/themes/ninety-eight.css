@@ -1,0 +1,336 @@
+/*
+  theme-title: Ninety Eight
+  theme-description: huh, that theme seems oddly familiar…
+*/
+
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
+:root {
+  /* remove the border radius */
+  --br: 0;
+  --br-inner: 0;
+
+  /* Define our color palette */
+  --ninety-eight-grey: #c0c0c0;
+  --ninety-eight-dark-blue: #000080;
+  --ninety-eight-light-blue: #1084d0;
+  --ninety-eight-textbox: #ffffff;
+  --ninety-eight-green: #008080;
+  --ninety-eight-light-grey: #dfdfdf;
+  --ninety-eight-dark-grey: #808080;
+
+  --ninety-eight-title-bar: linear-gradient(
+    90deg,
+    var(--ninety-eight-dark-blue) 0%,
+    var(--ninety-eight-light-blue) 100%
+  );
+
+  /* border gradient used by individual windows and items such */
+  --ninety-eight-border-top: #ffffff;
+  --ninety-eight-border-left: #ffffff;
+  --ninety-eight-border-bottom: #000000;
+  --ninety-eight-border-right: #000000;
+
+  /* Restyle basic colors to use black instead */
+  --blue1: var(--fg);
+  --blue2: var(--fg);
+  --blue3: var(--fg);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--ninety-eight-grey);
+  --bg-accent: var(--ninety-eight-grey);
+  --fg: #000000;
+  --fg-alt: #ffffff;
+  --fg-reduced: var(--ninety-eight-dark-grey);
+  --link-fg-alt: var(--fg-alt);
+
+  /* Profile page styling */
+  --profile-bg: var(--ninety-eight-grey);
+
+  /* Start buttons */
+  --button-bg: var(--ninety-eight-grey);
+  --button-fg: var(--fg);
+
+  /* ninety-eight-ize statuses */
+  --status-bg: var(--ninety-eight-grey);
+  --status-focus-bg: var(--ninety-eight-grey);
+  --status-info-bg: var(--ninety-eight-grey);
+  --status-info-border: var(--ninety-eight-dark-grey);
+  --status-focus-info-bg: var(--ninety-eight-grey);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 1px solid var(--ninety-eight-border-bottom);
+  --border-accent: var(--ninety-eight-border-bottom);
+}
+
+/* Main page background */
+body {
+  background: var(--ninety-eight-green);
+}
+
+/* Scroll bar */
+html, body {
+  font-family: "Noto Sans", sans-serif;
+  font-size: medium;
+  scrollbar-color: var(--ninety-eight-grey) var(--ninety-eight-light-grey);
+}
+
+/* Make this more like a ninety eight top bar */
+.col-header, .thread .col-header {
+  background: var(--ninety-eight-title-bar);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+  border-radius: 0;
+  color: var(--fg-alt);
+}
+
+/* Role and bot badge backgrounds */
+.profile .profile-header .basic-info .avatar-image-wrapper,
+.profile .profile-header .basic-info .namerole .role,
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top) !important;
+  border-left: 2px solid var(--ninety-eight-border-left) !important;
+  border-right: 2px solid var(--ninety-eight-border-right) !important;
+  border-bottom: 2px solid var(--ninety-eight-border-bottom) !important;
+  color: var(--fg) !important;
+}
+
+/* Profile fields */
+.profile .about-user .fields {
+  padding-left: 0.28rem;
+  padding-right: 0.28rem;
+  padding-top: 0;
+}
+.profile .about-user .fields dt {
+  padding-bottom: 0.5rem;
+}
+.profile .about-user .fields .field {
+  background: var(--ninety-eight-grey);
+  border-bottom: var(--ninety-eight-textbox);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: none;
+}
+
+/* Profile info */
+.profile .about-user {
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+  height: fit-content;
+}
+
+.profile .about-user .col-header {
+    border: none;
+    margin-bottom: 0rem;
+}
+.profile .about-user .bio {
+    background: var(--ninety-eight-textbox);
+    border-bottom: 2px solid var(--ninety-eight-border-top);
+    border-right: 2px solid var(--ninety-eight-border-left);
+    border-left: 2px solid var(--ninety-eight-border-right);
+    border-top: 2px solid var(--ninety-eight-border-bottom);
+    padding: 0 0.5rem !important;
+    margin: 0.5rem;
+}
+.profile .about-user .bio > p:last-child,
+.profile .about-user .bio > ol:last-child,
+.profile .about-user .bio > ul:last-child {
+  margin-bottom: 0.5rem !important;
+}
+
+/* Profile header and avatar */
+.profile .profile-header {
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+}
+
+.status .status-header > address > a {
+    padding: 0 0.5rem;
+    .avatar {
+        border-top: 2px solid var(--ninety-eight-border-top);
+        border-left: 2px solid var(--ninety-eight-border-left);
+        border-right: 2px solid var(--ninety-eight-border-right);
+        border-bottom: 2px solid var(--ninety-eight-border-bottom);
+    }
+}
+
+.profile .profile-header .header-image-wrapper img {
+    margin: 4px;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+}
+
+/* Profile stats */
+.accountstats {
+  border-top: var(--ninety-eight-border-top);
+}
+
+/* Statuses deserve a border, as a treat :3 */
+.status {
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+}
+
+.status .status-body {
+    padding: 0.5rem;
+}
+
+/* Status text and profile fields with the inputted things™ */
+.status .text,
+.profile .about-user .fields dd {
+  padding: 0.5rem;
+  background: var(--ninety-eight-textbox);
+  border-bottom: 2px solid var(--ninety-eight-border-top);
+  border-right: 2px solid var(--ninety-eight-border-left);
+  border-left: 2px solid var(--ninety-eight-border-right);
+  border-top: 2px solid var(--ninety-eight-border-bottom);
+
+  color: var(--fg);
+  text-shadow: none;
+  --link-fg: var(--fg);
+}
+
+/* Status media */
+.status .media .media-wrapper,
+.profile .media-galleries-wrapper .media-gallery .media-wrapper {
+  border-bottom: 2px solid var(--ninety-eight-border-top);
+  border-right: 2px solid var(--ninety-eight-border-left);
+  border-left: 2px solid var(--ninety-eight-border-right);
+  border-top: 2px solid var(--ninety-eight-border-bottom);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: black;
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--ninety-eight-grey);
+  border-bottom: 2px solid var(--ninety-eight-border-top);
+  border-right: 2px solid var(--ninety-eight-border-left);
+  border-left: 2px solid var(--ninety-eight-border-right);
+  border-top: 2px solid var(--ninety-eight-border-bottom);
+  border-radius: 0;
+}
+.status .text .poll .poll-info {
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+  border-radius: 0;
+}
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	font-family: "Atkinson Hyperlegible Mono", "Noto Sans Mono", monospace;
+  background: black;
+  color: var(--ninety-eight-light-grey);
+  border-radius: 0;
+}
+
+/* Block quotes */
+blockquote {
+  padding: 0.5rem;
+  background: var(--ninety-eight-grey);
+  border-bottom: 2px solid var(--ninety-eight-border-top);
+  border-right: 2px solid var(--ninety-eight-border-left);
+  border-left: 2px solid var(--ninety-eight-border-right);
+  border-top: 2px solid var(--ninety-eight-border-bottom);
+  border-radius: 0;
+}
+
+/* Cheeky little border */
+.status-info {
+  background: 2px solid var(--ninety-eight-grey);
+  margin: 0.25rem 0.5rem 0.5rem 0.5rem;
+  color: var(--fg) !important;
+}
+
+/* Status info dropdown button */
+.status .status-info .status-stats details.stats-more-info > summary {
+  color: var(--fg);
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+}
+.status .status-info .status-stats details.stats-more-info > summary:hover {
+    background: var(--ninety-eight-light-grey);
+}
+.status .status-info .status-stats details.stats-more-info[open] > summary {
+    background: var(--ninety-eight-dark-blue);
+    color: var(--ninety-eight-light-grey);
+}
+
+/* Status info dropdown content */
+.status .status-info .status-stats .stats-more-info-content,
+.status.expanded .status-info .status-stats .stats-more-info-content {
+  color: var(--fg);
+  text-shadow: none;
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+  border-radius: 0;
+}
+.status .status-info .status-stats .stats-item.edit-timeline {
+  border-top: var(--border-accent);
+}
+.status .status-info {
+  border-bottom: 2px solid var(--ninety-eight-border-top);
+  border-right: 2px solid var(--ninety-eight-border-left);
+  border-left: 2px solid var(--ninety-eight-border-right);
+  border-top: 2px solid var(--ninety-eight-border-bottom);
+}
+
+/* Button stuff */
+button, .button, .pswp__button {
+  background: var(--ninety-eight-grey);
+  border-top: 2px solid var(--ninety-eight-border-top);
+  border-left: 2px solid var(--ninety-eight-border-left);
+  border-right: 2px solid var(--ninety-eight-border-right);
+  border-bottom: 2px solid var(--ninety-eight-border-bottom);
+}
+button:hover, .button:hover, .pswp__button:hover {
+  background: var(--ninety-eight-light-grey);
+}
+
+/* Make these bold or they don't contrast enough */
+.backnextlinks {
+  font-weight: bold;
+}
+
+button, .button,
+.status .text-spoiler > summary .button {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* fix contrast issues */ 
+nav.backnextlinks > a {
+    color: var(--fg-alt) !important;
+}
+
+footer > nav > ul > li > a {
+    color: var(--fg-alt) !important;
+}
+
+.col-header a {
+    color: var(--fg-alt);
+    font-weight: 700;
+}
