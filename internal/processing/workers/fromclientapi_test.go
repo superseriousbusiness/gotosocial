@@ -262,9 +262,10 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 			receivingAccount,
 			[]string{testList.ID},
 		)
-		homeStream  = streams[stream.TimelineHome]
-		listStream  = streams[stream.TimelineList+":"+testList.ID]
-		notifStream = streams[stream.TimelineNotifications]
+		publicStream = streams[stream.TimelinePublic]
+		homeStream   = streams[stream.TimelineHome]
+		listStream   = streams[stream.TimelineList+":"+testList.ID]
+		notifStream  = streams[stream.TimelineNotifications]
 
 		// Admin account posts a new top-level status.
 		status = suite.newStatus(
@@ -308,6 +309,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		testStructs.TypeConverter,
 		status,
 		receivingAccount,
+	)
+
+	// Check message in public stream.
+	suite.checkStreamed(
+		publicStream,
+		true,
+		statusJSON,
+		stream.EventTypeUpdate,
 	)
 
 	// Check message in home stream.
@@ -379,9 +388,10 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotifi
 			receivingAccount,
 			[]string{testList.ID},
 		)
-		homeStream  = streams[stream.TimelineHome]
-		listStream  = streams[stream.TimelineList+":"+testList.ID]
-		notifStream = streams[stream.TimelineNotifications]
+		publicStream = streams[stream.TimelinePublic]
+		homeStream   = streams[stream.TimelineHome]
+		listStream   = streams[stream.TimelineList+":"+testList.ID]
+		notifStream  = streams[stream.TimelineNotifications]
 
 		// Admin account posts a new top-level status.
 		status = suite.newStatus(
@@ -419,6 +429,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotifi
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// There should be no message in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
 
 	// There should be no message in the home stream.
 	suite.checkStreamed(
@@ -530,6 +548,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -569,6 +588,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 		testStructs.TypeConverter,
 		status,
 		receivingAccount,
+	)
+
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
 	)
 
 	// Check message in home stream.
@@ -732,6 +759,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -778,6 +806,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		receivingAccount,
 	)
 
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
+
 	// Check message in home stream.
 	suite.checkStreamed(
 		homeStream,
@@ -811,6 +847,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -863,6 +900,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		receivingAccount,
 	)
 
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
+
 	// Check message in home stream.
 	suite.checkStreamed(
 		homeStream,
@@ -896,6 +941,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -942,6 +988,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 		receivingAccount,
 	)
 
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
+
 	// Check message in home stream.
 	suite.checkStreamed(
 		homeStream,
@@ -972,6 +1026,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -1009,6 +1064,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 		receivingAccount,
 	)
 
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
+
 	// Check message in home stream.
 	suite.checkStreamed(
 		homeStream,
@@ -1039,6 +1102,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
 		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
+		publicStream     = streams[stream.TimelinePublic]
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -1077,6 +1141,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Check message *not* in public stream.
+	suite.checkStreamed(
+		publicStream,
+		false,
+		"",
+		"",
+	)
 
 	// Check message NOT in home stream.
 	suite.checkStreamed(
@@ -1763,8 +1835,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 			receivingAccount,
 			[]string{testList.ID},
 		)
-		homeStream = streams[stream.TimelineHome]
-		listStream = streams[stream.TimelineList+":"+testList.ID]
+		publicStream = streams[stream.TimelinePublic]
+		homeStream   = streams[stream.TimelineHome]
+		listStream   = streams[stream.TimelineList+":"+testList.ID]
 
 		// postingAccount posts a new public status not mentioning anyone.
 		status = suite.newStatus(
@@ -1801,6 +1874,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Check status in public stream.
+	suite.checkStreamed(
+		publicStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
 
 	// Check status in list stream.
 	suite.checkStreamed(
@@ -1857,6 +1938,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 				testExclusiveList.ID,
 			},
 		)
+		publicStream        = streams[stream.TimelinePublic]
 		homeStream          = streams[stream.TimelineHome]
 		inclusiveListStream = streams[stream.TimelineList+":"+testInclusiveList.ID]
 		exclusiveListStream = streams[stream.TimelineList+":"+testExclusiveList.ID]
@@ -1911,6 +1993,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		suite.FailNow(err.Error())
 	}
 
+	// Check status in public stream.
+	suite.checkStreamed(
+		publicStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
 	// Check status in inclusive list stream.
 	suite.checkStreamed(
 		inclusiveListStream,
@@ -1957,9 +2047,10 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 			receivingAccount,
 			[]string{testList.ID},
 		)
-		homeStream  = streams[stream.TimelineHome]
-		listStream  = streams[stream.TimelineList+":"+testList.ID]
-		notifStream = streams[stream.TimelineNotifications]
+		publicStream = streams[stream.TimelinePublic]
+		homeStream   = streams[stream.TimelineHome]
+		listStream   = streams[stream.TimelineList+":"+testList.ID]
+		notifStream  = streams[stream.TimelineNotifications]
 
 		// postingAccount posts a new public status not mentioning anyone.
 		status = suite.newStatus(
@@ -2004,6 +2095,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Check status in public stream.
+	suite.checkStreamed(
+		publicStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
 
 	// Check status in list stream.
 	suite.checkStreamed(

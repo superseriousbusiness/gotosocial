@@ -20,6 +20,7 @@ package workers
 import (
 	"context"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
@@ -37,6 +38,7 @@ import (
 // the account, notifications for any local accounts that want
 // to know when this account posts, and conversations containing the status.
 func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
+
 	// Ensure status fully populated; including account, mentions, etc.
 	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status with id %s: %w", status.ID, err)
@@ -59,6 +61,11 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 		})
 	}
 
+	// Stream the status for public timelines for all local users as update msg.
+	if err := s.timelineStatusForPublic(ctx, status, s.Stream.Update); err != nil {
+		return err
+	}
+
 	// Timeline the status for each local follower of this account. This will
 	// also handle notifying any followers with notify set to true on their follow.
 	homeTimelinedAccountIDs := s.timelineAndNotifyStatusForFollowers(ctx, status, follows)
@@ -68,18 +75,109 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 		return gtserror.Newf("error timelining status %s for tag followers: %w", status.ID, err)
 	}
 
-	// Notify each local account that's mentioned by this status.
+	// Notify each local account mentioned by status.
 	if err := s.notifyMentions(ctx, status); err != nil {
 		return gtserror.Newf("error notifying status mentions for status %s: %w", status.ID, err)
 	}
 
-	// Update any conversations containing this status, and send conversation notifications.
+	// Update any conversations containing this status, and get notifications for them.
 	notifications, err := s.Conversations.UpdateConversationsForStatus(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error updating conversations for status %s: %w", status.ID, err)
 	}
+
+	// Stream these conversation notfications.
 	for _, notification := range notifications {
 		s.Stream.Conversation(ctx, notification.AccountID, notification.Conversation)
+	}
+
+	return nil
+}
+
+// timelineStatusForPublic timelines the given status
+// to LOCAL and PUBLIC (i.e. federated) timelines.
+func (s *Surface) timelineStatusForPublic(
+	ctx context.Context,
+	status *gtsmodel.Status,
+	streamFn func(context.Context, *gtsmodel.Account, *apimodel.Status, string),
+) error {
+	// Nil check function
+	// outside main loop.
+	if streamFn == nil {
+		panic("nil func")
+	}
+
+	if status.Visibility != gtsmodel.VisibilityPublic ||
+		status.BoostOfID != "" {
+		// Fast code path, if it's not "public"
+		// or a boost, don't public timeline it.
+		return nil
+	}
+
+	// Get a list of all our local users.
+	users, err := s.State.DB.GetAllUsers(ctx)
+	if err != nil {
+		return gtserror.Newf("error getting local users: %v", err)
+	}
+
+	// Iterate our list of users.
+	isLocal := status.IsLocal()
+	for _, user := range users {
+
+		// Check whether this status should be visible this user on public timelines.
+		visible, err := s.VisFilter.StatusPublicTimelineable(ctx, user.Account, status)
+		if err != nil {
+			log.Errorf(ctx, "error checking status %s visibility: %v", status.URI, err)
+			continue
+		}
+
+		if !visible {
+			continue
+		}
+
+		// Check whether this status is muted in any form by this user.
+		muted, err := s.MuteFilter.StatusMuted(ctx, user.Account, status)
+		if err != nil {
+			log.Errorf(ctx, "error checking status %s mutes: %v", status.URI, err)
+			continue
+		}
+
+		if muted {
+			continue
+		}
+
+		// Get status-filter results for this status in context by this user.
+		filtered, hidden, err := s.StatusFilter.StatusFilterResultsInContext(ctx,
+			user.Account,
+			status,
+			gtsmodel.FilterContextPublic,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error getting status %s filter results: %v", status.URI, err)
+			continue
+		}
+
+		if hidden {
+			continue
+		}
+
+		// Now all checks / filters are passed, convert status to frontend model.
+		apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, user.Account)
+		if err != nil {
+			log.Errorf(ctx, "error converting status %s: %v", status.URI, err)
+			continue
+		}
+
+		// Set API model filter results.
+		apiStatus.Filtered = filtered
+
+		if isLocal {
+			// This is local status, send it to local timeline stream.
+			streamFn(ctx, user.Account, apiStatus, stream.TimelineLocal)
+		}
+
+		// For public timeline stream, send all local / remote statuses.
+		streamFn(ctx, user.Account, apiStatus, stream.TimelinePublic)
 	}
 
 	return nil
@@ -409,8 +507,9 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 		status = status.BoostOf
 	}
 
+	var errs gtserror.MultiError
+
 	// Insert the status into the home timeline of each tag follower.
-	errs := gtserror.MultiError{}
 	for _, tagFollowerAccount := range tagFollowerAccounts {
 		_ = s.timelineStatus(ctx,
 			s.State.Caches.Timelines.Home.MustGet(tagFollowerAccount.ID),
@@ -535,6 +634,11 @@ func (s *Surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Sta
 			Notify:      util.Ptr(false), // Account shouldn't notify itself.
 			ShowReblogs: util.Ptr(true),  // Account should show own reblogs.
 		})
+	}
+
+	// Stream the status update for public timelines for all of our local users.
+	if err := s.timelineStatusForPublic(ctx, status, s.Stream.StatusUpdate); err != nil {
+		return err
 	}
 
 	// Push updated status to streams for each local follower of this account.

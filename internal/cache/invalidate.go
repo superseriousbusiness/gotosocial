@@ -365,7 +365,8 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 	c.Visibility.Invalidate("ItemID", user.AccountID)
 	c.Visibility.Invalidate("RequesterID", user.AccountID)
 
-	// Invalidate the local users count.
+	// Invalidate the local user IDs / count.
+	c.DB.LocalInstance.UserIDs.Store(nil)
 	c.DB.LocalInstance.Users.Store(nil)
 }
 

@@ -154,6 +154,7 @@ type DBCaches struct {
 		Domains  atomic.Pointer[int]
 		Statuses atomic.Pointer[int]
 		Users    atomic.Pointer[int]
+		UserIDs  atomic.Pointer[[]string]
 	}
 
 	// InteractionRequest provides access to the gtsmodel InteractionRequest database cache.
