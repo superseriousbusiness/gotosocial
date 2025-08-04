@@ -359,7 +359,7 @@ func (d *Dereferencer) unpermittedByParent(
 	// This collapses the chain beyond the first
 	// rejected reply and allows us to avoid derefing
 	// further replies we already know we don't want.
-	inReplyToID := parentReq.StatusID
+	inReplyToID := parentReq.TargetStatusID
 	targetAccountID := parentReq.TargetAccountID
 
 	// As nobody is actually Rejecting the reply
@@ -370,12 +370,12 @@ func (d *Dereferencer) unpermittedByParent(
 
 	rejection := &gtsmodel.InteractionRequest{
 		ID:                   rejectID,
-		StatusID:             inReplyToID,
+		TargetStatusID:       inReplyToID,
 		TargetAccountID:      targetAccountID,
 		InteractingAccountID: reply.AccountID,
 		InteractionURI:       reply.URI,
 		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  uri,
+		ResponseURI:          uri,
 		RejectedAt:           time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
@@ -430,13 +430,13 @@ func (d *Dereferencer) isPermittedByApprovedByIRI(
 	// pending approval, clear that now.
 	reply.PendingApproval = util.Ptr(false)
 	if thisReq != nil {
-		thisReq.URI = approvedByIRI
+		thisReq.ResponseURI = approvedByIRI
 		thisReq.AcceptedAt = time.Now()
 		thisReq.RejectedAt = time.Time{}
 		err := d.state.DB.UpdateInteractionRequest(
 			ctx,
 			thisReq,
-			"uri",
+			"response_uri",
 			"accepted_at",
 			"rejected_at",
 		)
@@ -483,13 +483,13 @@ func (d *Dereferencer) rejectedByPolicy(
 		// request is marked as rejected.
 		thisReq.RejectedAt = time.Now()
 		thisReq.AcceptedAt = time.Time{}
-		thisReq.URI = rejectURI
+		thisReq.ResponseURI = rejectURI
 		err := d.state.DB.UpdateInteractionRequest(
 			ctx,
 			thisReq,
 			"rejected_at",
 			"accepted_at",
-			"uri",
+			"response_uri",
 		)
 		if err != nil {
 			return gtserror.Newf("db error updating interaction request: %w", err)
@@ -502,12 +502,12 @@ func (d *Dereferencer) rejectedByPolicy(
 	// request for this status yet, do it now.
 	rejection := &gtsmodel.InteractionRequest{
 		ID:                   rejectID,
-		StatusID:             inReplyTo.ID,
+		TargetStatusID:       inReplyTo.ID,
 		TargetAccountID:      inReplyTo.AccountID,
 		InteractingAccountID: reply.AccountID,
 		InteractionURI:       reply.URI,
 		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  rejectURI,
+		ResponseURI:          rejectURI,
 		RejectedAt:           time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)

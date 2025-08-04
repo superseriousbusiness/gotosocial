@@ -71,11 +71,11 @@ func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
 
-// NotPermitted indicates that some call failed due to failed permission
+// IsNotPermitted indicates that some call failed due to failed permission
 // or acceptibility checks. For example an attempt to dereference remote
 // status in which the status author does not have permission to reply
 // to the status it is intended to be replying to.
-func NotPermitted(err error) bool {
+func IsNotPermitted(err error) bool {
 	_, ok := errors.Value(err, notPermittedKey).(struct{})
 	return ok
 }

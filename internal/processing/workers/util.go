@@ -526,9 +526,13 @@ func (u *utils) decrementFollowRequestsCount(
 	return nil
 }
 
-// requestFave stores an interaction request
+// impoliteFaveRequest stores an interaction request
 // for the given fave, and notifies the interactee.
-func (u *utils) requestFave(
+//
+// It should be used only when an actor has sent a Like
+// directly in response to a post that requires approval
+// for it, instead of sending a LikeRequest.
+func (u *utils) impoliteFaveRequest(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
 ) error {
@@ -569,9 +573,13 @@ func (u *utils) requestFave(
 	return nil
 }
 
-// requestReply stores an interaction request
+// impoliteReplyRequest stores an interaction request
 // for the given reply, and notifies the interactee.
-func (u *utils) requestReply(
+//
+// It should be used only when an actor has sent a reply
+// directly in response to a post that requires approval
+// for it, instead of sending a ReplyRequest.
+func (u *utils) impoliteReplyRequest(
 	ctx context.Context,
 	reply *gtsmodel.Status,
 ) error {
@@ -612,9 +620,13 @@ func (u *utils) requestReply(
 	return nil
 }
 
-// requestAnnounce stores an interaction request
+// impoliteAnnounceRequest stores an interaction request
 // for the given announce, and notifies the interactee.
-func (u *utils) requestAnnounce(
+//
+// It should be used only when an actor has sent an Announce
+// directly in response to a post that requires approval
+// for it, instead of sending an AnnounceRequest.
+func (u *utils) impoliteAnnounceRequest(
 	ctx context.Context,
 	boost *gtsmodel.Status,
 ) error {

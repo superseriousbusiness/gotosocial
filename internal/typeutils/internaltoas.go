@@ -2170,7 +2170,7 @@ func (c *Converter) InteractionReqToASAccept(
 ) (vocab.ActivityStreamsAccept, error) {
 	accept := streams.NewActivityStreamsAccept()
 
-	acceptID, err := url.Parse(req.URI)
+	acceptID, err := url.Parse(req.ResponseURI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid accept uri: %w", err)
 	}
@@ -2185,14 +2185,14 @@ func (c *Converter) InteractionReqToASAccept(
 		return nil, gtserror.Newf("invalid object uri: %w", err)
 	}
 
-	if req.Status == nil {
-		req.Status, err = c.state.DB.GetStatusByID(ctx, req.StatusID)
+	if req.TargetStatus == nil {
+		req.TargetStatus, err = c.state.DB.GetStatusByID(ctx, req.TargetStatusID)
 		if err != nil {
 			return nil, gtserror.Newf("db error getting interaction req target status: %w", err)
 		}
 	}
 
-	targetIRI, err := url.Parse(req.Status.URI)
+	targetIRI, err := url.Parse(req.TargetStatus.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid interaction req target status uri: %w", err)
 	}
@@ -2210,27 +2210,87 @@ func (c *Converter) InteractionReqToASAccept(
 	// owns the approval / accept.
 	ap.AppendActorIRIs(accept, actorIRI)
 
-	// Object is the interaction URI.
-	ap.AppendObjectIRIs(accept, objectIRI)
+	polite := req.IsPolite()
+	if polite {
+		// If accepting a polite request, put
+		// a barebones version of the *Request
+		// in the `object` property.
+		var (
+			objProp = streams.NewActivityStreamsObjectProperty()
+			ir      ap.InteractionRequestable
+		)
+		switch req.InteractionType {
+		case gtsmodel.InteractionLike:
+			v := streams.NewGoToSocialLikeRequest()
+			objProp.AppendGoToSocialLikeRequest(v)
+			ir = v
+		case gtsmodel.InteractionReply:
+			v := streams.NewGoToSocialReplyRequest()
+			objProp.AppendGoToSocialReplyRequest(v)
+			ir = v
+		case gtsmodel.InteractionAnnounce:
+			v := streams.NewGoToSocialAnnounceRequest()
+			objProp.AppendGoToSocialAnnounceRequest(v)
+			ir = v
+		}
 
-	// Target is the URI of the
-	// status being interacted with.
-	ap.AppendTargetIRIs(accept, targetIRI)
+		// URI of the interaction request.
+		ap.SetJSONLDIdStr(ir, req.InteractionRequestURI)
+
+		// URI of the interacting actor.
+		ap.AppendActorIRIs(ir, toIRI)
+
+		// URI of the status.
+		ap.AppendObjectIRIs(ir, targetIRI)
+
+		// URI of the interaction.
+		ap.AppendInstrumentIRIs(ir, objectIRI)
+
+		// Set the thing.
+		accept.SetActivityStreamsObject(objProp)
+
+		// If polite, also include the "result" URI
+		// of the interaction Authorization object.
+		resultIRI, err := url.Parse(req.AuthorizationURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid authorization uri: %w", err)
+		}
+		ap.AppendResultIRIs(accept, resultIRI)
+
+	} else {
+		// If accepting an impolite request,
+		// just set interaction URI as object.
+		ap.AppendObjectIRIs(accept, objectIRI)
+
+		// Target is the URI of the
+		// status being interacted with.
+		ap.AppendTargetIRIs(accept, targetIRI)
+	}
 
 	// Address to the owner
 	// of interaction URI.
 	ap.AppendTo(accept, toIRI)
 
-	// Whether or not we cc this Accept to
-	// followers and public depends on the
-	// type of interaction it Accepts.
+	// If the request is polite, send
+	// the Accept only to the requester,
+	// no need to cc anything.
+	if polite {
+		return accept, nil
+	}
+
+	// If the request was impolite, it's
+	// helpful for federation to distribute
+	// the Accept to our followers as well,
+	// depending on the type of interaction.
 
 	var cc bool
 	switch req.InteractionType {
 
 	case gtsmodel.InteractionLike:
 		// Accept of Like doesn't get cc'd
-		// because it's not that important.
+		// because it's not that important,
+		// as Likes are usually only ever
+		// sent to the post author.
 
 	case gtsmodel.InteractionReply:
 		// Accept of reply gets cc'd.
@@ -2266,7 +2326,7 @@ func (c *Converter) InteractionReqToASReject(
 ) (vocab.ActivityStreamsReject, error) {
 	reject := streams.NewActivityStreamsReject()
 
-	rejectID, err := url.Parse(req.URI)
+	rejectID, err := url.Parse(req.ResponseURI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid reject uri: %w", err)
 	}
@@ -2281,14 +2341,14 @@ func (c *Converter) InteractionReqToASReject(
 		return nil, gtserror.Newf("invalid object uri: %w", err)
 	}
 
-	if req.Status == nil {
-		req.Status, err = c.state.DB.GetStatusByID(ctx, req.StatusID)
+	if req.TargetStatus == nil {
+		req.TargetStatus, err = c.state.DB.GetStatusByID(ctx, req.TargetStatusID)
 		if err != nil {
 			return nil, gtserror.Newf("db error getting interaction req target status: %w", err)
 		}
 	}
 
-	targetIRI, err := url.Parse(req.Status.URI)
+	targetIRI, err := url.Parse(req.TargetStatus.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid interaction req target status uri: %w", err)
 	}
