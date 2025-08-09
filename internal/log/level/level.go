@@ -15,34 +15,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package log
+package level
 
-import (
-	"sync"
+// LEVEL defines a level of logging.
+type LEVEL uint8
 
-	"codeberg.org/gruf/go-byteutil"
+// Logging levels.
+const (
+	PANIC LEVEL = 1
+	ERROR LEVEL = 100
+	WARN  LEVEL = 150
+	INFO  LEVEL = 200
+	DEBUG LEVEL = 250
+	TRACE LEVEL = 254
+	UNSET LEVEL = ^LEVEL(0)
 )
 
-// bufPool provides memory
-// pool of log buffers.
-var bufPool sync.Pool
-
-// getBuf acquires a buffer from memory pool.
-func getBuf() *byteutil.Buffer {
-	buf, _ := bufPool.Get().(*byteutil.Buffer)
-	if buf == nil {
-		buf = new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 512)
-	}
-	return buf
+func (lvl LEVEL) String() string {
+	return strings[lvl]
 }
 
-// putBuf places (after resetting) buffer back in
-// memory pool, dropping if capacity too large.
-func putBuf(buf *byteutil.Buffer) {
-	if buf.Cap() > int(^uint16(0)) {
-		return // drop large buffer
-	}
-	buf.Reset()
-	bufPool.Put(buf)
+var strings = [int(UNSET) + 1]string{
+	TRACE: "TRACE",
+	DEBUG: "DEBUG",
+	INFO:  "INFO",
+	WARN:  "WARN",
+	ERROR: "ERROR",
+	PANIC: "PANIC",
 }

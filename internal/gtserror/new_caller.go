@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+
+	"codeberg.org/gruf/go-caller"
 )
 
 // Caller returns whether created errors will prepend calling function name.
@@ -48,7 +50,7 @@ func (ce *cerror) Unwrap() error {
 // newAt is the same as New() but allows specifying calldepth.
 func newAt(calldepth int, msg string) error {
 	return &cerror{
-		c: caller(calldepth + 1),
+		c: getCaller(calldepth + 1),
 		e: errors.New(msg),
 	}
 }
@@ -56,36 +58,24 @@ func newAt(calldepth int, msg string) error {
 // newfAt is the same as Newf() but allows specifying calldepth.
 func newfAt(calldepth int, msgf string, args ...any) error {
 	return &cerror{
-		c: caller(calldepth + 1),
+		c: getCaller(calldepth + 1),
 		e: fmt.Errorf(msgf, args...),
 	}
 }
 
-// caller fetches the calling function name, skipping 'depth'.
-func caller(depth int) string {
-	var pcs [1]uintptr
+// getCaller fetches the calling function name, skipping 'depth'.
+func getCaller(depth int) string {
+	pcs := make([]uintptr, 1)
 
-	// Fetch calling function using calldepth
-	_ = runtime.Callers(depth, pcs[:])
-	fn := runtime.FuncForPC(pcs[0])
+	// Fetch calling function at depth.
+	_ = runtime.Callers(depth, pcs)
 
-	if fn == nil {
-		return ""
-	}
+	// Get cached calling func name.
+	name := caller.Get(pcs[0])
 
-	// Get func name.
-	name := fn.Name()
-
-	// Drop everything but but function name itself
+	// Drop package / everything but function name itself.
 	if idx := strings.LastIndexByte(name, '.'); idx >= 0 {
 		name = name[idx+1:]
-	}
-
-	const params = `[...]`
-
-	// Drop any generic type parameter markers
-	if idx := strings.Index(name, params); idx >= 0 {
-		name = name[:idx] + name[idx+len(params):]
 	}
 
 	return name

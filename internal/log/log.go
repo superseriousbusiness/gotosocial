@@ -22,35 +22,31 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
-	"strings"
+	"runtime"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log/format"
+	"code.superseriousbusiness.org/gotosocial/internal/log/level"
 	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 	"codeberg.org/gruf/go-kv/v2"
 )
 
 var (
 	// loglvl is the currently
-	// set logging output
-	loglvl LEVEL
+	// set logging output.
+	loglvl = level.UNSET
 
-	// lvlstrs is the lookup table
-	// of all log levels to strings.
-	lvlstrs = [int(ALL) + 1]string{
-		TRACE: "TRACE",
-		DEBUG: "DEBUG",
-		INFO:  "INFO",
-		WARN:  "WARN",
-		ERROR: "ERROR",
-		PANIC: "PANIC",
-	}
+	// appendFormat stores log
+	// entry formatting function.
+	appendFormat = (&format.Logfmt{
+		Base: format.Base{TimeFormat: timefmt},
+	}).Format
 
 	// syslog output, only set if enabled.
 	sysout *syslog.Writer
 
-	// timefmt is the logging time format used, which includes
-	// the full field and required quoting
-	timefmt = `timestamp="02/01/2006 15:04:05.000" `
+	// timefmt is the logging time format used.
+	timefmt = `02/01/2006 15:04:05.000`
 
 	// ctxhooks allows modifying log content based on context.
 	ctxhooks []func(context.Context, []kv.Field) []kv.Field
@@ -61,12 +57,12 @@ func Hook(hook func(ctx context.Context, kvs []kv.Field) []kv.Field) {
 	ctxhooks = append(ctxhooks, hook)
 }
 
-// Level returns the currently set log
+// Level returns the currently set log.
 func Level() LEVEL {
 	return loglvl
 }
 
-// SetLevel sets the max logging
+// SetLevel sets the max logging.
 func SetLevel(lvl LEVEL) {
 	loglvl = lvl
 }
@@ -78,11 +74,20 @@ func TimeFormat() string {
 
 // SetTimeFormat sets the timestamp format to the given string.
 func SetTimeFormat(format string) {
-	if format == "" {
-		timefmt = format
-		return
+	timefmt = format
+}
+
+// SetJSON enables / disables JSON log output formatting.
+func SetJSON(enabled bool) {
+	if enabled {
+		var fmt format.JSON
+		fmt.TimeFormat = timefmt
+		appendFormat = fmt.Format
+	} else {
+		var fmt format.Logfmt
+		fmt.TimeFormat = timefmt
+		appendFormat = fmt.Format
 	}
-	timefmt = `timestamp="` + format + `" `
 }
 
 // New starts a new log entry.
@@ -105,282 +110,166 @@ func WithFields(fields ...kv.Field) Entry {
 	return Entry{kvs: fields}
 }
 
-// Note that most of the below logging
-// functions we specifically do NOT allow
-// the Go buildchain to inline, to ensure
-// expected behaviour in caller fetching.
-
 // Trace will log formatted args as 'msg' field to the log at TRACE level.
-//
-//go:noinline
 func Trace(ctx context.Context, a ...interface{}) {
-	logf(ctx, 3, TRACE, nil, args(len(a)), a...)
+	logf(ctx, TRACE, nil, "", a...)
 }
 
 // Tracef will log format string as 'msg' field to the log at TRACE level.
-//
-//go:noinline
 func Tracef(ctx context.Context, s string, a ...interface{}) {
-	logf(ctx, 3, TRACE, nil, s, a...)
+	logf(ctx, TRACE, nil, s, a...)
 }
 
 // TraceKV will log the one key-value field to the log at TRACE level.
-//
-//go:noinline
 func TraceKV(ctx context.Context, key string, value interface{}) {
-	logf(ctx, 3, TRACE, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, TRACE, []kv.Field{{K: key, V: value}}, "")
 }
 
 // TraceKVs will log key-value fields to the log at TRACE level.
-//
-//go:noinline
 func TraceKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, TRACE, kvs, "")
+	logf(ctx, TRACE, kvs, "")
 }
 
 // Debug will log formatted args as 'msg' field to the log at DEBUG level.
-//
-//go:noinline
 func Debug(ctx context.Context, a ...interface{}) {
-	logf(ctx, 3, DEBUG, nil, args(len(a)), a...)
+	logf(ctx, DEBUG, nil, "", a...)
 }
 
 // Debugf will log format string as 'msg' field to the log at DEBUG level.
-//
-//go:noinline
 func Debugf(ctx context.Context, s string, a ...interface{}) {
-	logf(ctx, 3, DEBUG, nil, s, a...)
+	logf(ctx, DEBUG, nil, s, a...)
 }
 
 // DebugKV will log the one key-value field to the log at DEBUG level.
-//
-//go:noinline
 func DebugKV(ctx context.Context, key string, value interface{}) {
-	logf(ctx, 3, DEBUG, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, DEBUG, []kv.Field{{K: key, V: value}}, "")
 }
 
 // DebugKVs will log key-value fields to the log at DEBUG level.
-//
-//go:noinline
 func DebugKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, DEBUG, kvs, "")
+	logf(ctx, DEBUG, kvs, "")
 }
 
 // Info will log formatted args as 'msg' field to the log at INFO level.
-//
-//go:noinline
 func Info(ctx context.Context, a ...interface{}) {
-	logf(ctx, 3, INFO, nil, args(len(a)), a...)
+	logf(ctx, INFO, nil, "", a...)
 }
 
 // Infof will log format string as 'msg' field to the log at INFO level.
-//
-//go:noinline
 func Infof(ctx context.Context, s string, a ...interface{}) {
-	logf(ctx, 3, INFO, nil, s, a...)
+	logf(ctx, INFO, nil, s, a...)
 }
 
 // InfoKV will log the one key-value field to the log at INFO level.
-//
-//go:noinline
 func InfoKV(ctx context.Context, key string, value interface{}) {
-	logf(ctx, 3, INFO, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, INFO, []kv.Field{{K: key, V: value}}, "")
 }
 
 // InfoKVs will log key-value fields to the log at INFO level.
-//
-//go:noinline
 func InfoKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, INFO, kvs, "")
+	logf(ctx, INFO, kvs, "")
 }
 
 // Warn will log formatted args as 'msg' field to the log at WARN level.
-//
-//go:noinline
 func Warn(ctx context.Context, a ...interface{}) {
-	logf(ctx, 3, WARN, nil, args(len(a)), a...)
+	logf(ctx, WARN, nil, "", a...)
 }
 
 // Warnf will log format string as 'msg' field to the log at WARN level.
-//
-//go:noinline
 func Warnf(ctx context.Context, s string, a ...interface{}) {
-	logf(ctx, 3, WARN, nil, s, a...)
+	logf(ctx, WARN, nil, s, a...)
 }
 
 // WarnKV will log the one key-value field to the log at WARN level.
-//
-//go:noinline
 func WarnKV(ctx context.Context, key string, value interface{}) {
-	logf(ctx, 3, WARN, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, WARN, []kv.Field{{K: key, V: value}}, "")
 }
 
 // WarnKVs will log key-value fields to the log at WARN level.
-//
-//go:noinline
 func WarnKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, WARN, kvs, "")
+	logf(ctx, WARN, kvs, "")
 }
 
 // Error will log formatted args as 'msg' field to the log at ERROR level.
-//
-//go:noinline
 func Error(ctx context.Context, a ...interface{}) {
-	logf(ctx, 3, ERROR, nil, args(len(a)), a...)
+	logf(ctx, ERROR, nil, "", a...)
 }
 
 // Errorf will log format string as 'msg' field to the log at ERROR level.
-//
-//go:noinline
 func Errorf(ctx context.Context, s string, a ...interface{}) {
-	logf(ctx, 3, ERROR, nil, s, a...)
+	logf(ctx, ERROR, nil, s, a...)
 }
 
 // ErrorKV will log the one key-value field to the log at ERROR level.
-//
-//go:noinline
 func ErrorKV(ctx context.Context, key string, value interface{}) {
-	logf(ctx, 3, ERROR, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, ERROR, []kv.Field{{K: key, V: value}}, "")
 }
 
 // ErrorKVs will log key-value fields to the log at ERROR level.
-//
-//go:noinline
 func ErrorKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, ERROR, kvs, "")
+	logf(ctx, ERROR, kvs, "")
 }
 
 // Panic will log formatted args as 'msg' field to the log at PANIC level.
 // This will then call panic causing the application to crash.
-//
-//go:noinline
 func Panic(ctx context.Context, a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
-	logf(ctx, 3, PANIC, nil, args(len(a)), a...)
+	logf(ctx, PANIC, nil, "", a...)
 }
 
 // Panicf will log format string as 'msg' field to the log at PANIC level.
 // This will then call panic causing the application to crash.
-//
-//go:noinline
 func Panicf(ctx context.Context, s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
-	logf(ctx, 3, PANIC, nil, s, a...)
+	logf(ctx, PANIC, nil, s, a...)
 }
 
 // PanicKV will log the one key-value field to the log at PANIC level.
 // This will then call panic causing the application to crash.
-//
-//go:noinline
 func PanicKV(ctx context.Context, key string, value interface{}) {
 	defer panic(kv.Field{K: key, V: value}.String())
-	logf(ctx, 3, PANIC, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, PANIC, []kv.Field{{K: key, V: value}}, "")
 }
 
 // PanicKVs will log key-value fields to the log at PANIC level.
 // This will then call panic causing the application to crash.
-//
-//go:noinline
 func PanicKVs(ctx context.Context, kvs ...kv.Field) {
 	defer panic(kv.Fields(kvs).String())
-	logf(ctx, 3, PANIC, kvs, "")
+	logf(ctx, PANIC, kvs, "")
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
-//
-//go:noinline
-func Log(ctx context.Context, lvl LEVEL, a ...interface{}) {
-	logf(ctx, 3, lvl, nil, args(len(a)), a...)
+func Log(ctx context.Context, lvl LEVEL, a ...interface{}) { //nolint:revive
+	logf(ctx, lvl, nil, "", a...)
 }
 
 // Logf will log format string as 'msg' field to the log at given level.
-//
-//go:noinline
-func Logf(ctx context.Context, lvl LEVEL, s string, a ...interface{}) {
-	logf(ctx, 3, lvl, nil, s, a...)
+func Logf(ctx context.Context, lvl LEVEL, s string, a ...interface{}) { //nolint:revive
+	logf(ctx, lvl, nil, s, a...)
 }
 
 // LogKV will log the one key-value field to the log at given level.
-//
-//go:noinline
 func LogKV(ctx context.Context, lvl LEVEL, key string, value interface{}) { //nolint:revive
-	logf(ctx, 3, lvl, []kv.Field{{K: key, V: value}}, "")
+	logf(ctx, lvl, []kv.Field{{K: key, V: value}}, "")
 }
 
 // LogKVs will log key-value fields to the log at given level.
-//
-//go:noinline
 func LogKVs(ctx context.Context, lvl LEVEL, kvs ...kv.Field) { //nolint:revive
-	logf(ctx, 3, lvl, kvs, "")
+	logf(ctx, lvl, kvs, "")
 }
 
 // Print will log formatted args to the stdout log output.
-//
-//go:noinline
 func Print(a ...interface{}) {
-	printf(3, nil, args(len(a)), a...)
+	logf(context.Background(), UNSET, nil, "", a...)
 }
 
 // Printf will log format string to the stdout log output.
-//
-//go:noinline
 func Printf(s string, a ...interface{}) {
-	printf(3, nil, s, a...)
-}
-
-// PrintKVs will log the one key-value field to the stdout log output.
-//
-//go:noinline
-func PrintKV(key string, value interface{}) {
-	printf(3, []kv.Field{{K: key, V: value}}, "")
-}
-
-// PrintKVs will log key-value fields to the stdout log output.
-//
-//go:noinline
-func PrintKVs(kvs ...kv.Field) {
-	printf(3, kvs, "")
+	logf(context.Background(), UNSET, nil, s, a...)
 }
 
 //go:noinline
-func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
-	// Acquire buffer
-	buf := getBuf()
-
-	// Append formatted timestamp according to `timefmt`
-	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-
-	// Append formatted caller func
-	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, Caller(depth+1)...)
-	buf.B = append(buf.B, ' ')
-
-	if len(fields) > 0 {
-		// Append formatted fields
-		kv.Fields(fields).AppendFormat(buf, false)
-		buf.B = append(buf.B, ' ')
-	}
-
-	// Append formatted args
-	fmt.Fprintf(buf, s, a...)
-
-	if buf.B[len(buf.B)-1] != '\n' {
-		// Append a final newline
-		buf.B = append(buf.B, '\n')
-	}
-
-	if sysout != nil {
-		// Write log entry to syslog
-		logsys(INFO, buf.String())
-	}
-
-	// Write to log and release
-	_, _ = os.Stdout.Write(buf.B)
-	putBuf(buf)
-}
-
-//go:noinline
-func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string, a ...interface{}) {
+func logf(ctx context.Context, lvl LEVEL, fields []kv.Field, msg string, args ...interface{}) {
 	var out *os.File
 
 	// Check if enabled.
@@ -396,25 +285,20 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 		out = os.Stdout
 	}
 
-	// Acquire buffer
+	// Get log stamp.
+	now := time.Now()
+
+	// Get caller information.
+	pcs := make([]uintptr, 1)
+	_ = runtime.Callers(3, pcs)
+
+	// Acquire buffer.
 	buf := getBuf()
+	defer putBuf(buf)
 
-	// Append formatted timestamp according to `timefmt`
-	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-
-	// Append formatted caller func
-	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, Caller(depth+1)...)
-	buf.B = append(buf.B, ' ')
-
-	// Append formatted level string
-	buf.B = append(buf.B, `level=`...)
-	buf.B = append(buf.B, lvlstrs[lvl]...)
-	buf.B = append(buf.B, ' ')
-
-	if ctx != nil && len(ctxhooks) > 0 {
-		// Ensure fields have space for hooks (+1 for below).
-		fields = xslices.GrowJust(fields, len(ctxhooks)+1)
+	if ctx != nil {
+		// Ensure fields have space for context hooks.
+		fields = xslices.GrowJust(fields, len(ctxhooks))
 
 		// Pass context through hooks.
 		for _, hook := range ctxhooks {
@@ -422,18 +306,32 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 		}
 	}
 
-	if s != "" {
-		// Append message (if given) as final log field.
-		fields = xslices.AppendJust(fields, kv.Field{
-			K: "msg", V: fmt.Sprintf(s, a...),
-		})
+	// If no args, use placeholders.
+	if msg == "" && len(args) > 0 {
+		const argstr = `%v%v%v%v%v%v%v%v%v%v` +
+			`%v%v%v%v%v%v%v%v%v%v` +
+			`%v%v%v%v%v%v%v%v%v%v` +
+			`%v%v%v%v%v%v%v%v%v%v`
+		msg = argstr[:2*len(args)]
 	}
 
-	// Append formatted fields to log buffer.
-	kv.Fields(fields).AppendFormat(buf, false)
+	if msg != "" {
+		// Format the message string.
+		msg = fmt.Sprintf(msg, args...)
+	}
 
+	// Append formatted
+	// entry to buffer.
+	appendFormat(buf,
+		now,
+		pcs[0],
+		lvl,
+		fields,
+		msg,
+	)
+
+	// Ensure a final new-line char.
 	if buf.B[len(buf.B)-1] != '\n' {
-		// Append a final newline
 		buf.B = append(buf.B, '\n')
 	}
 
@@ -442,9 +340,8 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 		logsys(lvl, buf.String())
 	}
 
-	// Write to log and release
+	// Write to output file.
 	_, _ = out.Write(buf.B)
-	putBuf(buf)
 }
 
 // logsys will log given msg at given severity to the syslog.
@@ -466,28 +363,4 @@ func logsys(lvl LEVEL, msg string) {
 	case PANIC:
 		_ = sysout.Crit(msg)
 	}
-}
-
-// args returns an args format string of format '%v' * count.
-func args(count int) string {
-	const args = `%v%v%v%v%v%v%v%v%v%v` +
-		`%v%v%v%v%v%v%v%v%v%v` +
-		`%v%v%v%v%v%v%v%v%v%v` +
-		`%v%v%v%v%v%v%v%v%v%v`
-
-	// Use predetermined args str
-	if count < len(args) {
-		return args[:count*2]
-	}
-
-	// Allocate buffer of needed len
-	var buf strings.Builder
-	buf.Grow(count * 2)
-
-	// Manually build an args str
-	for i := 0; i < count; i++ {
-		buf.WriteString(`%v`)
-	}
-
-	return buf.String()
 }

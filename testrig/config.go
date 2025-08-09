@@ -57,7 +57,8 @@ func InitTestConfig() {
 func testDefaults() config.Configuration {
 	return config.Configuration{
 		LogLevel:                   envStr("GTS_LOG_LEVEL", "error"),
-		LogTimestampFormat:         "02/01/2006 15:04:05.000",
+		LogFormat:                  envStr("GTS_LOG_FORMAT", "logfmt"),
+		LogTimestampFormat:         envStr("GTS_LOG_TIMESTAMP_FORMAT", "02/01/2006 15:04:05.000"),
 		LogDbQueries:               true,
 		ApplicationName:            "gotosocial",
 		LandingPageUser:            "",

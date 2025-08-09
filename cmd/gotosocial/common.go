@@ -64,9 +64,15 @@ func preRun(a preRunArgs) error {
 // context, after initializing any last-minute things like loggers etc.
 func run(ctx context.Context, action action.GTSAction) error {
 	log.SetTimeFormat(config.GetLogTimestampFormat())
-	// Set the global log level from configuration
+
+	// Set the global log level from configuration.
 	if err := log.ParseLevel(config.GetLogLevel()); err != nil {
 		return fmt.Errorf("error parsing log level: %w", err)
+	}
+
+	// Set global log output format from configuration.
+	if err := log.ParseFormat(config.GetLogFormat()); err != nil {
+		return fmt.Errorf("error parsing log format: %w", err)
 	}
 
 	if config.GetSyslogEnabled() {

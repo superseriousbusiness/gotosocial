@@ -8,8 +8,6 @@ import (
 	"codeberg.org/gruf/go-kv/v2/format"
 )
 
-var formatter format.Formatter
-
 var argsDefault = format.DefaultArgs()
 
 var argsVerbose = func() format.Args {
@@ -29,7 +27,7 @@ func (f Field) AppendFormat(buf *byteutil.Buffer, vbose bool) {
 	}
 	AppendQuoteString(buf, f.K)
 	buf.WriteByte('=')
-	buf.B = formatter.Append(buf.B, f.V, args)
+	buf.B = format.Global.Append(buf.B, f.V, args)
 }
 
 // Value returns the formatted value string of this Field.
@@ -41,6 +39,6 @@ func (f Field) Value(vbose bool) string {
 		args = argsDefault
 	}
 	buf := make([]byte, 0, bufsize/2)
-	buf = formatter.Append(buf, f.V, args)
+	buf = format.Global.Append(buf, f.V, args)
 	return byteutil.B2S(buf)
 }

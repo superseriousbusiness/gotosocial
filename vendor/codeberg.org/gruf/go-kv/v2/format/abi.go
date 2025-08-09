@@ -1,4 +1,4 @@
-//go:build go1.24 && !go1.25
+//go:build go1.24 && !go1.26
 
 package format
 
@@ -39,26 +39,36 @@ type abi_EmptyInterface struct {
 	Data unsafe.Pointer
 }
 
+// abi_NonEmptyInterface is a copy of the memory layout of abi.NonEmptyInterface{},
+// which is to say also the memory layout of any interface containing method(s).
+//
+// see: go/src/internal/abi/iface.go on 1.25+
+// see: go/src/reflect/value.go on 1.24
+type abi_NonEmptyInterface struct {
+	ITab uintptr
+	Data unsafe.Pointer
+}
+
 // see: go/src/internal/abi/type.go Type.Kind()
 func abi_Type_Kind(t reflect.Type) uint8 {
-	iface := (*reflect_nonEmptyInterface)(unsafe.Pointer(&t))
-	atype := (*abi_Type)(unsafe.Pointer(iface.word))
+	iface := (*abi_NonEmptyInterface)(unsafe.Pointer(&t))
+	atype := (*abi_Type)(unsafe.Pointer(iface.Data))
 	return atype.Kind_ & abi_KindMask
 }
 
 // see: go/src/internal/abi/type.go Type.IfaceIndir()
 func abi_Type_IfaceIndir(t reflect.Type) bool {
-	iface := (*reflect_nonEmptyInterface)(unsafe.Pointer(&t))
-	atype := (*abi_Type)(unsafe.Pointer(iface.word))
+	iface := (*abi_NonEmptyInterface)(unsafe.Pointer(&t))
+	atype := (*abi_Type)(unsafe.Pointer(iface.Data))
 	return atype.Kind_&abi_KindDirectIface == 0
 }
 
-// pack_iface packs a new reflect.nonEmptyInterface{} using shielded itab
-// pointer and data (word) pointer, returning a pointer for caller casting.
+// pack_iface packs a new reflect.nonEmptyInterface{} using shielded
+// itab and data pointer, returning a pointer for caller casting.
 func pack_iface(itab uintptr, word unsafe.Pointer) unsafe.Pointer {
-	return unsafe.Pointer(&reflect_nonEmptyInterface{
-		itab: itab,
-		word: word,
+	return unsafe.Pointer(&abi_NonEmptyInterface{
+		ITab: itab,
+		Data: word,
 	})
 }
 
@@ -68,8 +78,8 @@ func pack_iface(itab uintptr, word unsafe.Pointer) unsafe.Pointer {
 // this is useful for later calls to pack_iface for known type.
 func get_iface_ITab[I any](t reflect.Type) uintptr {
 	s := reflect.New(t).Elem().Interface().(I)
-	i := (*reflect_nonEmptyInterface)(unsafe.Pointer(&s))
-	return i.itab
+	i := (*abi_NonEmptyInterface)(unsafe.Pointer(&s))
+	return i.ITab
 }
 
 // unpack_eface returns the .Data portion of an abi.EmptyInterface{}.
@@ -162,15 +172,6 @@ func reflect_map_elem_flags(elemType reflect.Type) reflect_flag {
 	return reflect_flag(abi_Type_Kind(elemType))
 }
 
-// reflect_nonEmptyInterface is a copy of the memory layout of reflect.nonEmptyInterface,
-// which is also to say the memory layout of any non-empty (i.e. w/ method) interface.
-//
-// see: go/src/reflect/value.go
-type reflect_nonEmptyInterface struct {
-	itab uintptr
-	word unsafe.Pointer
-}
-
 // reflect_Value is a copy of the memory layout of reflect.Value{}.
 //
 // see: go/src/reflect/value.go
@@ -190,7 +191,7 @@ func init() {
 // as the reflect.nonEmptyInterface{}, which itself will be a pointer
 // to the actual abi.Type{} that this reflect.Type{} is wrapping.
 func reflect_type_data(t reflect.Type) unsafe.Pointer {
-	return (*reflect_nonEmptyInterface)(unsafe.Pointer(&t)).word
+	return (*abi_NonEmptyInterface)(unsafe.Pointer(&t)).Data
 }
 
 // build_reflect_value manually builds a reflect.Value{} by setting the internal field members.

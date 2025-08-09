@@ -15,34 +15,46 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package log
+package format_test
 
 import (
-	"sync"
+	"testing"
+	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log/format"
 	"codeberg.org/gruf/go-byteutil"
 )
 
-// bufPool provides memory
-// pool of log buffers.
-var bufPool sync.Pool
+func BenchmarkStampCache(b *testing.B) {
+	var base format.Base
+	base.TimeFormat = `02/01/2006 15:04:05.000`
 
-// getBuf acquires a buffer from memory pool.
-func getBuf() *byteutil.Buffer {
-	buf, _ := bufPool.Get().(*byteutil.Buffer)
-	if buf == nil {
-		buf = new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 512)
-	}
-	return buf
+	b.RunParallel(func(pb *testing.PB) {
+		var buf byteutil.Buffer
+		buf.B = make([]byte, 0, 1024)
+
+		for pb.Next() {
+			base.AppendFormatStamp(&buf, time.Now())
+			buf.B = buf.B[:0]
+		}
+
+		buf.B = buf.B[:0]
+	})
 }
 
-// putBuf places (after resetting) buffer back in
-// memory pool, dropping if capacity too large.
-func putBuf(buf *byteutil.Buffer) {
-	if buf.Cap() > int(^uint16(0)) {
-		return // drop large buffer
-	}
-	buf.Reset()
-	bufPool.Put(buf)
+func BenchmarkNoStampCache(b *testing.B) {
+	var base format.Base
+	base.TimeFormat = `02/01/2006 15:04:05.000`
+
+	b.RunParallel(func(pb *testing.PB) {
+		var buf byteutil.Buffer
+		buf.B = make([]byte, 0, 1024)
+
+		for pb.Next() {
+			buf.B = time.Now().AppendFormat(buf.B, base.TimeFormat)
+			buf.B = buf.B[:0]
+		}
+
+		buf.B = buf.B[:0]
+	})
 }

@@ -18,6 +18,8 @@ codeberg.org/gruf/go-byteutil v1.3.0 h1:nRqJnCcRQ7xbfU6azw7zOzJrSMDIJHBqX6FL9vEM
 codeberg.org/gruf/go-byteutil v1.3.0/go.mod h1:chgnZz1LUcfaObaIFglxF5MRYQkJGjQf4WwVz95ccCM=
 codeberg.org/gruf/go-cache/v3 v3.6.1 h1:sY1XhYeskjZAuYeMm5R0o4Qymru5taNbzmZPSn1oXLE=
 codeberg.org/gruf/go-cache/v3 v3.6.1/go.mod h1:JUNjc4E8gRccn3t+B99akxURFrU6NTDkvFVcwiZirnw=
+codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf h1:Rzu7WLpscj2w1N+ClIHlJoTYf9SuqZrZ7E4f9T7jGdw=
+codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf/go.mod h1:jEyYiqCzH1TaxfclSFYthE32oI0dsMnRS6EHqy6y0uo=
 codeberg.org/gruf/go-debug v1.3.0 h1:PIRxQiWUFKtGOGZFdZ3Y0pqyfI0Xr87j224IYe2snZs=
 codeberg.org/gruf/go-debug v1.3.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors/v2 v2.3.2 h1:8ItWaOMfhDaqrJK1Pw8MO0Nu+o/tVcQtR5cJ58Vc4zo=
@@ -32,8 +34,8 @@ codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf h1:84s/ii8N6lYls
 codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf/go.mod h1:zZAICsp5rY7+hxnws2V0ePrWxE0Z2Z/KXcN3p/RQCfk=
 codeberg.org/gruf/go-kv v1.6.5 h1:ttPf0NA8F79pDqBttSudPTVCZmGncumeNIxmeM9ztz0=
 codeberg.org/gruf/go-kv v1.6.5/go.mod h1:c4PsGqw05bDScvISpK+d31SiDEpBorweCL50hsiK3dc=
-codeberg.org/gruf/go-kv/v2 v2.0.3 h1:Ge4/WFR417EFPwfDdsf8S80XAdKF74RJk5g+VerAg1k=
-codeberg.org/gruf/go-kv/v2 v2.0.3/go.mod h1:mNL6SrBnYGEyrx6Mh4E1tAdhO0+T9/1iBrPJxIwxY24=
+codeberg.org/gruf/go-kv/v2 v2.0.5 h1:FuUAJcdWrj1jzySalGpe8sZSvBLr+LbvZiHMjt014s0=
+codeberg.org/gruf/go-kv/v2 v2.0.5/go.mod h1:mNL6SrBnYGEyrx6Mh4E1tAdhO0+T9/1iBrPJxIwxY24=
 codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f h1:Ss6Z+vygy+jOGhj96d/GwsYYDd22QmIcH74zM7/nQkw=
 codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f/go.mod h1:F9pl4h34iuVN7kucKam9fLwsItTc+9mmaKt7pNXRd/4=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4 h1:IXwfoU7f2whT6+JKIKskNl/hBlmWmnF1vZd84Eb3cyA=

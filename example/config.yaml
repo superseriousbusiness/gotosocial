@@ -36,6 +36,19 @@ log-db-queries: false
 # Default: true
 log-client-ip: true
 
+# String. Format to use for formatting log entries.
+# Supports "logfmt" and "json", with examples below:
+#
+# logfmt:
+# func=router.(*Router).Start.func1 level=INFO msg="listening on 127.0.0.1:8080"
+#
+# json:
+# {"func":"router.(*Router).Start.func1", "level":"INFO", "msg":"listening on 127.0.0.1:8080"}
+#
+# Examples: ["logfmt", "json"]
+# Default: "logfmt"
+log-format: "logfmt"
+
 # String. Format to use for the timestamp in log lines.
 # If set to the empty string, the timestamp will be
 # ommitted from the logs entirely.

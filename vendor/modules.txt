@@ -232,6 +232,9 @@ codeberg.org/gruf/go-byteutil
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/simple
 codeberg.org/gruf/go-cache/v3/ttl
+# codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf
+## explicit; go 1.24.5
+codeberg.org/gruf/go-caller
 # codeberg.org/gruf/go-debug v1.3.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
@@ -255,7 +258,7 @@ codeberg.org/gruf/go-iotools
 ## explicit; go 1.20
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
-# codeberg.org/gruf/go-kv/v2 v2.0.3
+# codeberg.org/gruf/go-kv/v2 v2.0.5
 ## explicit; go 1.24
 codeberg.org/gruf/go-kv/v2
 codeberg.org/gruf/go-kv/v2/format

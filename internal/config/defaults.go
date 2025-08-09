@@ -29,6 +29,7 @@ import (
 // if you use this, you will still need to set Host, and, if desired, ConfigPath.
 var Defaults = Configuration{
 	LogLevel:           "info",
+	LogFormat:          "logfmt",
 	LogTimestampFormat: "02/01/2006 15:04:05.000",
 	LogDbQueries:       false,
 	ApplicationName:    "gotosocial",

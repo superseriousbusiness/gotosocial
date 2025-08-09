@@ -19,7 +19,8 @@ package log
 
 import (
 	"runtime"
-	"strings"
+
+	"codeberg.org/gruf/go-caller"
 )
 
 // Caller fetches the calling function name, skipping 'depth'.
@@ -27,29 +28,6 @@ import (
 //go:noinline
 func Caller(depth int) string {
 	pcs := make([]uintptr, 1)
-
-	// Fetch calling func using depth.
 	_ = runtime.Callers(depth, pcs)
-	fn := runtime.FuncForPC(pcs[0])
-
-	if fn == nil {
-		return ""
-	}
-
-	// Get func name.
-	name := fn.Name()
-
-	// Drop all but package and function name, no path.
-	if idx := strings.LastIndex(name, "/"); idx >= 0 {
-		name = name[idx+1:]
-	}
-
-	const params = `[...]`
-
-	// Drop any function generic type parameter markers.
-	if idx := strings.Index(name, params); idx >= 0 {
-		name = name[:idx] + name[idx+len(params):]
-	}
-
-	return name
+	return caller.Get(pcs[0])
 }

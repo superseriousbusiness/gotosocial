@@ -45,7 +45,7 @@ func getInterfaceStringerType(t typenode) FormatFunc {
 	case true:
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
-			if s.P == nil || (*reflect_nonEmptyInterface)(s.P).word == nil {
+			if s.P == nil || (*abi_NonEmptyInterface)(s.P).Data == nil {
 				appendNil(s)
 				return
 			}
@@ -54,7 +54,7 @@ func getInterfaceStringerType(t typenode) FormatFunc {
 		})
 	case false:
 		return with_typestr_ptrs(t, func(s *State) {
-			if s.P == nil || (*reflect_nonEmptyInterface)(s.P).word == nil {
+			if s.P == nil || (*abi_NonEmptyInterface)(s.P).Data == nil {
 				appendNil(s)
 				return
 			}
@@ -102,7 +102,7 @@ func getInterfaceErrorType(t typenode) FormatFunc {
 	case true:
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
-			if s.P == nil || (*reflect_nonEmptyInterface)(s.P).word == nil {
+			if s.P == nil || (*abi_NonEmptyInterface)(s.P).Data == nil {
 				appendNil(s)
 				return
 			}
@@ -111,7 +111,7 @@ func getInterfaceErrorType(t typenode) FormatFunc {
 		})
 	case false:
 		return with_typestr_ptrs(t, func(s *State) {
-			if s.P == nil || (*reflect_nonEmptyInterface)(s.P).word == nil {
+			if s.P == nil || (*abi_NonEmptyInterface)(s.P).Data == nil {
 				appendNil(s)
 				return
 			}

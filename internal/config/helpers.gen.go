@@ -30,6 +30,7 @@ import (
 
 const (
 	LogLevelFlag                                   = "log-level"
+	LogFormatFlag                                  = "log-format"
 	LogTimestampFormatFlag                         = "log-timestamp-format"
 	LogDbQueriesFlag                               = "log-db-queries"
 	LogClientIPFlag                                = "log-client-ip"
@@ -226,6 +227,7 @@ const (
 
 func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.String("log-level", cfg.LogLevel, "Log level to run at: [trace, debug, info, warn, fatal]")
+	flags.String("log-format", cfg.LogFormat, "Log output format: [logfmt, json]")
 	flags.String("log-timestamp-format", cfg.LogTimestampFormat, "Format to use for the log timestamp, as supported by Go's time.Layout")
 	flags.Bool("log-db-queries", cfg.LogDbQueries, "Log database queries verbosely when log-level is trace or debug")
 	flags.Bool("log-client-ip", cfg.LogClientIP, "Include the client IP in logs")
@@ -412,8 +414,9 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 193)
+	cfgmap := make(map[string]any, 194)
 	cfgmap["log-level"] = cfg.LogLevel
+	cfgmap["log-format"] = cfg.LogFormat
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
 	cfgmap["log-client-ip"] = cfg.LogClientIP
@@ -620,6 +623,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.LogLevel, err = cast.ToStringE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> string for 'log-level': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["log-format"]; ok {
+		var err error
+		cfg.LogFormat, err = cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'log-format': %w", ival, err)
 		}
 	}
 
@@ -2217,6 +2228,28 @@ func GetLogLevel() string { return global.GetLogLevel() }
 
 // SetLogLevel safely sets the value for global configuration 'LogLevel' field
 func SetLogLevel(v string) { global.SetLogLevel(v) }
+
+// GetLogFormat safely fetches the Configuration value for state's 'LogFormat' field
+func (st *ConfigState) GetLogFormat() (v string) {
+	st.mutex.RLock()
+	v = st.config.LogFormat
+	st.mutex.RUnlock()
+	return
+}
+
+// SetLogFormat safely sets the Configuration value for state's 'LogFormat' field
+func (st *ConfigState) SetLogFormat(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LogFormat = v
+	st.reloadToViper()
+}
+
+// GetLogFormat safely fetches the value for global configuration 'LogFormat' field
+func GetLogFormat() string { return global.GetLogFormat() }
+
+// SetLogFormat safely sets the value for global configuration 'LogFormat' field
+func SetLogFormat(v string) { global.SetLogFormat(v) }
 
 // GetLogTimestampFormat safely fetches the Configuration value for state's 'LogTimestampFormat' field
 func (st *ConfigState) GetLogTimestampFormat() (v string) {

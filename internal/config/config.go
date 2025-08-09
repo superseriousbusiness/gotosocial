@@ -55,6 +55,7 @@ func fieldtag(field, tag string) string {
 // https://github.com/mvdan/gofumpt.
 type Configuration struct {
 	LogLevel           string `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
+	LogFormat          string `name:"log-format" usage:"Log output format: [logfmt, json]"`
 	LogTimestampFormat string `name:"log-timestamp-format" usage:"Format to use for the log timestamp, as supported by Go's time.Layout"`
 	LogDbQueries       bool   `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
 	LogClientIP        bool   `name:"log-client-ip" usage:"Include the client IP in logs"`

@@ -97,11 +97,12 @@ func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]TypeO
 func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
 	var accounts []Accountable
 
-	for i := 0; i < len(arr); i++ {
+	for i := 0; i < len(arr); {
 		elem := arr[i]
 
 		if elem.IsIRI() {
 			// skip IRIs
+			i++ // iter
 			continue
 		}
 
@@ -112,6 +113,7 @@ func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
 		// Try cast AS type as Accountable.
 		account, ok := ToAccountable(t)
 		if !ok {
+			i++ // iter
 			continue
 		}
 
@@ -130,11 +132,12 @@ func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
 func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
 	var statuses []Statusable
 
-	for i := 0; i < len(arr); i++ {
+	for i := 0; i < len(arr); {
 		elem := arr[i]
 
 		if elem.IsIRI() {
 			// skip IRIs
+			i++ // iter
 			continue
 		}
 
@@ -145,10 +148,11 @@ func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
 		// Try cast AS type as Statusable.
 		status, ok := ToStatusable(t)
 		if !ok {
+			i++ // iter
 			continue
 		}
 
-		// Add casted Statusable type.
+		// Append casted Statusable type.
 		statuses = append(statuses, status)
 
 		// Drop elem from slice.
@@ -163,11 +167,12 @@ func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
 func ExtractPollOptionables(arr []TypeOrIRI) ([]PollOptionable, []TypeOrIRI) {
 	var options []PollOptionable
 
-	for i := 0; i < len(arr); i++ {
+	for i := 0; i < len(arr); {
 		elem := arr[i]
 
 		if elem.IsIRI() {
 			// skip IRIs
+			i++ // iter
 			continue
 		}
 
@@ -178,6 +183,7 @@ func ExtractPollOptionables(arr []TypeOrIRI) ([]PollOptionable, []TypeOrIRI) {
 		// Try cast as PollOptionable.
 		option, ok := ToPollOptionable(t)
 		if !ok {
+			i++ // iter
 			continue
 		}
 

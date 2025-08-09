@@ -8,6 +8,9 @@ import (
 	"unsafe"
 )
 
+// Global formatter instance.
+var Global Formatter
+
 // FormatFunc defines a function capable of formatting
 // the value contained in State{}.P, based on args in
 // State{}.A, storing the result in buffer State{}.B.
@@ -48,7 +51,7 @@ const ringsz = 16
 
 // ptr_ring is a ring buffer of pointers,
 // purposely stored as uintptrs as all we
-// need them for is value comparisons and
+// need them for is integer comparisons and
 // we don't want to hold-up the GC.
 type ptr_ring struct {
 	p [ringsz]uintptr
@@ -296,38 +299,60 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
 	if t.rtype.NumMethod() == 0 {
 		return func(s *State) {
+			// Unpack empty interface.
 			eface := *(*any)(s.P)
 			s.P = unpack_eface(eface)
+
+			// Get reflected type information.
 			rtype := reflect.TypeOf(eface)
 			if rtype == nil {
 				appendNil(s)
 				return
 			}
+
+			// Check for ptr recursion.
 			if s.ifaces.contains(s.P) {
 				getPointerType(t)(s)
 				return
 			}
+
+			// Store value ptr.
 			s.ifaces.set(s.P)
+
+			// Wrap in our typenode for before load.
 			flags := reflect_iface_elem_flags(rtype)
 			t := new_typenode(rtype, flags)
+
+			// Load + pass to func.
 			fmt.loadOrStore(t)(s)
 		}
 	} else {
 		return func(s *State) {
+			// Unpack interface-with-method ptr.
 			iface := *(*interface{ M() })(s.P)
 			s.P = unpack_eface(iface)
+
+			// Get reflected type information.
 			rtype := reflect.TypeOf(iface)
 			if rtype == nil {
 				appendNil(s)
 				return
 			}
+
+			// Check for ptr recursion.
 			if s.ifaces.contains(s.P) {
 				getPointerType(t)(s)
 				return
 			}
+
+			// Store value ptr.
 			s.ifaces.set(s.P)
+
+			// Wrap in our typenode for before load.
 			flags := reflect_iface_elem_flags(rtype)
 			t := new_typenode(rtype, flags)
+
+			// Load + pass to func.
 			fmt.loadOrStore(t)(s)
 		}
 	}
@@ -360,14 +385,11 @@ func getIntType(t typenode) FormatFunc {
 			switch {
 			case s.A.AsNumber():
 				// fallthrough
-			case s.A.AsQuotedText():
-				s.B = strconv.AppendQuoteRune(s.B, *(*rune)(s.P))
-				return
 			case s.A.AsQuotedASCII():
 				s.B = strconv.AppendQuoteRuneToASCII(s.B, *(*rune)(s.P))
 				return
-			case s.A.AsText():
-				s.B = AppendEscapeRune(s.B, *(*rune)(s.P))
+			case s.A.AsText() || s.A.AsQuotedText():
+				s.B = strconv.AppendQuoteRune(s.B, *(*rune)(s.P))
 				return
 			}
 			appendInt(s, int64(*(*int32)(s.P)))
@@ -388,11 +410,8 @@ func getUintType(t typenode) FormatFunc {
 			switch {
 			case s.A.AsNumber():
 				// fallthrough
-			case s.A.AsQuotedText() || s.A.AsQuotedASCII():
+			case s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII():
 				s.B = AppendQuoteByte(s.B, *(*byte)(s.P))
-				return
-			case s.A.AsText():
-				s.B = AppendEscapeByte(s.B, *(*byte)(s.P))
 				return
 			}
 			appendUint(s, uint64(*(*uint8)(s.P)))
@@ -468,10 +487,17 @@ func with_typestr_ptrs(t typenode, fn FormatFunc) FormatFunc {
 	if fn == nil {
 		panic("nil func")
 	}
+
+	// Check for type wrapping.
 	if !t.needs_typestr() {
 		return fn
 	}
+
+	// Get type string with pointers.
 	typestr := t.typestr_with_ptrs()
+
+	// Wrap format func to include
+	// type information when needed.
 	return func(s *State) {
 		if s.A.WithType() {
 			s.B = append(s.B, "("+typestr+")("...)
@@ -485,7 +511,7 @@ func with_typestr_ptrs(t typenode, fn FormatFunc) FormatFunc {
 
 func appendString(s *State, v string) {
 	switch {
-	case s.A.Logfmt() || s.A.WithType():
+	case s.A.WithType():
 		if len(v) > SingleTermLine || !IsSafeASCII(v) {
 			// Requires quoting AND escaping
 			s.B = strconv.AppendQuote(s.B, v)
@@ -494,8 +520,22 @@ func appendString(s *State, v string) {
 			s.B = append(s.B, '"')
 			s.B = AppendEscape(s.B, v)
 			s.B = append(s.B, '"')
-		} else if s.A.WithType() ||
-			len(v) == 0 || ContainsSpaceOrTab(v) {
+		} else {
+			// All else, needs quotes
+			s.B = append(s.B, '"')
+			s.B = append(s.B, v...)
+			s.B = append(s.B, '"')
+		}
+	case s.A.Logfmt():
+		if len(v) > SingleTermLine || !IsSafeASCII(v) {
+			// Requires quoting AND escaping
+			s.B = strconv.AppendQuote(s.B, v)
+		} else if ContainsDoubleQuote(v) {
+			// Contains double quotes, needs escaping
+			s.B = append(s.B, '"')
+			s.B = AppendEscape(s.B, v)
+			s.B = append(s.B, '"')
+		} else if len(v) == 0 || ContainsSpaceOrTab(v) {
 			// Contains space / empty, needs quotes
 			s.B = append(s.B, '"')
 			s.B = append(s.B, v...)
@@ -515,75 +555,114 @@ func appendString(s *State, v string) {
 
 func appendInt(s *State, v int64) {
 	args := s.A.Int
+
+	// Set argument defaults.
 	if args == zeroArgs.Int {
 		args = defaultArgs.Int
 	}
+
+	// Add any padding.
 	if args.Pad > 0 {
 		const zeros = `00000000000000000000`
 		if args.Pad > len(zeros) {
 			panic("cannot pad > " + zeros)
 		}
+
 		if v == 0 {
 			s.B = append(s.B, zeros[:args.Pad]...)
 			return
 		}
+
+		// Get absolute.
 		abs := abs64(v)
+
+		// Get number of required chars.
 		chars := int(v / int64(args.Base))
 		if v%int64(args.Base) != 0 {
 			chars++
 		}
+
 		if abs != v {
+			// If this is a negative value,
+			// prepend minus ourselves and
+			// set value as the absolute.
 			s.B = append(s.B, '-')
 			v = abs
 		}
-		if n := args.Pad - chars; n > 0 {
-			s.B = append(s.B, zeros[:n]...)
-		}
+
+		// Prepend required zeros.
+		n := args.Pad - chars
+		s.B = append(s.B, zeros[:n]...)
 	}
+
+	// Append value as signed integer w/ args.
 	s.B = strconv.AppendInt(s.B, v, args.Base)
 }
 
 func appendUint(s *State, v uint64) {
 	args := s.A.Int
+
+	// Set argument defaults.
 	if args == zeroArgs.Int {
 		args = defaultArgs.Int
 	}
+
+	// Add any padding.
 	if args.Pad > 0 {
 		const zeros = `00000000000000000000`
 		if args.Pad > len(zeros) {
 			panic("cannot pad > " + zeros)
 		}
+
 		if v == 0 {
 			s.B = append(s.B, zeros[:args.Pad]...)
 			return
 		}
+
+		// Get number of required chars.
 		chars := int(v / uint64(args.Base))
 		if v%uint64(args.Base) != 0 {
 			chars++
 		}
-		if n := args.Pad - chars; n > 0 {
-			s.B = append(s.B, zeros[:n]...)
-		}
+
+		// Prepend required zeros.
+		n := args.Pad - chars
+		s.B = append(s.B, zeros[:n]...)
 	}
+
+	// Append value as unsigned integer w/ args.
 	s.B = strconv.AppendUint(s.B, v, args.Base)
 }
 
 func appendFloat(s *State, v float64, bits int) {
 	args := s.A.Float
+
+	// Set argument defaults.
 	if args == zeroArgs.Float {
 		args = defaultArgs.Float
 	}
-	s.B = strconv.AppendFloat(s.B, float64(v), args.Fmt, args.Prec, bits)
+
+	// Append value as float${bit} w/ args.
+	s.B = strconv.AppendFloat(s.B, float64(v),
+		args.Fmt, args.Prec, bits)
 }
 
 func appendComplex(s *State, r, i float64, bits int) {
 	args := s.A.Complex
+
+	// Set argument defaults.
 	if args == zeroArgs.Complex {
 		args = defaultArgs.Complex
 	}
-	s.B = strconv.AppendFloat(s.B, float64(r), args.Real.Fmt, args.Real.Prec, bits)
+
+	// Append real value as float${bit} w/ args.
+	s.B = strconv.AppendFloat(s.B, float64(r),
+		args.Real.Fmt, args.Real.Prec, bits)
 	s.B = append(s.B, '+')
-	s.B = strconv.AppendFloat(s.B, float64(i), args.Imag.Fmt, args.Imag.Prec, bits)
+
+	// Append imag value as float${bit} w/ args.
+	s.B = strconv.AppendFloat(s.B, float64(i),
+		args.Imag.Fmt, args.Imag.Prec, bits)
 	s.B = append(s.B, 'i')
 }
 

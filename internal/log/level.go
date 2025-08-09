@@ -17,22 +17,18 @@
 
 package log
 
-// LEVEL defines a level of logging.
-type LEVEL uint8
-
-// Default levels of logging.
-const (
-	UNSET LEVEL = 0
-	PANIC LEVEL = 1
-	ERROR LEVEL = 100
-	WARN  LEVEL = 150
-	INFO  LEVEL = 200
-	DEBUG LEVEL = 250
-	TRACE LEVEL = 254
-	ALL   LEVEL = ^LEVEL(0)
+import (
+	"code.superseriousbusiness.org/gotosocial/internal/log/level"
 )
 
-// CanLog returns whether an incoming log of 'lvl' can be logged against receiving level.
-func (loglvl LEVEL) CanLog(lvl LEVEL) bool {
-	return loglvl > lvl
-}
+type LEVEL = level.LEVEL
+
+const (
+	PANIC = level.PANIC
+	ERROR = level.ERROR
+	WARN  = level.WARN
+	INFO  = level.INFO
+	DEBUG = level.DEBUG
+	TRACE = level.TRACE
+	UNSET = level.UNSET
+)

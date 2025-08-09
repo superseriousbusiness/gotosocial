@@ -1,8 +1,6 @@
 module code.superseriousbusiness.org/gotosocial
 
-go 1.24
-
-toolchain go1.24.3
+go 1.24.5
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.32.3-gts-go1.23-fix
@@ -19,12 +17,13 @@ require (
 	codeberg.org/gruf/go-bytesize v1.0.3
 	codeberg.org/gruf/go-byteutil v1.3.0
 	codeberg.org/gruf/go-cache/v3 v3.6.1
+	codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-ffmpreg v0.6.8
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
-	codeberg.org/gruf/go-kv/v2 v2.0.3
+	codeberg.org/gruf/go-kv/v2 v2.0.5
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 	codeberg.org/gruf/go-mutexes v1.5.2

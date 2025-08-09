@@ -31,7 +31,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/workers"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
-	"codeberg.org/gruf/go-kv/v2"
+	"codeberg.org/gruf/go-kv/v2/format"
 )
 
 // Starts workers on the provided state using noop processing functions.
@@ -282,7 +282,6 @@ func WaitFor(condition func() bool) bool {
 
 // dump returns debug output of 'v'.
 func dump(v any) string {
-	var kv kv.Field
-	kv.V = v
-	return kv.Value(false)
+	buf := format.Global.Append(nil, v, format.DefaultArgs())
+	return string(buf)
 }

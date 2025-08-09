@@ -23,7 +23,8 @@ import (
 	"strings"
 )
 
-// ParseLevel will parse the log level from given string and set to appropriate LEVEL.
+// ParseLevel will parse the log level from
+// given string and set to appropriate LEVEL.
 func ParseLevel(str string) error {
 	switch strings.ToLower(str) {
 	case "trace":
@@ -44,16 +45,22 @@ func ParseLevel(str string) error {
 	return nil
 }
 
-// EnableSyslog will enabling logging to the syslog at given address.
-func EnableSyslog(proto, addr string) error {
-	// Dial a connection to the syslog daemon
-	writer, err := syslog.Dial(proto, addr, 0, "gotosocial")
-	if err != nil {
-		return err
+// ParseFormat will parse the log format from
+// given string and set appropriate formatter.
+func ParseFormat(str string) error {
+	switch strings.ToLower(str) {
+	case "json":
+		SetJSON(true)
+	case "", "logfmt":
+		SetJSON(false)
+	default:
+		return fmt.Errorf("unknown log format: %q", str)
 	}
-
-	// Set the syslog writer
-	sysout = writer
-
 	return nil
+}
+
+// EnableSyslog will enabling logging to the syslog at given address.
+func EnableSyslog(proto, addr string) (err error) {
+	sysout, err = syslog.Dial(proto, addr, 0, "gotosocial")
+	return err
 }

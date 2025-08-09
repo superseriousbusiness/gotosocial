@@ -20,6 +20,7 @@ package federatingdb
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
@@ -212,15 +213,23 @@ func getActivityContext(ctx context.Context) activityContext {
 // lazy-serialization along with error output.
 type serialize struct{ item vocab.Type }
 
+func (s serialize) MarshalJSON() ([]byte, error) {
+	m, err := ap.Serialize(s.item)
+	if err != nil {
+		return nil, fmt.Errorf("error serializing: %w", err)
+	}
+	return json.Marshal(m)
+}
+
 func (s serialize) String() string {
 	m, err := ap.Serialize(s.item)
 	if err != nil {
-		return "!(error serializing item: " + err.Error() + ")"
+		return "!(error serializing: " + err.Error() + ")"
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return "!(error json marshaling item: " + err.Error() + ")"
+		return "!(error marshaling: " + err.Error() + ")"
 	}
 
 	return byteutil.B2S(b)

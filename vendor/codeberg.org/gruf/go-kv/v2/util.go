@@ -17,8 +17,8 @@ func AppendQuoteString(buf *byteutil.Buffer, str string) {
 		return
 
 	case len(str) == 1:
-		// Append escaped single byte.
-		buf.B = format.AppendEscapeByte(buf.B, str[0])
+		// Append quoted escaped single byte.
+		buf.B = format.AppendQuoteByte(buf.B, str[0])
 		return
 
 	case len(str) > format.SingleTermLine || !format.IsSafeASCII(str):
@@ -62,7 +62,7 @@ func AppendQuoteValue(buf *byteutil.Buffer, str string) {
 		return
 
 	case len(str) == 1:
-		// Append quoted single byte.
+		// Append quoted escaped single byte.
 		buf.B = format.AppendQuoteByte(buf.B, str[0])
 		return
 
