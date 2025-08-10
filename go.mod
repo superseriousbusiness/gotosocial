@@ -6,7 +6,7 @@ go 1.24.5
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.32.3-gts-go1.23-fix
 
 // Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
-replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.0-concurrency-workaround
+replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.2-concurrency-workaround
 
 require (
 	code.superseriousbusiness.org/activity v1.16.0
@@ -23,7 +23,7 @@ require (
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-ffmpreg v0.6.8
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
-	codeberg.org/gruf/go-kv/v2 v2.0.5
+	codeberg.org/gruf/go-kv/v2 v2.0.6
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 	codeberg.org/gruf/go-mutexes v1.5.2
@@ -36,7 +36,7 @@ require (
 	github.com/KimMachineGun/automemlimit v0.7.4
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/buckket/go-blurhash v1.1.0
-	github.com/coreos/go-oidc/v3 v3.14.1
+	github.com/coreos/go-oidc/v3 v3.15.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/gzip v1.2.3
 	github.com/gin-contrib/sessions v1.0.4
@@ -50,7 +50,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/miekg/dns v1.1.67
+	github.com/miekg/dns v1.1.68
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.27.1
@@ -62,7 +62,7 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	github.com/tdewolff/minify/v2 v2.23.9
+	github.com/tdewolff/minify/v2 v2.23.11
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
 	github.com/tetratelabs/wazero v1.9.0
@@ -73,7 +73,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.15
 	github.com/uptrace/bun/extra/bunotel v1.2.15
 	github.com/wagslane/go-password-validator v0.3.0
-	github.com/yuin/goldmark v1.7.12
+	github.com/yuin/goldmark v1.7.13
 	go.opentelemetry.io/contrib/exporters/autoexport v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.62.0
 	go.opentelemetry.io/otel v1.37.0
@@ -82,15 +82,15 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/crypto v0.40.0
-	golang.org/x/image v0.29.0
-	golang.org/x/net v0.42.0
+	golang.org/x/crypto v0.41.0
+	golang.org/x/image v0.30.0
+	golang.org/x/net v0.43.0
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/sys v0.34.0
-	golang.org/x/text v0.27.0
+	golang.org/x/sys v0.35.0
+	golang.org/x/text v0.28.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.38.0
+	modernc.org/sqlite v1.38.2
 	mvdan.cc/xurls/v2 v2.6.0
 )
 
@@ -101,6 +101,7 @@ require (
 	codeberg.org/gruf/go-kv v1.6.5 // indirect
 	codeberg.org/gruf/go-mangler v1.4.4 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
+	codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
@@ -201,7 +202,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tdewolff/parse/v2 v2.8.1 // indirect
+	github.com/tdewolff/parse/v2 v2.8.2-0.20250806174018-50048bb39781 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
@@ -229,16 +230,16 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
+	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	modernc.org/libc v1.65.10 // indirect
+	modernc.org/libc v1.66.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )

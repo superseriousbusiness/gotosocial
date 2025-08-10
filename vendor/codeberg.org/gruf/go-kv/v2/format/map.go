@@ -1,21 +1,25 @@
 package format
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"codeberg.org/gruf/go-xunsafe"
+)
 
 // iterMapType returns a FormatFunc capable of iterating
-// and formatting the given map type currently in typenode{}.
+// and formatting the given map type currently in TypeIter{}.
 // note this will fetch sub-FormatFuncs for key / value types.
-func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
+func (fmt *Formatter) iterMapType(t xunsafe.TypeIter) FormatFunc {
 
 	// Key / value types.
-	key := t.rtype.Key()
-	elem := t.rtype.Elem()
+	key := t.Type.Key()
+	elem := t.Type.Elem()
 
-	// Get nested k / v typenodes with appropriate flags.
-	flagsKey := reflect_map_key_flags(key)
-	flagsVal := reflect_map_elem_flags(elem)
-	kt := t.next(t.rtype.Key(), flagsKey)
-	vt := t.next(t.rtype.Elem(), flagsVal)
+	// Get nested k / v TypeIters with appropriate flags.
+	flagsKey := xunsafe.ReflectMapKeyFlags(key) | flagKeyType
+	flagsVal := xunsafe.ReflectMapElemFlags(elem)
+	kt := t.Child(key, flagsKey)
+	vt := t.Child(elem, flagsVal)
 
 	// Get key format func.
 	kfn := fmt.loadOrGet(kt)
@@ -30,14 +34,14 @@ func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
 	}
 
 	// Final map type.
-	rtype := t.rtype
-	flags := t.flags
+	rtype := t.Type
+	flags := t.Flag
 
 	// Map type string with ptrs / refs.
-	typestrPtrs := t.typestr_with_ptrs()
-	typestrRefs := t.typestr_with_refs()
+	typestrPtrs := typestr_with_ptrs(t)
+	typestrRefs := typestr_with_refs(t)
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			if s.P == nil || *(*unsafe.Pointer)(s.P) == nil {
 				// Append nil.
@@ -45,9 +49,9 @@ func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
 				return
 			}
 
-			// Build reflect value, and then a map iter.
-			v := build_reflect_value(rtype, s.P, flags)
-			i := map_iter(v)
+			// Build reflect value, and then a map iterator.
+			v := xunsafe.BuildReflectValue(rtype, s.P, flags)
+			i := xunsafe.GetMapIter(v)
 
 			// Prepend object brace.
 			s.B = append(s.B, '{')
@@ -56,15 +60,15 @@ func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
 			l := len(s.B)
 
 			for i.Next() {
-				// Pass to key fn.
-				s.P = map_key(i)
+				// Pass to map key func.
+				s.P = xunsafe.Map_Key(i)
 				kfn(s)
 
 				// Add key seperator.
 				s.B = append(s.B, '=')
 
-				// Pass to elem fn.
-				s.P = map_elem(i)
+				// Pass to map elem func.
+				s.P = xunsafe.Map_Elem(i)
 				vfn(s)
 
 				// Add comma pair seperator.
@@ -89,8 +93,8 @@ func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
 		}
 
 		// Build reflect value, and then a map iter.
-		v := build_reflect_value(rtype, s.P, flags)
-		i := map_iter(v)
+		v := xunsafe.BuildReflectValue(rtype, s.P, flags)
+		i := xunsafe.GetMapIter(v)
 
 		// Include type info.
 		if s.A.WithType() {
@@ -104,15 +108,15 @@ func (fmt *Formatter) iterMapType(t typenode) FormatFunc {
 		l := len(s.B)
 
 		for i.Next() {
-			// Pass to key fn.
-			s.P = map_key(i)
+			// Pass to map key func.
+			s.P = xunsafe.Map_Key(i)
 			kfn(s)
 
 			// Add key seperator.
 			s.B = append(s.B, '=')
 
-			// Pass to elem fn.
-			s.P = map_elem(i)
+			// Pass to map elem func.
+			s.P = xunsafe.Map_Elem(i)
 			vfn(s)
 
 			// Add comma pair seperator.

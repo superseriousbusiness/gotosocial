@@ -3,58 +3,17 @@ package format
 import (
 	"reflect"
 	"strings"
+
+	"codeberg.org/gruf/go-xunsafe"
 )
 
-// typenode ...
-type typenode struct {
-	typeinfo
-	parent *typenode
-}
-
-// typeinfo ...
-type typeinfo struct {
-	rtype reflect.Type
-	flags reflect_flag
-}
-
-// new_typenode returns a new typenode{} with reflect.Type and flags.
-func new_typenode(t reflect.Type, flags reflect_flag) typenode {
-	return typenode{typeinfo: typeinfo{
-		rtype: t,
-		flags: flags,
-	}}
-}
-
-// key returns data (i.e. type value info)
-// to store a FormatFunc under in a cache.
-func (n typenode) key() typeinfo {
-	return n.typeinfo
-}
-
-// indirect returns whether reflect_flagIndir is set for given type flags.
-func (n typenode) indirect() bool {
-	return n.flags&reflect_flagIndir != 0
-}
-
-// iface_indir returns the result of abi.Type{}.IfaceIndir() for underlying type.
-func (n typenode) iface_indir() bool {
-	return abi_Type_IfaceIndir(n.rtype)
-}
-
-// next ...
-func (n typenode) next(t reflect.Type, flags reflect_flag) typenode {
-	child := new_typenode(t, flags)
-	child.parent = &n
-	return child
-}
-
 // visit ...
-func (n typenode) visit() bool {
-	t := n.rtype
+func visit(iter xunsafe.TypeIter) bool {
+	t := iter.Type
 
 	// Check if type is already encountered further up tree.
-	for node := n.parent; node != nil; node = node.parent {
-		if node.rtype == t {
+	for node := iter.Parent; node != nil; node = node.Parent {
+		if node.Type == t {
 			return false
 		}
 	}
@@ -63,16 +22,16 @@ func (n typenode) visit() bool {
 }
 
 // needs_typestr returns whether the type contained in the
-// receiving typenode{} needs type string information prefixed
+// receiving TypeIter{} needs type string information prefixed
 // when the TypeMask argument flag bit is set. Certain types
 // don't need this as the parent type already indicates this.
-func (n typenode) needs_typestr() bool {
-	if n.parent == nil {
+func needs_typestr(iter xunsafe.TypeIter) bool {
+	if iter.Parent == nil {
 		return true
 	}
-	switch p := n.parent.rtype; p.Kind() {
+	switch p := iter.Parent.Type; p.Kind() {
 	case reflect.Pointer:
-		return n.parent.needs_typestr()
+		return needs_typestr(*iter.Parent)
 	case reflect.Slice,
 		reflect.Array,
 		reflect.Map:
@@ -83,17 +42,17 @@ func (n typenode) needs_typestr() bool {
 }
 
 // typestr_with_ptrs returns the type string for
-// current typenode{} with asterisks for pointers.
-func (n typenode) typestr_with_ptrs() string {
-	t := n.rtype
+// current xunsafe.TypeIter{} with asterisks for pointers.
+func typestr_with_ptrs(iter xunsafe.TypeIter) string {
+	t := iter.Type
 
 	// Check for parent.
-	if n.parent == nil {
+	if iter.Parent == nil {
 		return t.String()
 	}
 
 	// Get parent type.
-	p := n.parent.rtype
+	p := iter.Parent.Type
 
 	// If parent is not ptr, then
 	// this was not a deref'd ptr.
@@ -107,17 +66,17 @@ func (n typenode) typestr_with_ptrs() string {
 }
 
 // typestr_with_refs returns the type string for
-// current typenode{} with ampersands for pointers.
-func (n typenode) typestr_with_refs() string {
-	t := n.rtype
+// current xunsafe.TypeIter{} with ampersands for pointers.
+func typestr_with_refs(iter xunsafe.TypeIter) string {
+	t := iter.Type
 
 	// Check for parent.
-	if n.parent == nil {
+	if iter.Parent == nil {
 		return t.String()
 	}
 
 	// Get parent type.
-	p := n.parent.rtype
+	p := iter.Parent.Type
 
 	var d int
 

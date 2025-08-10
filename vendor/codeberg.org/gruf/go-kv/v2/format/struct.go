@@ -1,5 +1,7 @@
 package format
 
+import "codeberg.org/gruf/go-xunsafe"
+
 // field stores the minimum necessary
 // data for iterating and formatting
 // each field in a given struct.
@@ -10,23 +12,23 @@ type field struct {
 }
 
 // iterStructType returns a FormatFunc capable of iterating
-// and formatting the given struct type currently in typenode{}.
+// and formatting the given struct type currently in TypeIter{}.
 // note this will fetch sub-FormatFuncs for each struct field.
-func (fmt *Formatter) iterStructType(t typenode) FormatFunc {
+func (fmt *Formatter) iterStructType(t xunsafe.TypeIter) FormatFunc {
 	// Number of struct fields.
-	n := t.rtype.NumField()
+	n := t.Type.NumField()
 
 	// Gather format functions.
 	fields := make([]field, n)
 	for i := 0; i < n; i++ {
 
 		// Get struct field at index.
-		sfield := t.rtype.Field(i)
+		sfield := t.Type.Field(i)
 		rtype := sfield.Type
 
-		// Get nested field typenode with appropriate flags.
-		flags := reflect_struct_field_flags(t.flags, rtype)
-		ft := t.next(sfield.Type, flags)
+		// Get nested field TypeIter with appropriate flags.
+		flags := xunsafe.ReflectStructFieldFlags(t.Flag, rtype)
+		ft := t.Child(sfield.Type, flags)
 
 		// Get field format func.
 		fn := fmt.loadOrGet(ft)
@@ -53,8 +55,8 @@ func (fmt *Formatter) iterStructType(t typenode) FormatFunc {
 	}
 }
 
-func emptyStructType(t typenode) FormatFunc {
-	if !t.needs_typestr() {
+func emptyStructType(t xunsafe.TypeIter) FormatFunc {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			// Append empty object.
 			s.B = append(s.B, "{}"...)
@@ -62,7 +64,7 @@ func emptyStructType(t typenode) FormatFunc {
 	}
 
 	// Struct type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	// Append empty object
 	// with type information.
@@ -74,12 +76,12 @@ func emptyStructType(t typenode) FormatFunc {
 	}
 }
 
-func iterSingleFieldStructType(t typenode, field field) FormatFunc {
+func iterSingleFieldStructType(t xunsafe.TypeIter, field field) FormatFunc {
 	if field.format == nil {
 		panic("nil func")
 	}
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			// Wrap 'fn' with braces + field name.
 			s.B = append(s.B, "{"+field.name+"="...)
@@ -89,7 +91,7 @@ func iterSingleFieldStructType(t typenode, field field) FormatFunc {
 	}
 
 	// Struct type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	return func(s *State) {
 		// Include type info.
@@ -104,14 +106,14 @@ func iterSingleFieldStructType(t typenode, field field) FormatFunc {
 	}
 }
 
-func iterMultiFieldStructType(t typenode, fields []field) FormatFunc {
+func iterMultiFieldStructType(t xunsafe.TypeIter, fields []field) FormatFunc {
 	for _, field := range fields {
 		if field.format == nil {
 			panic("nil func")
 		}
 	}
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			ptr := s.P
 
@@ -139,7 +141,7 @@ func iterMultiFieldStructType(t typenode, fields []field) FormatFunc {
 	}
 
 	// Struct type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	return func(s *State) {
 		ptr := s.P

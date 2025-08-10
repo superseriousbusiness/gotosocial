@@ -3,34 +3,36 @@ package format
 import (
 	"reflect"
 	"unsafe"
+
+	"codeberg.org/gruf/go-xunsafe"
 )
 
 // derefPointerType returns a FormatFunc capable of dereferencing
-// and formatting the given pointer type currently in typenode{}.
+// and formatting the given pointer type currently in TypeIter{}.
 // note this will fetch a sub-FormatFunc for resulting value type.
-func (fmt *Formatter) derefPointerType(t typenode) FormatFunc {
+func (fmt *Formatter) derefPointerType(t xunsafe.TypeIter) FormatFunc {
 	var n int
-	rtype := t.rtype
-	flags := t.flags
+	rtype := t.Type
+	flags := t.Flag
 
 	// Iteratively dereference pointer types.
 	for rtype.Kind() == reflect.Pointer {
 
-		// If this is actual indirect
-		// memory, increase dereferences.
-		if flags&reflect_flagIndir != 0 {
+		// If this actual indirect memory,
+		// increase dereferences counter.
+		if flags&xunsafe.Reflect_flagIndir != 0 {
 			n++
 		}
 
 		// Get next elem type.
 		rtype = rtype.Elem()
 
-		// Get next set of dereferenced elem type flags.
-		flags = reflect_pointer_elem_flags(flags, rtype)
+		// Get next set of dereferenced element type flags.
+		flags = xunsafe.ReflectPointerElemFlags(flags, rtype)
 	}
 
-	// Wrap value as typenode.
-	vt := t.next(rtype, flags)
+	// Wrap value as TypeIter.
+	vt := t.Child(rtype, flags)
 
 	// Get value format func.
 	fn := fmt.loadOrGet(vt)
@@ -38,7 +40,7 @@ func (fmt *Formatter) derefPointerType(t typenode) FormatFunc {
 		panic("unreachable")
 	}
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		if n <= 0 {
 			// No derefs are needed.
 			return func(s *State) {
@@ -83,7 +85,7 @@ func (fmt *Formatter) derefPointerType(t typenode) FormatFunc {
 	}
 
 	// Final type string with ptrs.
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 
 	if n <= 0 {
 		// No derefs are needed.

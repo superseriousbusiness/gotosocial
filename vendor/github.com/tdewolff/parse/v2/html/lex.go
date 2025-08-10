@@ -21,8 +21,9 @@ const (
 	EndTagToken
 	AttributeToken
 	TextToken
-	SvgToken
+	SVGToken
 	MathToken
+	XMLToken
 	TemplateToken
 )
 
@@ -47,10 +48,14 @@ func (tt TokenType) String() string {
 		return "Attribute"
 	case TextToken:
 		return "Text"
-	case SvgToken:
-		return "Svg"
+	case SVGToken:
+		return "SVG"
 	case MathToken:
 		return "Math"
+	case XMLToken:
+		return "XML"
+	case TemplateToken:
+		return "Template"
 	}
 	return "Invalid(" + strconv.Itoa(int(tt)) + ")"
 }
@@ -371,8 +376,8 @@ func (l *Lexer) shiftStartTag() (TokenType, []byte) {
 		l.r.Move(1)
 	}
 	l.text = parse.ToLower(l.r.Lexeme()[1:])
-	if h := ToHash(l.text); h == Textarea || h == Title || h == Style || h == Xmp || h == Iframe || h == Script || h == Plaintext || h == Svg || h == Math {
-		if h == Svg || h == Math {
+	if h := ToHash(l.text); h == Textarea || h == Title || h == Style || h == Xmp || h == Iframe || h == Script || h == Plaintext || h == Svg || h == Math || h == Xml {
+		if h == Svg || h == Math || h == Xml {
 			data := l.shiftXML(h)
 			if l.err != nil {
 				return ErrorToken, nil
@@ -380,9 +385,11 @@ func (l *Lexer) shiftStartTag() (TokenType, []byte) {
 
 			l.inTag = false
 			if h == Svg {
-				return SvgToken, data
+				return SVGToken, data
+			} else if h == Math {
+				return MathToken, data
 			}
-			return MathToken, data
+			return XMLToken, data
 		}
 		l.rawTag = h
 	}

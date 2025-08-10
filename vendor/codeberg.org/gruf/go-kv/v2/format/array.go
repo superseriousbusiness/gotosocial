@@ -1,19 +1,23 @@
 package format
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"codeberg.org/gruf/go-xunsafe"
+)
 
 // iterArrayType returns a FormatFunc capable of iterating
-// and formatting the given array type currently in typenode{}.
+// and formatting the given array type currently in TypeIter{}.
 // note this will fetch a sub-FormatFunc for the array element
 // type, and also handle special cases of [n]byte, [n]rune arrays.
-func (fmt *Formatter) iterArrayType(t typenode) FormatFunc {
+func (fmt *Formatter) iterArrayType(t xunsafe.TypeIter) FormatFunc {
 
 	// Array element type.
-	elem := t.rtype.Elem()
+	elem := t.Type.Elem()
 
-	// Get nested elem typenode with appropriate flags.
-	flags := reflect_array_elem_flags(t.flags, elem)
-	et := t.next(elem, flags)
+	// Get nested elem TypeIter with appropriate flags.
+	flags := xunsafe.ReflectArrayElemFlags(t.Flag, elem)
+	et := t.Child(elem, flags)
 
 	// Get elem format func.
 	fn := fmt.loadOrGet(et)
@@ -22,7 +26,7 @@ func (fmt *Formatter) iterArrayType(t typenode) FormatFunc {
 	}
 
 	// Handle possible sizes.
-	switch t.rtype.Len() {
+	switch t.Type.Len() {
 	case 0:
 		return emptyArrayType(t)
 	case 1:
@@ -32,8 +36,8 @@ func (fmt *Formatter) iterArrayType(t typenode) FormatFunc {
 	}
 }
 
-func emptyArrayType(t typenode) FormatFunc {
-	if !t.needs_typestr() {
+func emptyArrayType(t xunsafe.TypeIter) FormatFunc {
+	if !needs_typestr(t) {
 		// Simply append empty.
 		return func(s *State) {
 			s.B = append(s.B, "[]"...)
@@ -41,7 +45,7 @@ func emptyArrayType(t typenode) FormatFunc {
 	}
 
 	// Array type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	// Append empty with type.
 	return func(s *State) {
@@ -54,8 +58,8 @@ func emptyArrayType(t typenode) FormatFunc {
 	}
 }
 
-func iterSingleArrayType(t typenode, fn FormatFunc) FormatFunc {
-	if !t.needs_typestr() {
+func iterSingleArrayType(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			// Wrap 'fn' in braces.
 			s.B = append(s.B, '[')
@@ -65,7 +69,7 @@ func iterSingleArrayType(t typenode, fn FormatFunc) FormatFunc {
 	}
 
 	// Array type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	// Wrap in type+braces.
 	return func(s *State) {
@@ -87,14 +91,14 @@ func iterSingleArrayType(t typenode, fn FormatFunc) FormatFunc {
 	}
 }
 
-func iterMultiArrayType(t typenode, fn FormatFunc) FormatFunc {
+func iterMultiArrayType(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
 	// Array element in-memory size.
-	esz := t.rtype.Elem().Size()
+	esz := t.Type.Elem().Size()
 
 	// Number of elements.
-	n := t.rtype.Len()
+	n := t.Type.Len()
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		// Wrap elems in braces.
 		return func(s *State) {
 			ptr := s.P
@@ -121,7 +125,7 @@ func iterMultiArrayType(t typenode, fn FormatFunc) FormatFunc {
 	}
 
 	// Array type string with refs.
-	typestr := t.typestr_with_refs()
+	typestr := typestr_with_refs(t)
 
 	// Wrap in type+braces.
 	return func(s *State) {
@@ -158,13 +162,13 @@ func iterMultiArrayType(t typenode, fn FormatFunc) FormatFunc {
 	}
 }
 
-func wrapByteArray(t typenode, fn FormatFunc) FormatFunc {
-	n := t.rtype.Len()
-	if !t.needs_typestr() {
+func wrapByteArray(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
+	n := t.Type.Len()
+	if !needs_typestr(t) {
 		return func(s *State) {
 			if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 				var v string
-				p := (*unsafeheader_String)(unsafe.Pointer(&v))
+				p := (*xunsafe.Unsafeheader_String)(unsafe.Pointer(&v))
 				p.Len = n
 				p.Data = s.P
 				appendString(s, v)
@@ -173,11 +177,11 @@ func wrapByteArray(t typenode, fn FormatFunc) FormatFunc {
 			}
 		}
 	}
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 	return func(s *State) {
 		if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 			var v string
-			p := (*unsafeheader_String)(unsafe.Pointer(&v))
+			p := (*xunsafe.Unsafeheader_String)(unsafe.Pointer(&v))
 			p.Len = n
 			p.Data = s.P
 			if s.A.WithType() {
@@ -193,13 +197,13 @@ func wrapByteArray(t typenode, fn FormatFunc) FormatFunc {
 	}
 }
 
-func wrapRuneArray(t typenode, fn FormatFunc) FormatFunc {
-	n := t.rtype.Len()
-	if !t.needs_typestr() {
+func wrapRuneArray(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
+	n := t.Type.Len()
+	if !needs_typestr(t) {
 		return func(s *State) {
 			if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 				var v []rune
-				p := (*unsafeheader_Slice)(unsafe.Pointer(&v))
+				p := (*xunsafe.Unsafeheader_Slice)(unsafe.Pointer(&v))
 				p.Cap = n
 				p.Len = n
 				p.Data = s.P
@@ -209,11 +213,11 @@ func wrapRuneArray(t typenode, fn FormatFunc) FormatFunc {
 			}
 		}
 	}
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 	return func(s *State) {
 		if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 			var v []rune
-			p := (*unsafeheader_Slice)(unsafe.Pointer(&v))
+			p := (*xunsafe.Unsafeheader_Slice)(unsafe.Pointer(&v))
 			p.Cap = n
 			p.Len = n
 			p.Data = s.P

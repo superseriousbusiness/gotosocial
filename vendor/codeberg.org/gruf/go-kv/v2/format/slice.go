@@ -1,18 +1,20 @@
 package format
 
+import "codeberg.org/gruf/go-xunsafe"
+
 // iterSliceType returns a FormatFunc capable of iterating
-// and formatting the given slice type currently in typenode{}.
+// and formatting the given slice type currently in TypeIter{}.
 // note this will fetch a sub-FormatFunc for the slice element
 // type, and also handle special cases of []byte, []rune slices.
-func (fmt *Formatter) iterSliceType(t typenode) FormatFunc {
+func (fmt *Formatter) iterSliceType(t xunsafe.TypeIter) FormatFunc {
 
 	// Get nested element type.
-	elem := t.rtype.Elem()
+	elem := t.Type.Elem()
 	esz := elem.Size()
 
-	// Get nested elem typenode with flags.
-	flags := reflect_slice_elem_flags(elem)
-	et := t.next(elem, flags)
+	// Get nested elem TypeIter{} with flags.
+	flags := xunsafe.ReflectSliceElemFlags(elem)
+	et := t.Child(elem, flags)
 
 	// Get elem format func.
 	fn := fmt.loadOrGet(et)
@@ -20,12 +22,12 @@ func (fmt *Formatter) iterSliceType(t typenode) FormatFunc {
 		panic("unreachable")
 	}
 
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			ptr := s.P
 
 			// Get data as unsafe slice header.
-			hdr := (*unsafeheader_Slice)(ptr)
+			hdr := (*xunsafe.Unsafeheader_Slice)(ptr)
 			if hdr == nil || hdr.Data == nil {
 
 				// Append nil.
@@ -57,14 +59,14 @@ func (fmt *Formatter) iterSliceType(t typenode) FormatFunc {
 	}
 
 	// Slice type string with ptrs / refs.
-	typestrPtrs := t.typestr_with_ptrs()
-	typestrRefs := t.typestr_with_refs()
+	typestrPtrs := typestr_with_ptrs(t)
+	typestrRefs := typestr_with_refs(t)
 
 	return func(s *State) {
 		ptr := s.P
 
 		// Get data as unsafe slice header.
-		hdr := (*unsafeheader_Slice)(ptr)
+		hdr := (*xunsafe.Unsafeheader_Slice)(ptr)
 		if hdr == nil || hdr.Data == nil {
 
 			// Append nil value with type.
@@ -105,8 +107,8 @@ func (fmt *Formatter) iterSliceType(t typenode) FormatFunc {
 	}
 }
 
-func wrapByteSlice(t typenode, fn FormatFunc) FormatFunc {
-	if !t.needs_typestr() {
+func wrapByteSlice(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 				appendString(s, *(*string)(s.P))
@@ -115,7 +117,7 @@ func wrapByteSlice(t typenode, fn FormatFunc) FormatFunc {
 			}
 		}
 	}
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 	return func(s *State) {
 		if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 			if s.A.WithType() {
@@ -131,8 +133,8 @@ func wrapByteSlice(t typenode, fn FormatFunc) FormatFunc {
 	}
 }
 
-func wrapRuneSlice(t typenode, fn FormatFunc) FormatFunc {
-	if !t.needs_typestr() {
+func wrapRuneSlice(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
+	if !needs_typestr(t) {
 		return func(s *State) {
 			if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 				appendString(s, string(*(*[]rune)(s.P)))
@@ -141,7 +143,7 @@ func wrapRuneSlice(t typenode, fn FormatFunc) FormatFunc {
 			}
 		}
 	}
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 	return func(s *State) {
 		if s.A.AsText() || s.A.AsQuotedText() || s.A.AsQuotedASCII() {
 			if s.A.WithType() {

@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"runtime/debug"
 	"strconv"
-	"sync"
 	"unsafe"
+
+	"codeberg.org/gruf/go-xunsafe"
 )
 
 // Global formatter instance.
@@ -93,15 +94,7 @@ type Formatter struct {
 	// internal
 	// format func
 	// cache map.
-	fns sync.Map
-}
-
-// LoadFor returns a FormatFunc for the given value type.
-func (fmt *Formatter) LoadFor(value any) FormatFunc {
-	rtype := reflect.TypeOf(value)
-	flags := reflect_iface_elem_flags(rtype)
-	t := new_typenode(rtype, flags)
-	return fmt.loadOrStore(t)
+	fns cache
 }
 
 // Append calls AppendState() with a newly allocated State{}, returning byte buffer.
@@ -126,17 +119,17 @@ func (fmt *Formatter) AppendState(s *State, value any) {
 		// global defaults.
 		s.A = defaultArgs
 	}
-	s.P = unpack_eface(value)
+	t := xunsafe.TypeIterFrom(value)
+	s.P = xunsafe.UnpackEface(value)
 	s.ifaces.clear()
 	s.ifaces.set(s.P)
-	fmt.LoadFor(value)(s)
+	fmt.loadOrStore(t)(s)
 }
 
-func (fmt *Formatter) loadOrGet(t typenode) FormatFunc {
+func (fmt *Formatter) loadOrGet(t xunsafe.TypeIter) FormatFunc {
 	// Look for existing stored
 	// func under this type key.
-	v, _ := fmt.fns.Load(t.key())
-	fn, _ := v.(FormatFunc)
+	fn := fmt.fns.Get(t.TypeInfo)
 
 	if fn == nil {
 		// Load format func
@@ -150,14 +143,13 @@ func (fmt *Formatter) loadOrGet(t typenode) FormatFunc {
 	return fn
 }
 
-func (fmt *Formatter) loadOrStore(t typenode) FormatFunc {
+func (fmt *Formatter) loadOrStore(t xunsafe.TypeIter) FormatFunc {
 	// Get cache key.
-	key := t.key()
+	key := t.TypeInfo
 
 	// Look for existing stored
 	// func under this type key.
-	v, _ := fmt.fns.Load(key)
-	fn, _ := v.(FormatFunc)
+	fn := fmt.fns.Get(key)
 
 	if fn == nil {
 		// Load format func
@@ -167,8 +159,8 @@ func (fmt *Formatter) loadOrStore(t typenode) FormatFunc {
 			panic("unreachable")
 		}
 
-		// Store in map under type.
-		fmt.fns.Store(key, fn)
+		// Store under type.
+		fmt.fns.Put(key, fn)
 	}
 
 	return fn
@@ -188,8 +180,8 @@ var (
 	runesType = typeof[[]rune]()
 )
 
-func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
-	if t.rtype == nil {
+func (fmt *Formatter) get(t xunsafe.TypeIter) (fn FormatFunc) {
+	if t.Type == nil {
 		// catch nil type.
 		return appendNil
 	}
@@ -205,7 +197,7 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 		// Don't allow method functions for map keys,
 		// to prevent situation of the method receiver
 		// attempting to modify stored map key itself.
-		if t.flags&flagKeyType != 0 {
+		if t.Flag&flagKeyType != 0 {
 			return
 		}
 
@@ -228,20 +220,20 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 		}
 	}()
 
-	if t.rtype == reflectTypeType {
+	if t.Type == reflectTypeType {
 		// DO NOT iterate down internal ABI
 		// types, some are in non-GC memory.
 		return getPointerType(t)
 	}
 
-	if !t.visit() {
+	if !visit(t) {
 		// On type recursion simply
 		// format as raw pointer.
 		return getPointerType(t)
 	}
 
 	// Get func for type kind.
-	switch t.rtype.Kind() {
+	switch t.Type.Kind() {
 	case reflect.Interface:
 		return fmt.getInterfaceType(t)
 	case reflect.String:
@@ -269,7 +261,7 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 	case reflect.Pointer:
 		return fmt.derefPointerType(t)
 	case reflect.Array:
-		elem := t.rtype.Elem()
+		elem := t.Type.Elem()
 		switch fn := fmt.iterArrayType(t); {
 		case elem.AssignableTo(byteType):
 			return wrapByteArray(t, fn)
@@ -280,9 +272,9 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 		}
 	case reflect.Slice:
 		switch fn := fmt.iterSliceType(t); {
-		case t.rtype.AssignableTo(bytesType):
+		case t.Type.AssignableTo(bytesType):
 			return wrapByteSlice(t, fn)
-		case t.rtype.AssignableTo(runesType):
+		case t.Type.AssignableTo(runesType):
 			return wrapRuneSlice(t, fn)
 		default:
 			return fn
@@ -296,12 +288,12 @@ func (fmt *Formatter) get(t typenode) (fn FormatFunc) {
 	}
 }
 
-func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
-	if t.rtype.NumMethod() == 0 {
+func (fmt *Formatter) getInterfaceType(t xunsafe.TypeIter) FormatFunc {
+	if t.Type.NumMethod() == 0 {
 		return func(s *State) {
 			// Unpack empty interface.
 			eface := *(*any)(s.P)
-			s.P = unpack_eface(eface)
+			s.P = xunsafe.UnpackEface(eface)
 
 			// Get reflected type information.
 			rtype := reflect.TypeOf(eface)
@@ -319,9 +311,10 @@ func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
 			// Store value ptr.
 			s.ifaces.set(s.P)
 
-			// Wrap in our typenode for before load.
-			flags := reflect_iface_elem_flags(rtype)
-			t := new_typenode(rtype, flags)
+			// Wrap before load.
+			var t xunsafe.TypeIter
+			t.Flag = xunsafe.ReflectIfaceElemFlags(rtype)
+			t.Type = rtype
 
 			// Load + pass to func.
 			fmt.loadOrStore(t)(s)
@@ -330,7 +323,7 @@ func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
 		return func(s *State) {
 			// Unpack interface-with-method ptr.
 			iface := *(*interface{ M() })(s.P)
-			s.P = unpack_eface(iface)
+			s.P = xunsafe.UnpackEface(iface)
 
 			// Get reflected type information.
 			rtype := reflect.TypeOf(iface)
@@ -348,9 +341,10 @@ func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
 			// Store value ptr.
 			s.ifaces.set(s.P)
 
-			// Wrap in our typenode for before load.
-			flags := reflect_iface_elem_flags(rtype)
-			t := new_typenode(rtype, flags)
+			// Wrap before load.
+			var t xunsafe.TypeIter
+			t.Flag = xunsafe.ReflectIfaceElemFlags(rtype)
+			t.Type = rtype
 
 			// Load + pass to func.
 			fmt.loadOrStore(t)(s)
@@ -358,20 +352,20 @@ func (fmt *Formatter) getInterfaceType(t typenode) FormatFunc {
 	}
 }
 
-func getStringType(t typenode) FormatFunc {
+func getStringType(t xunsafe.TypeIter) FormatFunc {
 	return with_typestr_ptrs(t, func(s *State) {
 		appendString(s, *(*string)(s.P))
 	})
 }
 
-func getBoolType(t typenode) FormatFunc {
+func getBoolType(t xunsafe.TypeIter) FormatFunc {
 	return with_typestr_ptrs(t, func(s *State) {
 		s.B = strconv.AppendBool(s.B, *(*bool)(s.P))
 	})
 }
 
-func getIntType(t typenode) FormatFunc {
-	switch t.rtype.Bits() {
+func getIntType(t xunsafe.TypeIter) FormatFunc {
+	switch t.Type.Bits() {
 	case 8:
 		return with_typestr_ptrs(t, func(s *State) {
 			appendInt(s, int64(*(*int8)(s.P)))
@@ -403,8 +397,8 @@ func getIntType(t typenode) FormatFunc {
 	}
 }
 
-func getUintType(t typenode) FormatFunc {
-	switch t.rtype.Bits() {
+func getUintType(t xunsafe.TypeIter) FormatFunc {
+	switch t.Type.Bits() {
 	case 8:
 		return with_typestr_ptrs(t, func(s *State) {
 			switch {
@@ -433,8 +427,8 @@ func getUintType(t typenode) FormatFunc {
 	}
 }
 
-func getFloatType(t typenode) FormatFunc {
-	switch t.rtype.Bits() {
+func getFloatType(t xunsafe.TypeIter) FormatFunc {
+	switch t.Type.Bits() {
 	case 32:
 		return with_typestr_ptrs(t, func(s *State) {
 			appendFloat(s, float64(*(*float32)(s.P)), 32)
@@ -448,8 +442,8 @@ func getFloatType(t typenode) FormatFunc {
 	}
 }
 
-func getComplexType(t typenode) FormatFunc {
-	switch t.rtype.Bits() {
+func getComplexType(t xunsafe.TypeIter) FormatFunc {
+	switch t.Type.Bits() {
 	case 64:
 		return with_typestr_ptrs(t, func(s *State) {
 			v := *(*complex64)(s.P)
@@ -467,8 +461,8 @@ func getComplexType(t typenode) FormatFunc {
 	}
 }
 
-func getPointerType(t typenode) FormatFunc {
-	switch t.indirect() {
+func getPointerType(t xunsafe.TypeIter) FormatFunc {
+	switch t.Indirect() {
 	case true:
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
@@ -483,18 +477,18 @@ func getPointerType(t typenode) FormatFunc {
 	}
 }
 
-func with_typestr_ptrs(t typenode, fn FormatFunc) FormatFunc {
+func with_typestr_ptrs(t xunsafe.TypeIter, fn FormatFunc) FormatFunc {
 	if fn == nil {
 		panic("nil func")
 	}
 
 	// Check for type wrapping.
-	if !t.needs_typestr() {
+	if !needs_typestr(t) {
 		return fn
 	}
 
 	// Get type string with pointers.
-	typestr := t.typestr_with_ptrs()
+	typestr := typestr_with_ptrs(t)
 
 	// Wrap format func to include
 	// type information when needed.

@@ -17,6 +17,9 @@ do
 	echo "GOOS=freebsd GOARCH=arm64"
 	GOOS=freebsd GOARCH=arm64 go build -tags=$tag -v ./...
 	GOOS=freebsd GOARCH=arm64 go test -tags=$tag -c -o /dev/null
+	echo "GOOS=illumos GOARCH=amd64"
+	GOOS=illumos GOARCH=amd64 go build -tags=$tag -v ./...
+	GOOS=illumos GOARCH=amd64 go test -tags=$tag -c -o /dev/null
 	#TODO echo "GOOS=freebsd GOARCH=arm"
 	#TODO GOOS=freebsd GOARCH=arm go build -tags=$tag -v ./...
 	#TODO GOOS=freebsd GOARCH=arm go test -tags=$tag -c -o /dev/null
