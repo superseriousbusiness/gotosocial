@@ -730,7 +730,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
 		suite.FailNow(err.Error())
 	}
 	suite.NotZero(intReq.AcceptedAt)
-	suite.NotEmpty(intReq.URI)
+	suite.NotEmpty(intReq.InteractionURI)
 }
 
 func TestStatusBoostTestSuite(t *testing.T) {

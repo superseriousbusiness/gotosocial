@@ -305,21 +305,21 @@ func (f *DB) rejectStatusIRI(
 			InteractingAccountID: receivingAcct.ID,
 			InteractingAccount:   receivingAcct,
 			InteractionURI:       status.URI,
-			URI:                  activityID,
+			ResponseURI:          activityID,
 			RejectedAt:           time.Now(),
 		}
 
 		if apObjectType == ap.ObjectNote {
 			// Reply.
 			req.InteractionType = gtsmodel.InteractionReply
-			req.StatusID = status.InReplyToID
-			req.Status = status.InReplyTo
+			req.TargetStatusID = status.InReplyToID
+			req.TargetStatus = status.InReplyTo
 			req.Reply = status
 		} else {
 			// Announce.
 			req.InteractionType = gtsmodel.InteractionAnnounce
-			req.StatusID = status.BoostOfID
-			req.Status = status.BoostOf
+			req.TargetStatusID = status.BoostOfID
+			req.TargetStatus = status.BoostOf
 			req.Announce = status
 		}
 
@@ -331,8 +331,8 @@ func (f *DB) rejectStatusIRI(
 	case req.IsRejected():
 		// Interaction has already been rejected. Just
 		// update to this Reject URI and then return early.
-		req.URI = activityID
-		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "uri"); err != nil {
+		req.ResponseURI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "response_uri"); err != nil {
 			err := gtserror.Newf("db error updating interaction request: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -343,11 +343,11 @@ func (f *DB) rejectStatusIRI(
 		// Rejected, even if previously Accepted.
 		req.AcceptedAt = time.Time{}
 		req.RejectedAt = time.Now()
-		req.URI = activityID
+		req.ResponseURI = activityID
 		if err := f.state.DB.UpdateInteractionRequest(ctx, req,
 			"accepted_at",
 			"rejected_at",
-			"uri",
+			"response_uri",
 		); err != nil {
 			err := gtserror.Newf("db error updating interaction request: %w", err)
 			return gtserror.NewErrorInternalError(err)
@@ -438,7 +438,7 @@ func (f *DB) rejectLikeIRI(
 			InteractionURI:       fave.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Like:                 fave,
-			URI:                  activityID,
+			ResponseURI:          activityID,
 			RejectedAt:           time.Now(),
 		}
 
@@ -450,8 +450,8 @@ func (f *DB) rejectLikeIRI(
 	case req.IsRejected():
 		// Interaction has already been rejected. Just
 		// update to this Reject URI and then return early.
-		req.URI = activityID
-		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "uri"); err != nil {
+		req.ResponseURI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "response_uri"); err != nil {
 			err := gtserror.Newf("db error updating interaction request: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -462,11 +462,11 @@ func (f *DB) rejectLikeIRI(
 		// Rejected, even if previously Accepted.
 		req.AcceptedAt = time.Time{}
 		req.RejectedAt = time.Now()
-		req.URI = activityID
+		req.ResponseURI = activityID
 		if err := f.state.DB.UpdateInteractionRequest(ctx, req,
 			"accepted_at",
 			"rejected_at",
-			"uri",
+			"response_uri",
 		); err != nil {
 			err := gtserror.Newf("db error updating interaction request: %w", err)
 			return gtserror.NewErrorInternalError(err)

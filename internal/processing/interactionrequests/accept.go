@@ -67,12 +67,14 @@ func (p *Processor) Accept(
 	// Mark the request as accepted
 	// and generate a URI for it.
 	req.AcceptedAt = time.Now()
-	req.URI = uris.GenerateURIForAccept(acct.Username, req.ID)
+	req.ResponseURI = uris.GenerateURIForAccept(acct.Username, req.ID)
+	req.AuthorizationURI = uris.GenerateURIForAuthorization(acct.Username, req.ID)
 	if err := p.state.DB.UpdateInteractionRequest(
 		ctx,
 		req,
 		"accepted_at",
-		"uri",
+		"response_uri",
+		"authorization_uri",
 	); err != nil {
 		err := gtserror.Newf("db error updating interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -130,9 +132,15 @@ func (p *Processor) acceptLike(
 	}
 
 	// Update the Like.
+	//
+	// For back-compat with pre-v0.20.0 GtS instances,
+	// we use the URI of the Accept instread of the URI
+	// of the authorization.
+	//
+	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Like.PendingApproval = util.Ptr(false)
 	req.Like.PreApproved = false
-	req.Like.ApprovedByURI = req.URI
+	req.Like.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatusFave(
 		ctx,
 		req.Like,
@@ -171,9 +179,15 @@ func (p *Processor) acceptReply(
 	}
 
 	// Update the Reply.
+	//
+	// For back-compat with pre-v0.20.0 GtS instances,
+	// we use the URI of the Accept instread of the URI
+	// of the authorization.
+	//
+	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Reply.PendingApproval = util.Ptr(false)
 	req.Reply.PreApproved = false
-	req.Reply.ApprovedByURI = req.URI
+	req.Reply.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Reply,
@@ -212,9 +226,15 @@ func (p *Processor) acceptAnnounce(
 	}
 
 	// Update the Announce.
+	//
+	// For back-compat with pre-v0.20.0 GtS instances,
+	// we use the URI of the Accept instread of the URI
+	// of the authorization.
+	//
+	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Announce.PendingApproval = util.Ptr(false)
 	req.Announce.PreApproved = false
-	req.Announce.ApprovedByURI = req.URI
+	req.Announce.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Announce,

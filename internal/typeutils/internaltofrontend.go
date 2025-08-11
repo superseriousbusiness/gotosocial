@@ -2881,7 +2881,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 
 	interactedStatus, err := c.StatusToAPIStatus(
 		ctx,
-		req.Status,
+		req.TargetStatus,
 		requestingAcct,
 	)
 	if err != nil {
@@ -2919,16 +2919,21 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		rejectedAt = util.FormatISO8601(req.RejectedAt)
 	}
 
+	createdAt, err := id.TimeFromULID(req.ID)
+	if err != nil {
+		err := gtserror.Newf("error converting id to time: %w", err)
+		return nil, err
+	}
+
 	return &apimodel.InteractionRequest{
-		ID:         req.ID,
-		Type:       req.InteractionType.String(),
-		CreatedAt:  util.FormatISO8601(req.CreatedAt),
-		Account:    interactingAcct,
-		Status:     interactedStatus,
-		Reply:      reply,
-		AcceptedAt: acceptedAt,
-		RejectedAt: rejectedAt,
-		URI:        req.URI,
+		ID:          req.ID,
+		Type:        req.InteractionType.String(),
+		CreatedAt:   util.FormatISO8601(createdAt),
+		Account:     interactingAcct,
+		Status:      interactedStatus,
+		Reply:       reply,
+		AcceptedAt:  acceptedAt,
+		RejectedAt:  rejectedAt,
 	}, nil
 }
 
