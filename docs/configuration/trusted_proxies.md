@@ -2,11 +2,14 @@
 
 To correctly enforce [rate limiting](../api/ratelimiting.md), GoToSocial relies on the concept of "trusted proxies" in order to accurately determine the IP address of clients accessing your server.
 
-A "trusted proxy" is an intermediate network hop that GoToSocial can be instructed to trust to provide a correct client IP address.
+A "trusted proxy" is an intermediate network hop that GoToSocial can be instructed to trust to provide a correct client IP address via an `X-Forwarded-For` or `X-Real-IP` header.
 
 For example, if you are running in a reverse proxy configuration with Docker + Nginx, then the Docker network address of Nginx should be configured as a trusted proxy, since all traffic from the wider internet will come into GoToSocial via Nginx.
 
-Without setting `trusted-proxies` correctly, GoToSocial will see all incoming client IP addresses as the same address, which leads to rate limiting issues, since GoToSocial uses client IP addresses to bucket rate limits.
+If `trusted-proxies` is not set correctly, GoToSocial will see all incoming client IP addresses as the same address. This will lead to rate limiting issues, since GoToSocial uses client IP addresses to bucket rate limits.
+
+!!! tip
+    If you reached this page via the trusted proxies warning on a GoToSocial page, and the suggested address to add is `127.0.0.1`, then before you try any of the other troubleshooting steps, ensure that your reverse proxy is configured to correctly pass either `X-Forwarded-For` or `X-Real-IP`.
 
 ## tl;dr: How to set `trusted-proxies` correctly
 

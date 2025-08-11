@@ -21,14 +21,17 @@
 {{- .with }}
 <div class="trusted-proxies-rec">
     <p>
-        <strong>Warning!</strong> It looks like <code>trusted-proxies</code> is not set correctly in this instance's configuration.
+        <strong>Warning!</strong> It looks like either <code>trusted-proxies</code> is not set correctly in this instance's configuration,
+        or the upstream reverse proxy is not passing an appropriate <code>X-Forwarded-For</code> or <code>X-Real-IP</code> header.
+    </p>
+    <p>
         This may cause rate-limiting issues and, by extension, federation issues.
     </p>
     <p>
-        If you are the instance admin, you should fix this by adding <code>{{- .trustedProxiesRec -}}</code> to your <code>trusted-proxies</code>.
+        If you are the instance admin, you may be able to fix this by adding <code>{{- .trustedProxiesRec -}}</code> to your <code>trusted-proxies</code>.
     </p>
     <p>
-        For more information, see
+        For more information and other possible fixes for this issue, see
         <a
             href="https://docs.gotosocial.org/en/latest/configuration/trusted_proxies/"
             rel="nofollow noreferrer noopener"
