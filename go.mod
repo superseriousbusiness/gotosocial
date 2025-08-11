@@ -1,6 +1,6 @@
 module code.superseriousbusiness.org/gotosocial
 
-go 1.24.5
+go 1.24.6
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.32.3-gts-go1.23-fix
