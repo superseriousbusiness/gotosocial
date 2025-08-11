@@ -39,7 +39,7 @@ func (f *DB) GetAccept(
 	ctx context.Context,
 	acceptIRI *url.URL,
 ) (vocab.ActivityStreamsAccept, error) {
-	approval, err := f.state.DB.GetInteractionRequestByURI(ctx, acceptIRI.String())
+	approval, err := f.state.DB.GetInteractionRequestByResponseURI(ctx, acceptIRI.String())
 	if err != nil {
 		return nil, err
 	}

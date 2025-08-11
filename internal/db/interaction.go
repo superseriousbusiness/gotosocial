@@ -28,12 +28,17 @@ type Interaction interface {
 	// GetInteractionRequestByID gets one request with the given id.
 	GetInteractionRequestByID(ctx context.Context, id string) (*gtsmodel.InteractionRequest, error)
 
-	// GetInteractionRequestByID gets one request with the given interaction uri.
-	GetInteractionRequestByInteractionURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error)
+	// GetInteractionRequestByID gets one request with the given interaction
+	// uri (ie., the URI of the requested like, reply, or announce).
+	GetInteractionRequestByInteractionURI(ctx context.Context, intURI string) (*gtsmodel.InteractionRequest, error)
 
-	// GetInteractionRequestByURI returns one accepted or rejected
-	// interaction request with the given URI, if it exists in the db.
-	GetInteractionRequestByURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error)
+	// GetInteractionRequestByResponseURI returns one accepted or rejected
+	// interaction request with the given Accept or Reject URI.
+	GetInteractionRequestByResponseURI(ctx context.Context, respURI string) (*gtsmodel.InteractionRequest, error)
+
+	// GetInteractionRequestByAuthorizationURI returns one accepted
+	// interaction request with the given authorization URI.
+	GetInteractionRequestByAuthorizationURI(ctx context.Context, authURI string) (*gtsmodel.InteractionRequest, error)
 
 	// PopulateInteractionRequest ensures that the request's struct fields are populated.
 	PopulateInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest) error

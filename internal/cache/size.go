@@ -418,15 +418,16 @@ func sizeofInstance() uintptr {
 
 func sizeofInteractionRequest() uintptr {
 	return uintptr(size.Of(&gtsmodel.InteractionRequest{
-		ID:                   exampleID,
-		CreatedAt:            exampleTime,
-		StatusID:             exampleID,
-		TargetAccountID:      exampleID,
-		InteractingAccountID: exampleID,
-		InteractionURI:       exampleURI,
-		InteractionType:      gtsmodel.InteractionAnnounce,
-		URI:                  exampleURI,
-		AcceptedAt:           exampleTime,
+		ID:                    exampleID,
+		TargetStatusID:        exampleID,
+		TargetAccountID:       exampleID,
+		InteractingAccountID:  exampleID,
+		InteractionRequestURI: exampleURI,
+		InteractionURI:        exampleURI,
+		InteractionType:       gtsmodel.InteractionAnnounce,
+		AcceptedAt:            exampleTime,
+		ResponseURI:           exampleURI,
+		AuthorizationURI:      exampleURI,
 	}))
 }
 
