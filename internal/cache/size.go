@@ -554,6 +554,25 @@ func sizeofReport() uintptr {
 	}))
 }
 
+func sizeofScheduledStatus() uintptr {
+	return uintptr(size.Of(&gtsmodel.ScheduledStatus{
+		ID:          exampleID,
+		AccountID:   exampleID,
+		ScheduledAt: exampleTime,
+		Text:        exampleText,
+		Poll: gtsmodel.ScheduledStatusPoll{
+			Options:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+			Multiple:   util.Ptr(false),
+			HideTotals: util.Ptr(false),
+		},
+		MediaIDs:    []string{exampleID, exampleID, exampleID},
+		Sensitive:   util.Ptr(false),
+		SpoilerText: exampleText,
+		Visibility:  gtsmodel.VisibilityPublic,
+		Language:    "en",
+	}))
+}
+
 func sizeofSinBinStatus() uintptr {
 	return uintptr(size.Of(&gtsmodel.SinBinStatus{
 		ID:                  exampleID,

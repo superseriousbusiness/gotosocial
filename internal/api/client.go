@@ -48,6 +48,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/preferences"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/push"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/reports"
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/scheduledstatuses"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/search"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/statuses"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/streaming"
@@ -95,6 +96,7 @@ type Client struct {
 	preferences         *preferences.Module         // api/v1/preferences
 	push                *push.Module                // api/v1/push
 	reports             *reports.Module             // api/v1/reports
+	scheduledStatuses   *scheduledstatuses.Module   // api/v1/scheduled_statuses
 	search              *search.Module              // api/v1/search, api/v2/search
 	statuses            *statuses.Module            // api/v1/statuses
 	streaming           *streaming.Module           // api/v1/streaming
@@ -149,6 +151,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.preferences.Route(h)
 	c.push.Route(h)
 	c.reports.Route(h)
+	c.scheduledStatuses.Route(h)
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
@@ -191,6 +194,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		preferences:         preferences.New(p),
 		push:                push.New(p),
 		reports:             reports.New(p),
+		scheduledStatuses:   scheduledstatuses.New(p),
 		search:              search.New(p),
 		statuses:            statuses.New(p),
 		streaming:           streaming.New(p, time.Second*30, 4096),

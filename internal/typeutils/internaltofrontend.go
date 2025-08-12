@@ -3014,3 +3014,57 @@ func (c *Converter) TokenToAPITokenInfo(
 		Application: apiApplication,
 	}, nil
 }
+
+func (c *Converter) ScheduledStatusToAPIScheduledStatus(
+	ctx context.Context,
+	scheduledStatus *gtsmodel.ScheduledStatus,
+) (*apimodel.ScheduledStatus, error) {
+	apiAttachments, err := c.convertAttachmentsToAPIAttachments(
+		ctx,
+		scheduledStatus.MediaAttachments,
+		scheduledStatus.MediaIDs,
+	)
+	if err != nil {
+		log.Errorf(ctx, "error converting status attachments: %v", err)
+	}
+
+	scheduledAt := util.FormatISO8601(scheduledStatus.ScheduledAt)
+
+	apiScheduledStatus := &apimodel.ScheduledStatus{
+		ID:          scheduledStatus.ID,
+		ScheduledAt: scheduledAt,
+		Params: &apimodel.ScheduledStatusParams{
+			Text:          scheduledStatus.Text,
+			MediaIDs:      scheduledStatus.MediaIDs,
+			Sensitive:     *scheduledStatus.Sensitive,
+			SpoilerText:   scheduledStatus.SpoilerText,
+			Visibility:    VisToAPIVis(scheduledStatus.Visibility),
+			InReplyToID:   scheduledStatus.InReplyToID,
+			Language:      scheduledStatus.Language,
+			ApplicationID: scheduledStatus.ApplicationID,
+			LocalOnly:     *scheduledStatus.LocalOnly,
+			ContentType:   apimodel.StatusContentType(scheduledStatus.ContentType),
+			ScheduledAt:   nil,
+		},
+		MediaAttachments: apiAttachments,
+	}
+
+	if len(scheduledStatus.Poll.Options) > 1 {
+		apiScheduledStatus.Params.Poll = &apimodel.ScheduledStatusParamsPoll{
+			Options:    scheduledStatus.Poll.Options,
+			ExpiresIn:  scheduledStatus.Poll.ExpiresIn,
+			Multiple:   *scheduledStatus.Poll.Multiple,
+			HideTotals: *scheduledStatus.Poll.HideTotals,
+		}
+	}
+
+	if scheduledStatus.InteractionPolicy != nil {
+		apiInteractionPolicy, err := c.InteractionPolicyToAPIInteractionPolicy(ctx, scheduledStatus.InteractionPolicy, nil, nil)
+		if err != nil {
+			return nil, gtserror.Newf("error converting interaction policy: %w", err)
+		}
+		apiScheduledStatus.Params.InteractionPolicy = apiInteractionPolicy
+	}
+
+	return apiScheduledStatus, nil
+}

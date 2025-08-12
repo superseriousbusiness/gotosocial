@@ -561,10 +561,11 @@ func insertStatus(ctx context.Context, tx bun.Tx, status *gtsmodel.Status) error
 	// attachments to the current status
 	for _, a := range status.Attachments {
 		a.StatusID = status.ID
+		a.ScheduledStatusID = ""
 		if _, err := tx.
 			NewUpdate().
 			Model(a).
-			Column("status_id").
+			Column("status_id", "scheduled_status_id").
 			Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 			Exec(ctx); err != nil {
 			return gtserror.Newf("error updating media: %w", err)

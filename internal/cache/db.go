@@ -219,6 +219,9 @@ type DBCaches struct {
 	// Report provides access to the gtsmodel Report database cache.
 	Report StructCache[*gtsmodel.Report]
 
+	// ScheduledStatus provides access to the gtsmodel ScheduledStatus database cache.
+	ScheduledStatus StructCache[*gtsmodel.ScheduledStatus]
+
 	// SinBinStatus provides access to the gtsmodel SinBinStatus database cache.
 	SinBinStatus StructCache[*gtsmodel.SinBinStatus]
 
@@ -1284,6 +1287,40 @@ func (c *Caches) initReport() {
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
 		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initScheduledStatus() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofScheduledStatus(), // model in-mem size.
+		config.GetCacheScheduledStatusMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.ScheduledStatus) *gtsmodel.ScheduledStatus {
+		s2 := new(gtsmodel.ScheduledStatus)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		s2.Account = nil
+		s2.Application = nil
+		s2.MediaAttachments = nil
+
+		return s2
+	}
+
+	c.DB.ScheduledStatus.Init(structr.CacheConfig[*gtsmodel.ScheduledStatus]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateScheduledStatus,
 	})
 }
 

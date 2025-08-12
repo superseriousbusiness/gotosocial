@@ -4331,6 +4331,21 @@ func NewTestStatusEdits() map[string]*gtsmodel.StatusEdit {
 	}
 }
 
+func NewTestScheduledStatuses() map[string]*gtsmodel.ScheduledStatus {
+	return map[string]*gtsmodel.ScheduledStatus{
+		"scheduled_status_1": {
+			ID:            "01JZ399E8JF23TS0NEVY6J91KP",
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1,
+			ScheduledAt:   TimeMustParse("2080-07-01T21:37:00+02:00"),
+			Text:          ":neopapaj_woozy:",
+			Visibility:    gtsmodel.VisibilityPublic,
+			Sensitive:     util.Ptr(false),
+			Language:      "pl",
+			ApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
+		},
+	}
+}
+
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
 func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// convert the activity into json bytes

@@ -375,6 +375,25 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 		}
 	}
 
+	// Check whether we have the required scheduled status for media.
+	scheduledStatus, missing, err := m.getRelatedScheduledStatus(ctx, media)
+	if err != nil {
+		return false, err
+	} else if missing {
+		l.Debug("deleting due to missing scheduled status")
+		return true, m.delete(ctx, media)
+	}
+
+	if scheduledStatus != nil {
+		// Check whether still attached to status.
+		for _, id := range scheduledStatus.MediaIDs {
+			if id == media.ID {
+				l.Debug("skippping as attached to scheduled status")
+				return false, nil
+			}
+		}
+	}
+
 	// Media totally unused, delete it.
 	l.Debug("deleting unused media")
 	return true, m.delete(ctx, media)
@@ -533,6 +552,29 @@ func (m *Media) getRelatedStatus(ctx context.Context, media *gtsmodel.MediaAttac
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, false, gtserror.Newf("error fetching status by id %s: %w", media.StatusID, err)
+	}
+
+	if status == nil {
+		// status is missing.
+		return nil, true, nil
+	}
+
+	return status, false, nil
+}
+
+func (m *Media) getRelatedScheduledStatus(ctx context.Context, media *gtsmodel.MediaAttachment) (*gtsmodel.ScheduledStatus, bool, error) {
+	if media.ScheduledStatusID == "" {
+		// no related status.
+		return nil, false, nil
+	}
+
+	// Load the status related to this media.
+	status, err := m.state.DB.GetScheduledStatusByID(
+		gtscontext.SetBarebones(ctx),
+		media.ScheduledStatusID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, false, gtserror.Newf("error fetching scheduled status by id %s: %w", media.ScheduledStatusID, err)
 	}
 
 	if status == nil {

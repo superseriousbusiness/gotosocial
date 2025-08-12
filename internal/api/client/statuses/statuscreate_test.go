@@ -476,13 +476,24 @@ func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
 		"scheduled_at": {"2080-10-04T15:32:02.018Z"},
 	}, "")
 
-	// We should have 501 from
+	// We should have OK from
 	// our call to the function.
-	suite.Equal(http.StatusNotImplemented, recorder.Code)
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	// We should have a helpful error message.
+	// A scheduled status with scheduled_at and status params should be returned.
 	suite.Equal(`{
-  "error": "Not Implemented: scheduled statuses are not yet supported"
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "media_attachments": [],
+  "params": {
+    "application_id": "01F8MGY43H3N2C8EWPR2FPYEXG",
+    "language": "",
+    "scheduled_at": null,
+    "sensitive": true,
+    "spoiler_text": "hello hello",
+    "text": "this is a brand new status! #helloworld",
+    "visibility": "private"
+  },
+  "scheduled_at": "2080-10-04T15:32:02.018Z"
 }`, out)
 }
 

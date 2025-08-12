@@ -130,6 +130,69 @@ definitions:
         title: NodeInfoUsers represents aggregate information about the users on the server.
         type: object
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    ScheduledStatusParams:
+        properties:
+            application_id:
+                type: string
+                x-go-name: ApplicationID
+            content_type:
+                type: string
+                x-go-name: ContentType
+            in_reply_to_id:
+                type: string
+                x-go-name: InReplyToID
+            interaction_policy:
+                $ref: '#/definitions/interactionPolicy'
+            language:
+                type: string
+                x-go-name: Language
+            local_only:
+                type: boolean
+                x-go-name: LocalOnly
+            media_ids:
+                items:
+                    type: string
+                type: array
+                x-go-name: MediaIDs
+            poll:
+                $ref: '#/definitions/ScheduledStatusParamsPoll'
+            scheduled_at:
+                type: string
+                x-go-name: ScheduledAt
+            sensitive:
+                type: boolean
+                x-go-name: Sensitive
+            spoiler_text:
+                type: string
+                x-go-name: SpoilerText
+            text:
+                type: string
+                x-go-name: Text
+            visibility:
+                type: string
+                x-go-name: Visibility
+        title: StatusParams represents parameters for a scheduled status.
+        type: object
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    ScheduledStatusParamsPoll:
+        properties:
+            expires_in:
+                format: int64
+                type: integer
+                x-go-name: ExpiresIn
+            hide_totals:
+                type: boolean
+                x-go-name: HideTotals
+            multiple:
+                type: boolean
+                x-go-name: Multiple
+            options:
+                items:
+                    type: string
+                type: array
+                x-go-name: Options
+        type: object
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     Source:
         description: Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
         properties:
@@ -2908,6 +2971,25 @@ definitions:
         title: Report models a moderation report submitted to the instance, either via the client API or via the federated API.
         type: object
         x-go-name: Report
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    scheduledStatus:
+        properties:
+            id:
+                type: string
+                x-go-name: ID
+            media_attachments:
+                items:
+                    $ref: '#/definitions/attachment'
+                type: array
+                x-go-name: MediaAttachments
+            params:
+                $ref: '#/definitions/ScheduledStatusParams'
+            scheduled_at:
+                type: string
+                x-go-name: ScheduledAt
+        title: ScheduledStatus represents a status that will be published at a future scheduled date.
+        type: object
+        x-go-name: ScheduledStatus
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     searchResult:
         properties:
@@ -10870,6 +10952,159 @@ paths:
             summary: Get one report with the given id.
             tags:
                 - reports
+    /api/v1/scheduled_statuses:
+        get:
+            operationId: getScheduledStatuses
+            parameters:
+                - description: Return only statuses *OLDER* than the given max status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only statuses *newer* than the given since status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only statuses *immediately newer* than the given min ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of scheduled statuses to return.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/scheduledStatus'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: Get an array of statuses scheduled by authorized user.
+            tags:
+                - scheduled_statuses
+    /api/v1/scheduled_statuses/{id}:
+        delete:
+            operationId: deleteScheduledStatus
+            parameters:
+                - description: ID of the status
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: status canceled
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Cancel a scheduled status with the given id.
+            tags:
+                - scheduled_statuses
+        get:
+            operationId: getScheduledStatus
+            parameters:
+                - description: ID of the status
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/scheduledStatus'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: Get a scheduled status with the given id.
+            tags:
+                - scheduled_statuses
+        put:
+            description: Update a scheduled status's publishing date
+            operationId: updateScheduledStatus
+            parameters:
+                - description: ID of the status
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    ISO 8601 Datetime at which to schedule a status.
+
+                    Must be at least 5 minutes in the future.
+                  format: date-time
+                  in: formData
+                  name: scheduled_at
+                  type: string
+                  x-go-name: ScheduledAt
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/scheduledStatus'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            tags:
+                - scheduled_statuses
     /api/v1/statuses:
         post:
             consumes:
@@ -10994,7 +11229,6 @@ paths:
 
                     Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
                     Must be at least 5 minutes in the future.
-                    This feature isn't implemented yet.
 
                     Providing this parameter with a *past* time will cause the status to be backdated,
                     and will not push it to the user's followers. This is intended for importing old statuses.
@@ -11057,6 +11291,8 @@ paths:
                     description: not found
                 "406":
                     description: not acceptable
+                "422":
+                    description: unprocessable content
                 "500":
                     description: internal server error
                 "501":

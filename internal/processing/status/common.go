@@ -282,6 +282,7 @@ func (p *Processor) processMedia(
 	authorID string,
 	statusID string,
 	mediaIDs []string,
+	scheduledStatusID *string,
 ) (
 	[]*gtsmodel.MediaAttachment,
 	gtserror.WithCode,
@@ -315,7 +316,7 @@ func (p *Processor) processMedia(
 
 		// Check media isn't already attached to another status.
 		if (media.StatusID != "" && media.StatusID != statusID) ||
-			(media.ScheduledStatusID != "" && media.ScheduledStatusID != statusID) {
+			(media.ScheduledStatusID != "" && (media.ScheduledStatusID != statusID && (scheduledStatusID == nil || media.ScheduledStatusID != *scheduledStatusID))) {
 			text := fmt.Sprintf("media already attached to status: %s", id)
 			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}

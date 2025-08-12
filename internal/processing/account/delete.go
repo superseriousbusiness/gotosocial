@@ -459,6 +459,11 @@ func (p *Processor) deleteAccountPeripheral(
 		if err := p.state.DB.DeleteAccountStats(ctx, account.ID); err != nil {
 			log.Errorf("error deleting stats for account: %v", err)
 		}
+
+		// Delete statuses scheduled by given account, only for local.
+		if err := p.state.DB.DeleteScheduledStatusesByAccountID(ctx, account.ID); err != nil {
+			log.Errorf("error deleting scheduled statuses for account: %v", err)
+		}
 	}
 
 	// Delete all bookmarks targeting given account, local and remote.

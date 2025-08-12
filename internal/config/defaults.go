@@ -105,6 +105,9 @@ var Defaults = Configuration{
 	StatusesPollOptionMaxChars: 50,
 	StatusesMediaMaxFiles:      6,
 
+	ScheduledStatusesMaxTotal: 300,
+	ScheduledStatusesMaxDaily: 25,
+
 	LetsEncryptEnabled:      false,
 	LetsEncryptPort:         80,
 	LetsEncryptCertDir:      "/gotosocial/storage/certs",
@@ -217,6 +220,7 @@ var Defaults = Configuration{
 		PollVoteMemRatio:                      2,
 		PollVoteIDsMemRatio:                   2,
 		ReportMemRatio:                        1,
+		ScheduledStatusMemRatio:               4,
 		SinBinStatusMemRatio:                  0.5,
 		StatusMemRatio:                        5,
 		StatusBookmarkMemRatio:                0.5,

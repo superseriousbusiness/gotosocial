@@ -44,10 +44,8 @@ func (p *Processor) Create(
 	requester *gtsmodel.Account,
 	application *gtsmodel.Application,
 	form *apimodel.StatusCreateRequest,
-) (
-	*apimodel.Status,
-	gtserror.WithCode,
-) {
+	scheduledStatusID *string,
+) (any, gtserror.WithCode) {
 	// Validate incoming form status content.
 	if errWithCode := validateStatusContent(
 		form.Status,
@@ -83,16 +81,6 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	// Process incoming status attachments.
-	media, errWithCode := p.processMedia(ctx,
-		requester.ID,
-		statusID,
-		form.MediaIDs,
-	)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
 	// Generate necessary URIs for username, to build status URIs.
 	accountURIs := uris.GenerateURIsForAccount(requester.Username)
 
@@ -105,16 +93,27 @@ func (p *Processor) Create(
 
 	// Handle backfilled/scheduled statuses.
 	backfill := false
-	if form.ScheduledAt != nil {
-		scheduledAt := *form.ScheduledAt
 
-		// Statuses may only be scheduled
-		// a minimum time into the future.
-		if now.Before(scheduledAt) {
-			const errText = "scheduled statuses are not yet supported"
-			return nil, gtserror.NewErrorNotImplemented(gtserror.New(errText), errText)
+	switch {
+	case form.ScheduledAt == nil:
+		// No scheduling/backfilling
+		break
+	case form.ScheduledAt.Sub(now) >= 5*time.Minute:
+		// Statuses may only be scheduled a minimum time into the future.
+		scheduledStatus, errWithCode := p.processScheduledStatus(ctx, statusID, form, requester, application)
+
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
 
+		return scheduledStatus, nil
+
+	case now.Before(*form.ScheduledAt):
+		// Invalid future scheduled status
+		const errText = "scheduled_at must be at least 5 minutes in the future"
+		return nil, gtserror.NewErrorUnprocessableEntity(gtserror.New(errText), errText)
+
+	default:
 		// If not scheduled into the future, this status is being backfilled.
 		if !config.GetInstanceAllowBackdatingStatuses() {
 			const errText = "backdating statuses has been disabled on this instance"
@@ -127,7 +126,7 @@ func (p *Processor) Create(
 		// this would also cause issues with time.Time.IsZero() checks
 		// that normally signify an absent optional time,
 		// but this check covers both cases.
-		if scheduledAt.Compare(time.UnixMilli(0)) <= 0 {
+		if form.ScheduledAt.Compare(time.UnixMilli(0)) <= 0 {
 			const errText = "statuses can't be backdated to or before the UNIX epoch"
 			return nil, gtserror.NewErrorNotAcceptable(gtserror.New(errText), errText)
 		}
@@ -138,12 +137,23 @@ func (p *Processor) Create(
 		backfill = true
 
 		// Update to backfill date.
-		createdAt = scheduledAt
+		createdAt = *form.ScheduledAt
 
 		// Generate an appropriate, (and unique!), ID for the creation time.
 		if statusID, err = p.backfilledStatusID(ctx, createdAt); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
+	}
+
+	// Process incoming status attachments.
+	media, errWithCode := p.processMedia(ctx,
+		requester.ID,
+		statusID,
+		form.MediaIDs,
+		scheduledStatusID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	status := &gtsmodel.Status{
@@ -545,4 +555,104 @@ func processInteractionPolicy(
 	// "fall back to global default policy". We avoid
 	// setting it explicitly to save space.
 	return nil
+}
+
+func (p *Processor) processScheduledStatus(
+	ctx context.Context,
+	statusID string,
+	form *apimodel.StatusCreateRequest,
+	requester *gtsmodel.Account,
+	application *gtsmodel.Application,
+) (*apimodel.ScheduledStatus, gtserror.WithCode) {
+	// Validate scheduled status against server configuration
+	// (max scheduled statuses limit).
+	if errWithCode := p.validateScheduledStatusLimits(ctx, requester.ID, form.ScheduledAt, nil); errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	media, errWithCode := p.processMedia(ctx,
+		requester.ID,
+		statusID,
+		form.MediaIDs,
+		nil,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+	status := &gtsmodel.ScheduledStatus{
+		ID:               statusID,
+		Account:          requester,
+		AccountID:        requester.ID,
+		Application:      application,
+		ApplicationID:    application.ID,
+		ScheduledAt:      *form.ScheduledAt,
+		Text:             form.Status,
+		MediaIDs:         form.MediaIDs,
+		MediaAttachments: media,
+		Sensitive:        &form.Sensitive,
+		SpoilerText:      form.SpoilerText,
+		InReplyToID:      form.InReplyToID,
+		Language:         form.Language,
+		LocalOnly:        form.LocalOnly,
+		ContentType:      string(form.ContentType),
+	}
+
+	if form.Poll != nil {
+		status.Poll = gtsmodel.ScheduledStatusPoll{
+			Options:    form.Poll.Options,
+			ExpiresIn:  form.Poll.ExpiresIn,
+			Multiple:   &form.Poll.Multiple,
+			HideTotals: &form.Poll.HideTotals,
+		}
+	}
+
+	accountDefaultVisibility := requester.Settings.Privacy
+
+	switch {
+	case form.Visibility != "":
+		status.Visibility = typeutils.APIVisToVis(form.Visibility)
+
+	case accountDefaultVisibility != 0:
+		status.Visibility = accountDefaultVisibility
+		form.Visibility = typeutils.VisToAPIVis(accountDefaultVisibility)
+
+	default:
+		status.Visibility = gtsmodel.VisibilityDefault
+		form.Visibility = typeutils.VisToAPIVis(gtsmodel.VisibilityDefault)
+	}
+
+	if form.InteractionPolicy != nil {
+		interactionPolicy, err := typeutils.APIInteractionPolicyToInteractionPolicy(form.InteractionPolicy, form.Visibility)
+
+		if err != nil {
+			err := gtserror.Newf("error converting interaction policy: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		status.InteractionPolicy = interactionPolicy
+	}
+
+	// Insert this newly prepared status into the database.
+	if err := p.state.DB.PutScheduledStatus(ctx, status); err != nil {
+		err := gtserror.Newf("error inserting status in db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Schedule the newly inserted status for publishing.
+	if err := p.ScheduledStatusesSchedulePublication(ctx, status.ID); err != nil {
+		err := gtserror.Newf("error scheduling status publish: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	apiScheduledStatus, err := p.converter.ScheduledStatusToAPIScheduledStatus(
+		ctx,
+		status,
+	)
+
+	if err != nil {
+		err := gtserror.Newf("error converting: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiScheduledStatus, nil
 }

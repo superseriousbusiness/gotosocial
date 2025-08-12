@@ -382,6 +382,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error scheduling poll expiries: %w", err)
 	}
 
+	// schedule publication tasks for all scheduled statuses.
+	if err := process.Status().ScheduledStatusesScheduleAll(ctx); err != nil {
+		return fmt.Errorf("error scheduling status publications: %w", err)
+	}
+
 	// Initialize metrics.
 	if err := observability.InitializeMetrics(ctx, state.DB); err != nil {
 		return fmt.Errorf("error initializing metrics: %w", err)

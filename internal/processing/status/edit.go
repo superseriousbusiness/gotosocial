@@ -110,6 +110,7 @@ func (p *Processor) Edit(
 		requester.ID,
 		statusID,
 		form.MediaIDs,
+		nil,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

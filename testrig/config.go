@@ -140,6 +140,9 @@ func testDefaults() config.Configuration {
 		StatusesPollOptionMaxChars: 50,
 		StatusesMediaMaxFiles:      6,
 
+		ScheduledStatusesMaxTotal: 300,
+		ScheduledStatusesMaxDaily: 25,
+
 		LetsEncryptEnabled:      false,
 		LetsEncryptPort:         0,
 		LetsEncryptCertDir:      "",

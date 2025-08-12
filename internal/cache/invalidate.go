@@ -292,6 +292,11 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 	c.DB.PollVoteIDs.Invalidate(vote.PollID)
 }
 
+func (c *Caches) OnInvalidateScheduledStatus(status *gtsmodel.ScheduledStatus) {
+	// Invalidate cache of related media attachments.
+	c.DB.Media.InvalidateIDs("ID", status.MediaIDs)
+}
+
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 	// Invalidate cached stats objects for this account.
 	c.DB.AccountStats.Invalidate("AccountID", status.AccountID)

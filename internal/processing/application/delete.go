@@ -66,5 +66,11 @@ func (p *Processor) Delete(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Delete all scheduled statuses posted from the app.
+	if err := p.state.DB.DeleteScheduledStatusesByApplicationID(ctx, appID); err != nil {
+		err := gtserror.Newf("db error deleting scheduled statuses for app %s: %w", appID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	return apiApp, nil
 }

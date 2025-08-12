@@ -51,14 +51,15 @@ type StatusStandardTestSuite struct {
 	federator     *federation.Federator
 
 	// standard suite models
-	testTokens       map[string]*gtsmodel.Token
-	testApplications map[string]*gtsmodel.Application
-	testUsers        map[string]*gtsmodel.User
-	testAccounts     map[string]*gtsmodel.Account
-	testAttachments  map[string]*gtsmodel.MediaAttachment
-	testStatuses     map[string]*gtsmodel.Status
-	testTags         map[string]*gtsmodel.Tag
-	testMentions     map[string]*gtsmodel.Mention
+	testTokens            map[string]*gtsmodel.Token
+	testApplications      map[string]*gtsmodel.Application
+	testUsers             map[string]*gtsmodel.User
+	testAccounts          map[string]*gtsmodel.Account
+	testAttachments       map[string]*gtsmodel.MediaAttachment
+	testStatuses          map[string]*gtsmodel.Status
+	testTags              map[string]*gtsmodel.Tag
+	testMentions          map[string]*gtsmodel.Mention
+	testScheduledStatuses map[string]*gtsmodel.ScheduledStatus
 
 	// module being tested
 	status status.Processor
@@ -73,6 +74,7 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
 	suite.testMentions = testrig.NewTestMentions()
+	suite.testScheduledStatuses = testrig.NewTestScheduledStatuses()
 }
 
 func (suite *StatusStandardTestSuite) SetupTest() {

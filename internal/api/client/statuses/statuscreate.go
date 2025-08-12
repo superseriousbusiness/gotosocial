@@ -181,7 +181,6 @@ import (
 //
 //			Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
 //			Must be at least 5 minutes in the future.
-//			This feature isn't implemented yet.
 //
 //			Providing this parameter with a *past* time will cause the status to be backdated,
 //			and will not push it to the user's followers. This is intended for importing old statuses.
@@ -256,6 +255,8 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'422':
+//			description: unprocessable content
 //		'500':
 //			description: internal server error
 //		'501':
@@ -300,7 +301,9 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		authed.Account,
 		authed.Application,
 		form,
+		nil,
 	)
+
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

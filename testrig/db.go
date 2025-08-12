@@ -358,6 +358,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestScheduledStatuses() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(ctx, err)
+		}
+	}
+
 	if err := db.CreateInstanceAccount(ctx); err != nil {
 		log.Panic(ctx, err)
 	}

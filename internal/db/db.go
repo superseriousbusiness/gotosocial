@@ -46,6 +46,7 @@ type DB interface {
 	Relationship
 	Report
 	Rule
+	ScheduledStatus
 	Search
 	Session
 	SinBinStatus

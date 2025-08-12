@@ -53,7 +53,8 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 		ContentType: apimodel.StatusContentTypePlain,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(err)
 	suite.NotNil(apiStatus)
 
@@ -84,7 +85,8 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 		ContentType: apimodel.StatusContentTypeMarkdown,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(err)
 	suite.NotNil(apiStatus)
 
@@ -111,7 +113,8 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 		ContentType: apimodel.StatusContentTypeMarkdown,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(err)
 	suite.NotNil(apiStatus)
 
@@ -142,7 +145,7 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 		ContentType: apimodel.StatusContentTypePlain,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
 	suite.EqualError(err, "media description less than min chars (100)")
 	suite.Nil(apiStatus)
 }
@@ -167,7 +170,8 @@ func (suite *StatusCreateTestSuite) TestProcessLanguageWithScriptPart() {
 		ContentType: apimodel.StatusContentTypePlain,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(err)
 	suite.NotNil(apiStatus)
 
@@ -197,7 +201,8 @@ func (suite *StatusCreateTestSuite) TestProcessReplyToUnthreadedRemoteStatus() {
 		ContentType: apimodel.StatusContentTypePlain,
 	}
 
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(err)
 	suite.NotNil(apiStatus)
 
@@ -230,7 +235,8 @@ func (suite *StatusCreateTestSuite) TestProcessNoContentTypeUsesDefault() {
 		ContentType: "",
 	}
 
-	apiStatus, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatusAny, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
+	apiStatus := apiStatusAny.(*apimodel.Status)
 	suite.NoError(errWithCode)
 	suite.NotNil(apiStatus)
 
@@ -260,7 +266,7 @@ func (suite *StatusCreateTestSuite) TestProcessInvalidVisibility() {
 		ContentType: apimodel.StatusContentTypePlain,
 	}
 
-	apiStatus, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	apiStatus, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm, nil)
 	suite.Nil(apiStatus)
 	suite.Equal(http.StatusUnprocessableEntity, errWithCode.Code())
 	suite.Equal("Unprocessable Entity: processVisibility: invalid visibility", errWithCode.Safe())
