@@ -8,8 +8,8 @@ code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 h1:I512jiIeXDC4//
 code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0/go.mod h1:SNHomXNW88o1pFfLHpD4KsCZLfcr4z5dm+xcX5SV10A=
 code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7CiiuqK8vcZjeQg=
 code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
-code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250606121655-9d54ef189d42 h1:MZXZaWeBV7eal2E0Evrwmo0Q/kwfy5F4S/fPTkrtvNQ=
-code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250606121655-9d54ef189d42/go.mod h1:+7E3Zyp5xPGSWiKxOMXnfvHMBdGjoIZF/Ozv+WIHRgA=
+code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384 h1:eJzULGUyhHGk2DdQxX/jbH9FKZOyoIF90p3dzukCfLA=
+code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384/go.mod h1:4x61i4C725jkXOpnUPFNfmiEthF6FZc/byADbalp+F8=
 codeberg.org/gruf/go-bitutil v1.1.0 h1:U1Q+A1mtnPk+npqYrlRBc9ar2C5hYiBd17l1Wrp2Bt8=
 codeberg.org/gruf/go-bitutil v1.1.0/go.mod h1:rGibFevYTQfYKcPv0Df5KpG8n5xC3AfD4d/UgYeoNy0=
 codeberg.org/gruf/go-bytesize v1.0.3 h1:Tz8tCxhPLeyM5VryuBNjUHgKmLj4Bx9RbPaUSA3qg6g=
@@ -214,8 +214,8 @@ github.com/gobwas/glob v0.2.3/go.mod h1:d3Ez4x06l9bZtSvzIay5+Yzi0fmZzPgnTbPcKjJA
 github.com/goccy/go-json v0.10.5 h1:Fq85nIqj+gXn/S5ahsiTlK3TmC85qgirsdTP/+DeaC4=
 github.com/goccy/go-json v0.10.5/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/golang-jwt/jwt/v5 v5.2.1/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
-github.com/golang-jwt/jwt/v5 v5.2.2 h1:Rl4B7itRWVtYIHFrSNd7vhTiz9UpLdi6gZhZ3wEeDy8=
-github.com/golang-jwt/jwt/v5 v5.2.2/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
+github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=
+github.com/golang-jwt/jwt/v5 v5.3.0/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
 github.com/golang/geo v0.0.0-20190916061304-5b978397cfec/go.mod h1:QZ0nwyI2jOfgRAoBvP+ab5aRr7c9x7lhGEJrKvBwjWI=
 github.com/golang/geo v0.0.0-20200319012246-673a6f80352d h1:C/hKUcHT483btRbeGkrRjJz+Zbcj8audldIi9tRJDCc=
 github.com/golang/geo v0.0.0-20200319012246-673a6f80352d/go.mod h1:QZ0nwyI2jOfgRAoBvP+ab5aRr7c9x7lhGEJrKvBwjWI=
