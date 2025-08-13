@@ -100,6 +100,8 @@ func toAPIFilterAction(m gtsmodel.FilterAction) apimodel.FilterAction {
 		return apimodel.FilterActionWarn
 	case gtsmodel.FilterActionHide:
 		return apimodel.FilterActionHide
+	case gtsmodel.FilterActionBlur:
+		return apimodel.FilterActionBlur
 	}
 	return apimodel.FilterActionNone
 }

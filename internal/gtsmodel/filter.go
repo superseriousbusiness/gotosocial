@@ -205,6 +205,10 @@ const (
 	// FilterActionHide means that the status should
 	// be removed from timeline results entirely.
 	FilterActionHide FilterAction = 2
+
+	// FilterActionWarn means that the status should
+	// be shown with its media attachments hidden/blurred.
+	FilterActionBlur FilterAction = 3
 )
 
 // String returns human-readable form of FilterAction.
@@ -216,6 +220,8 @@ func (act FilterAction) String() string {
 		return "warn"
 	case FilterActionHide:
 		return "hide"
+	case FilterActionBlur:
+		return "blur"
 	default:
 		panic(fmt.Sprintf("invalid filter action: %d", act))
 	}

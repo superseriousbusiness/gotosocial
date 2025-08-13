@@ -69,6 +69,8 @@ const (
 	FilterActionWarn FilterAction = "warn"
 	// FilterActionHide filters will remove this status from API results.
 	FilterActionHide FilterAction = "hide"
+	// FilterActionBlur filters will include this status in API results indicating the media attachments should be hidden/blurred.
+	FilterActionBlur FilterAction = "blur"
 )
 
 // FilterKeyword represents text to filter within a v2 filter.

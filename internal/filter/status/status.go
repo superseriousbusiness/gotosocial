@@ -208,8 +208,8 @@ func (f *Filter) getStatusFilterResults(
 		var apiResult *apimodel.FilterResult
 
 		switch filter.Action {
-		case gtsmodel.FilterActionWarn:
-			// For filter action WARN get all possible filter matches against status.
+		case gtsmodel.FilterActionWarn, gtsmodel.FilterActionBlur:
+			// For filter action WARN or BLUR get all possible filter matches against status.
 			keywordMatches, statusMatches := getFilterMatches(filter, status.ID, fields)
 			if len(keywordMatches) == 0 && len(statusMatches) == 0 {
 				continue

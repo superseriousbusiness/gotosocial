@@ -383,14 +383,16 @@ func FilterContexts(contexts []apimodel.FilterContext) error {
 func FilterAction(action apimodel.FilterAction) error {
 	switch action {
 	case apimodel.FilterActionWarn,
-		apimodel.FilterActionHide:
+		apimodel.FilterActionHide,
+		apimodel.FilterActionBlur:
 		return nil
 	}
 	return fmt.Errorf(
-		"filter action '%s' was not recognized, valid options are '%s', '%s'",
+		"filter action '%s' was not recognized, valid options are '%s', '%s', '%s'",
 		action,
 		apimodel.FilterActionWarn,
 		apimodel.FilterActionHide,
+		apimodel.FilterActionBlur,
 	)
 }
 
