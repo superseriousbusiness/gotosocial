@@ -70,9 +70,13 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
+// check function conformance.
+var _ action.GTSAction = Maintenance
+var _ action.GTSAction = Start
+
 // Maintenance starts and creates a GoToSocial server
 // in maintenance mode (returns 503 for most requests).
-var Maintenance action.GTSAction = func(ctx context.Context) error {
+func Maintenance(ctx context.Context) error {
 	route, err := router.New(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating maintenance router: %w", err)
@@ -101,7 +105,7 @@ var Maintenance action.GTSAction = func(ctx context.Context) error {
 }
 
 // Start creates and starts a gotosocial server
-var Start action.GTSAction = func(ctx context.Context) error {
+func Start(ctx context.Context) error {
 	// Set GOMAXPROCS / GOMEMLIMIT
 	// to match container limits.
 	setLimits(ctx)

@@ -27,8 +27,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
+// check function conformance.
+var _ action.GTSAction = Run
+
 // Run will initialize the database, running any available migrations.
-var Run action.GTSAction = func(ctx context.Context) error {
+func Run(ctx context.Context) error {
 	var state state.State
 
 	defer func() {

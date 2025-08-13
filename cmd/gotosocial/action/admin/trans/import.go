@@ -29,8 +29,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/trans"
 )
 
+// check function conformance.
+var _ action.GTSAction = Import
+
 // Import imports info from a file into the database
-var Import action.GTSAction = func(ctx context.Context) error {
+func Import(ctx context.Context) error {
 	var state state.State
 
 	// Only set state DB connection.

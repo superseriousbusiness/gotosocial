@@ -27,8 +27,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
+// check function conformance.
+var _ action.GTSAction = Remote
+
 // Remote prunes old and/or unused remote media.
-var Remote action.GTSAction = func(ctx context.Context) error {
+func Remote(ctx context.Context) error {
 	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {

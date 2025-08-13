@@ -35,6 +35,10 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
+// check function conformance.
+var _ action.GTSAction = ListAttachments
+var _ action.GTSAction = ListEmojis
+
 type list struct {
 	dbService  db.DB
 	state      *state.State
@@ -155,7 +159,7 @@ func (l *list) shutdown() error {
 }
 
 // ListAttachments lists local, remote, or all attachment paths.
-var ListAttachments action.GTSAction = func(ctx context.Context) error {
+func ListAttachments(ctx context.Context) error {
 	list, err := setupList(ctx)
 	if err != nil {
 		return err
@@ -214,7 +218,7 @@ var ListAttachments action.GTSAction = func(ctx context.Context) error {
 }
 
 // ListEmojis lists local, remote, or all emoji filepaths.
-var ListEmojis action.GTSAction = func(ctx context.Context) error {
+func ListEmojis(ctx context.Context) error {
 	list, err := setupList(ctx)
 	if err != nil {
 		return err

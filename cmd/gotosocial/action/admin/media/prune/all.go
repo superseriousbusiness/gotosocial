@@ -26,8 +26,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
+// check function conformance.
+var _ action.GTSAction = All
+
 // All performs all media clean actions
-var All action.GTSAction = func(ctx context.Context) error {
+func All(ctx context.Context) error {
 	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {

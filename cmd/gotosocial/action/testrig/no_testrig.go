@@ -19,8 +19,15 @@
 
 package testrig
 
-import "code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+import (
+	"context"
+
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+)
+
+// check function conformance.
+var _ action.GTSAction = Start
 
 // Start creates and starts a gotosocial testrig server.
 // This is only enabled in debug builds, else is nil.
-var Start action.GTSAction
+func Start(context.Context) error { return nil }

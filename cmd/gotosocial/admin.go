@@ -146,6 +146,19 @@ func adminCommands() *cobra.Command {
 	config.AddAdminAccountPassword(adminAccountPasswordCmd)
 	adminAccountCmd.AddCommand(adminAccountPasswordCmd)
 
+	adminAccountDisable2FACmd := &cobra.Command{
+		Use:   "disable-2fa",
+		Short: "disable 2fa for the given local account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Disable2FA)
+		},
+	}
+	config.AddAdminAccount(adminAccountDisable2FACmd)
+	adminAccountCmd.AddCommand(adminAccountDisable2FACmd)
+
 	adminCmd.AddCommand(adminAccountCmd)
 
 	/*

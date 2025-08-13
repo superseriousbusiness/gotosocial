@@ -34,6 +34,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/pquerna/otp"
@@ -42,60 +43,6 @@ import (
 )
 
 var b32NoPadding = base32.StdEncoding.WithPadding(base32.NoPadding)
-
-// EncodeQuery is a copy-paste of url.Values.Encode, except it uses
-// %20 instead of + to encode spaces. This is necessary to correctly
-// render spaces in some authenticator apps, like Google Authenticator.
-//
-// [Note: this func and the above comment are both taken
-// directly from github.com/pquerna/otp/internal/encode.go.]
-func encodeQuery(v url.Values) string {
-	if v == nil {
-		return ""
-	}
-	var buf strings.Builder
-	keys := make([]string, 0, len(v))
-	for k := range v {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		vs := v[k]
-		// Changed from url.QueryEscape.
-		keyEscaped := url.PathEscape(k)
-		for _, v := range vs {
-			if buf.Len() > 0 {
-				buf.WriteByte('&')
-			}
-			buf.WriteString(keyEscaped)
-			buf.WriteByte('=')
-			// Changed from url.QueryEscape.
-			buf.WriteString(url.PathEscape(v))
-		}
-	}
-	return buf.String()
-}
-
-// totpURLForUser reconstructs a TOTP URL for the
-// given user, setting the instance host as issuer.
-//
-// See https://github.com/google/google-authenticator/wiki/Key-Uri-Format
-func totpURLForUser(user *gtsmodel.User) *url.URL {
-	issuer := config.GetHost() + " - GoToSocial"
-	v := url.Values{}
-	v.Set("secret", user.TwoFactorSecret)
-	v.Set("issuer", issuer)
-	v.Set("period", "30") // 30 seconds totp validity.
-	v.Set("algorithm", "SHA1")
-	v.Set("digits", "6") // 6-digit totp.
-
-	return &url.URL{
-		Scheme:   "otpauth",
-		Host:     "totp",
-		Path:     "/" + issuer + ":" + user.Email,
-		RawQuery: encodeQuery(v),
-	}
-}
 
 func (p *Processor) TwoFactorQRCodePngGet(
 	ctx context.Context,
@@ -135,14 +82,32 @@ func (p *Processor) TwoFactorQRCodePngGet(
 	}, nil
 }
 
+// TwoFactorQRCodeURIGet will generate a new
+// 2 factor auth secret for user, and return a
+// URI of expected format for generating a QR code
+// or inputting into a password manager.
+//
+// This may be called multiple times without error
+// UNTIL the moment the user has finalized enabling
+// 2FA. i.e. when user.TwoFactorEnabled() == true.
+// Until this point, the URI may be requested for
+// both QR code generation, and requesting the URI,
+// but once 2FA is confirmed enabled it is not safe
+// to re-share the agreed-upon secret.
 func (p *Processor) TwoFactorQRCodeURIGet(
 	ctx context.Context,
 	user *gtsmodel.User,
 ) (*url.URL, gtserror.WithCode) {
-	// Check if we need to lazily
-	// generate a new 2fa secret.
+	if user.TwoFactorEnabled() {
+		const errText = "2fa already enabled; not sharing secret again"
+		return nil, gtserror.NewErrorConflict(errors.New(errText), errText)
+	}
+
+	// Only generate new 2FA secret
+	// if not already been generated
+	// during this enabling process.
 	if user.TwoFactorSecret == "" {
-		// We do! Read some random crap.
+
 		// 32 bytes should be plenty entropy.
 		secret := make([]byte, 32)
 		if _, err := io.ReadFull(rand.Reader, secret); err != nil {
@@ -156,39 +121,40 @@ func (p *Processor) TwoFactorQRCodeURIGet(
 			err := gtserror.Newf("db error updating user: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-
-	} else if user.TwoFactorEnabled() {
-		// If a secret is already set, and 2fa is
-		// already enabled, we shouldn't share the
-		// secret via QR code again: Someone may
-		// have obtained a token for this user and
-		// is trying to get the 2fa secret so they
-		// can escalate an attack or something.
-		const errText = "2fa already enabled; keeping the secret secret"
-		return nil, gtserror.NewErrorConflict(errors.New(errText), errText)
 	}
 
-	// Recreate the totp key.
-	return totpURLForUser(user), nil
+	// see: https://github.com/google/google-authenticator/wiki/Key-Uri-Format
+	issuer := config.GetHost() + " - GoToSocial"
+	return &url.URL{
+		Scheme: "otpauth",
+		Host:   "totp",
+		Path:   "/" + issuer + ":" + user.Email,
+		RawQuery: encodeQuery(url.Values{
+			"secret":    {user.TwoFactorSecret},
+			"issuer":    {issuer},
+			"period":    {"30s"}, // 30s totp validity.
+			"digits":    {"6"},   // 6-digit totp.
+			"algorithm": {"SHA1"},
+		}),
+	}, nil
 }
 
+// TwoFactorEnable will enable 2 factor auth for
+// account, using given TOTP code to validate the
+// user's 2fa secret before continuing.
 func (p *Processor) TwoFactorEnable(
 	ctx context.Context,
 	user *gtsmodel.User,
 	code string,
 ) ([]string, gtserror.WithCode) {
-	if user.TwoFactorSecret == "" {
-		// User doesn't have a secret set, which
-		// means they never got the QR code to scan
-		// into their authenticator app. We can safely
-		// return an error from this request.
-		const errText = "no 2fa secret stored yet; read the qr code first"
-		return nil, gtserror.NewErrorForbidden(errors.New(errText), errText)
-	}
-
 	if user.TwoFactorEnabled() {
 		const errText = "2fa already enabled; disable it first then try again"
 		return nil, gtserror.NewErrorConflict(errors.New(errText), errText)
+	}
+
+	if user.TwoFactorSecret == "" {
+		const errText = "no 2fa secret stored; first read qr code / totp secret"
+		return nil, gtserror.NewErrorForbidden(errors.New(errText), errText)
 	}
 
 	// Try validating the provided code and give
@@ -222,12 +188,11 @@ func (p *Processor) TwoFactorEnable(
 			err := gtserror.Newf("error encrypting backup codes: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-
 		user.TwoFactorBackups[i] = string(encryptedBackup)
 	}
 
-	if err := p.state.DB.UpdateUser(
-		ctx,
+	// Update user in the database.
+	if err := p.state.DB.UpdateUser(ctx,
 		user,
 		"two_factor_enabled_at",
 		"two_factor_backups",
@@ -239,16 +204,12 @@ func (p *Processor) TwoFactorEnable(
 	return backupsClearText, nil
 }
 
+// TwoFactorDisable: see TwoFactorDisable().
 func (p *Processor) TwoFactorDisable(
 	ctx context.Context,
 	user *gtsmodel.User,
 	password string,
 ) gtserror.WithCode {
-	if !user.TwoFactorEnabled() {
-		const errText = "2fa already disabled"
-		return gtserror.NewErrorConflict(errors.New(errText), errText)
-	}
-
 	// Ensure provided password is correct.
 	if err := bcrypt.CompareHashAndPassword(
 		byteutil.S2B(user.EncryptedPassword),
@@ -258,13 +219,29 @@ func (p *Processor) TwoFactorDisable(
 		return gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 	}
 
-	// Disable 2fa for this user
-	// and clear backup codes.
+	// Disable 2 factor auth for this account.
+	return TwoFactorDisable(ctx, p.state, user)
+}
+
+// TwoFactorDisable disables 2 factor auth
+// for given user account. Note this should
+// be gated with password authentication if
+// accessed via web.
+func TwoFactorDisable(
+	ctx context.Context,
+	state *state.State,
+	user *gtsmodel.User,
+) gtserror.WithCode {
+	if !user.TwoFactorEnabled() {
+		const errText = "2fa already disabled"
+		return gtserror.NewErrorConflict(errors.New(errText), errText)
+	}
+
+	// Clear 2FA fields on user account.
 	user.TwoFactorEnabledAt = time.Time{}
 	user.TwoFactorSecret = ""
 	user.TwoFactorBackups = nil
-	if err := p.state.DB.UpdateUser(
-		ctx,
+	if err := state.DB.UpdateUser(ctx,
 		user,
 		"two_factor_enabled_at",
 		"two_factor_secret",
@@ -275,4 +252,34 @@ func (p *Processor) TwoFactorDisable(
 	}
 
 	return nil
+}
+
+// encodeQuery is a copy-paste of url.Values.Encode, except it uses
+// %20 instead of + to encode spaces. This is necessary to correctly
+// render spaces in some authenticator apps, like Google Authenticator.
+//
+// [Note: this func and the above comment are both taken
+// directly from github.com/pquerna/otp/internal/encode.go.]
+func encodeQuery(v url.Values) string {
+	var buf strings.Builder
+	keys := make([]string, 0, len(v))
+	for k := range v {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		vs := v[k]
+		// Changed from url.QueryEscape.
+		keyEscaped := url.PathEscape(k)
+		for _, v := range vs {
+			if buf.Len() > 0 {
+				buf.WriteByte('&')
+			}
+			buf.WriteString(keyEscaped)
+			buf.WriteByte('=')
+			// Changed from url.QueryEscape.
+			buf.WriteString(url.PathEscape(v))
+		}
+	}
+	return buf.String()
 }

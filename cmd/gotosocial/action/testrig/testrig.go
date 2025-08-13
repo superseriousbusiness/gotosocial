@@ -50,9 +50,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// check function conformance.
+var _ action.GTSAction = Start
+
 // Start creates and starts a gotosocial testrig server.
 // This is only enabled in debug builds, else is nil.
-var Start action.GTSAction = func(ctx context.Context) error {
+func Start(ctx context.Context) error {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 

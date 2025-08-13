@@ -29,10 +29,23 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/db/bundb"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	userprocessor "code.superseriousbusiness.org/gotosocial/internal/processing/user"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	// check function conformance
+	_ action.GTSAction = Create
+	_ action.GTSAction = List
+	_ action.GTSAction = Confirm
+	_ action.GTSAction = Promote
+	_ action.GTSAction = Demote
+	_ action.GTSAction = Enable
+	_ action.GTSAction = Disable
+	_ action.GTSAction = Password
 )
 
 func initState(ctx context.Context) (*state.State, error) {
@@ -61,7 +74,7 @@ func stopState(state *state.State) error {
 
 // Create creates a new account and user
 // in the database using the provided flags.
-var Create action.GTSAction = func(ctx context.Context) error {
+func Create(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -118,7 +131,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 }
 
 // List returns all existing local accounts.
-var List action.GTSAction = func(ctx context.Context) error {
+func List(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -156,7 +169,7 @@ var List action.GTSAction = func(ctx context.Context) error {
 
 // Confirm sets a user to Approved, sets Email to the current
 // UnconfirmedEmail value, and sets ConfirmedAt to now.
-var Confirm action.GTSAction = func(ctx context.Context) error {
+func Confirm(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -198,7 +211,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 }
 
 // Promote sets admin + moderator flags on a user to true.
-var Promote action.GTSAction = func(ctx context.Context) error {
+func Promote(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -235,7 +248,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 }
 
 // Demote sets admin + moderator flags on a user to false.
-var Demote action.GTSAction = func(ctx context.Context) error {
+func Demote(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -272,7 +285,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 }
 
 // Disable sets Disabled to true on a user.
-var Disable action.GTSAction = func(ctx context.Context) error {
+func Disable(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -308,7 +321,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 }
 
 // Enable sets Disabled to false on a user.
-var Enable action.GTSAction = func(ctx context.Context) error {
+func Enable(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -344,7 +357,7 @@ var Enable action.GTSAction = func(ctx context.Context) error {
 }
 
 // Password sets the password of target account.
-var Password action.GTSAction = func(ctx context.Context) error {
+func Password(ctx context.Context) error {
 	state, err := initState(ctx)
 	if err != nil {
 		return err
@@ -388,4 +401,42 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		ctx, user,
 		"encrypted_password",
 	)
+}
+
+// Disable2FA disables 2FA for target account.
+func Disable2FA(ctx context.Context) error {
+	state, err := initState(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
+
+	username := config.GetAdminAccountUsername()
+	if err := validate.Username(username); err != nil {
+		return err
+	}
+
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	if err != nil {
+		return err
+	}
+
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
+	if err != nil {
+		return err
+	}
+
+	err = userprocessor.TwoFactorDisable(ctx, state, user)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("2fa disabled\n")
+	return nil
 }

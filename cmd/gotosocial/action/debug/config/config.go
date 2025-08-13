@@ -26,8 +26,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
+// check function conformance.
+var _ action.GTSAction = Config
+
 // Config just prints the collated config out to stdout as json.
-var Config action.GTSAction = func(ctx context.Context) (err error) {
+func Config(ctx context.Context) (err error) {
 	var raw map[string]interface{}
 
 	// Marshal configuration to a raw JSON map

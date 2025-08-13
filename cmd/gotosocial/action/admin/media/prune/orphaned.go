@@ -26,8 +26,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
+// check function conformance.
+var _ action.GTSAction = Orphaned
+
 // Orphaned prunes orphaned media from storage.
-var Orphaned action.GTSAction = func(ctx context.Context) error {
+func Orphaned(ctx context.Context) error {
 	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {
