@@ -20,7 +20,6 @@ package webpush
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -299,41 +298,37 @@ func formatNotificationTitle(
 
 	switch notification.NotificationType {
 	case gtsmodel.NotificationFollow:
-		return fmt.Sprintf("%s followed you", displayNameOrAcct)
+		return displayNameOrAcct + " followed you"
 	case gtsmodel.NotificationFollowRequest:
-		return fmt.Sprintf("%s requested to follow you", displayNameOrAcct)
+		return displayNameOrAcct + " requested to followed you"
 	case gtsmodel.NotificationMention:
-		return fmt.Sprintf("%s mentioned you", displayNameOrAcct)
+		return displayNameOrAcct + " mentioned you"
 	case gtsmodel.NotificationReblog:
-		return fmt.Sprintf("%s boosted your post", displayNameOrAcct)
+		return displayNameOrAcct + " boosted your post"
 	case gtsmodel.NotificationFavourite:
-		return fmt.Sprintf("%s faved your post", displayNameOrAcct)
+		return displayNameOrAcct + " faved your post"
 	case gtsmodel.NotificationPoll:
 		if subscription.AccountID == notification.TargetAccountID {
 			return "Your poll has ended"
 		}
-		return fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
+		return displayNameOrAcct + "'s poll has ended"
 	case gtsmodel.NotificationStatus:
-		return fmt.Sprintf("%s posted", displayNameOrAcct)
+		return displayNameOrAcct + " posted"
 	case gtsmodel.NotificationAdminSignup:
-		return fmt.Sprintf("%s requested to sign up", displayNameOrAcct)
+		return displayNameOrAcct + " requested to sign up"
 	case gtsmodel.NotificationPendingFave:
-		return fmt.Sprintf("%s faved your post, which requires your approval", displayNameOrAcct)
+		return displayNameOrAcct + " faved your post, which requires your approval"
 	case gtsmodel.NotificationPendingReply:
-		return fmt.Sprintf("%s mentioned you, which requires your approval", displayNameOrAcct)
+		return displayNameOrAcct + " mentioned you, which requires your approval"
 	case gtsmodel.NotificationPendingReblog:
-		return fmt.Sprintf("%s boosted your post, which requires your approval", displayNameOrAcct)
+		return displayNameOrAcct + " boosted your post, which requires your approval"
 	case gtsmodel.NotificationAdminReport:
-		return fmt.Sprintf("%s submitted a report", displayNameOrAcct)
+		return displayNameOrAcct + " submitted a report"
 	case gtsmodel.NotificationUpdate:
-		return fmt.Sprintf("%s updated their post", displayNameOrAcct)
+		return displayNameOrAcct + " updated their post"
 	default:
 		log.Warnf(ctx, "Unknown notification type: %d", notification.NotificationType)
-		return fmt.Sprintf(
-			"%s did something (unknown notification type %d)",
-			displayNameOrAcct,
-			notification.NotificationType,
-		)
+		return displayNameOrAcct + " did something (unknown notification type)"
 	}
 }
 

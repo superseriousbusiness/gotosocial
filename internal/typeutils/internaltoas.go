@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"code.superseriousbusiness.org/activity/pub"
@@ -1042,7 +1043,7 @@ func (c *Converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 		domain = m.TargetAccount.Domain
 	}
 	username := m.TargetAccount.Username
-	nameString := fmt.Sprintf("@%s@%s", username, domain)
+	nameString := "@" + username + "@" + domain
 	nameProp := streams.NewActivityStreamsNameProperty()
 	nameProp.AppendXMLSchemaString(nameString)
 	mention.SetActivityStreamsName(nameProp)
@@ -1104,7 +1105,7 @@ func (c *Converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.Too
 	emoji.SetJSONLDId(idProp)
 
 	nameProp := streams.NewActivityStreamsNameProperty()
-	nameString := fmt.Sprintf(":%s:", e.Shortcode)
+	nameString := ":" + e.Shortcode + ":"
 	nameProp.AppendXMLSchemaString(nameString)
 	emoji.SetActivityStreamsName(nameProp)
 
@@ -1490,7 +1491,7 @@ func (c *Converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.Act
 //		}
 //	}
 func (c *Converter) StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
-	collectionID := fmt.Sprintf("%s/replies", status.URI)
+	collectionID := status.URI + "/replies"
 	collectionIDURI, err := url.Parse(collectionID)
 	if err != nil {
 		return nil, err
@@ -1509,7 +1510,7 @@ func (c *Converter) StatusToASRepliesCollection(ctx context.Context, status *gts
 
 	// first.id
 	firstPageIDProp := streams.NewJSONLDIdProperty()
-	firstPageID, err := url.Parse(fmt.Sprintf("%s?page=true", collectionID))
+	firstPageID, err := url.Parse(collectionID + "?page=true")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -1518,7 +1519,8 @@ func (c *Converter) StatusToASRepliesCollection(ctx context.Context, status *gts
 
 	// first.next
 	nextProp := streams.NewActivityStreamsNextProperty()
-	nextPropID, err := url.Parse(fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts))
+	nextPropIDStr := collectionID + "?page=true&only_other_accounts=" + strconv.FormatBool(onlyOtherAccounts)
+	nextPropID, err := url.Parse(nextPropIDStr)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -1553,15 +1555,15 @@ func (c *Converter) StatusToASRepliesCollection(ctx context.Context, status *gts
 //		]
 //	}
 func (c *Converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
-	collectionID := fmt.Sprintf("%s/replies", status.URI)
+	collectionID := status.URI + "/replies"
 
 	page := streams.NewActivityStreamsCollectionPage()
 
 	// .id
 	pageIDProp := streams.NewJSONLDIdProperty()
-	pageIDString := fmt.Sprintf("%s?page=true&only_other_accounts=%t", collectionID, onlyOtherAccounts)
+	pageIDString := collectionID + "?page=true&only_other_accounts=" + strconv.FormatBool(onlyOtherAccounts)
 	if minID != "" {
-		pageIDString = fmt.Sprintf("%s&min_id=%s", pageIDString, minID)
+		pageIDString += "&min_id=" + minID
 	}
 
 	pageID, err := url.Parse(pageIDString)
@@ -1593,9 +1595,9 @@ func (c *Converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 
 	// .next
 	nextProp := streams.NewActivityStreamsNextProperty()
-	nextPropIDString := fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts)
+	nextPropIDString := collectionID + "?page=true&only_other_accounts=" + strconv.FormatBool(onlyOtherAccounts)
 	if highestID != "" {
-		nextPropIDString = fmt.Sprintf("%s&min_id=%s", nextPropIDString, highestID)
+		nextPropIDString += "&min_id=" + minID
 	}
 
 	nextPropID, err := url.Parse(nextPropIDString)
@@ -1643,12 +1645,12 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 
 	// .id
 	pageIDProp := streams.NewJSONLDIdProperty()
-	pageID := fmt.Sprintf("%s?page=true", outboxID)
+	pageID := outboxID + "?page=true"
 	if minID != "" {
-		pageID = fmt.Sprintf("%s&minID=%s", pageID, minID)
+		pageID += "&min_id=" + minID
 	}
 	if maxID != "" {
-		pageID = fmt.Sprintf("%s&maxID=%s", pageID, maxID)
+		pageID += "&max_id=" + maxID
 	}
 	pageIDURI, err := url.Parse(pageID)
 	if err != nil {
@@ -1691,7 +1693,7 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 	// .next
 	if lowest != "" {
 		nextProp := streams.NewActivityStreamsNextProperty()
-		nextPropIDString := fmt.Sprintf("%s?page=true&max_id=%s", outboxID, lowest)
+		nextPropIDString := outboxID + "?page=true&max_id=" + lowest
 		nextPropIDURI, err := url.Parse(nextPropIDString)
 		if err != nil {
 			return nil, err
@@ -1703,7 +1705,7 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 	// .prev
 	if highest != "" {
 		prevProp := streams.NewActivityStreamsPrevProperty()
-		prevPropIDString := fmt.Sprintf("%s?page=true&min_id=%s", outboxID, highest)
+		prevPropIDString := outboxID + "?page=true&min_id=" + highest
 		prevPropIDURI, err := url.Parse(prevPropIDString)
 		if err != nil {
 			return nil, err
@@ -1854,7 +1856,7 @@ func (c *Converter) PollVoteToASCreates(
 		ap.AppendTo(create, pollAuthorIRI)
 
 		// Create ID formatted as: {$voterIRI}/activity#vote{$index}/{$statusIRI}.
-		createID := fmt.Sprintf("%s/activity#vote%d/%s", author.URI, i, poll.Status.URI)
+		createID := author.URI + "/activity#vote" + strconv.Itoa(i) + "/" + poll.Status.URI
 		ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), createID)
 
 		// Set Create actor appropriately.
@@ -1867,7 +1869,7 @@ func (c *Converter) PollVoteToASCreates(
 		note := streams.NewActivityStreamsNote()
 
 		// For AP IRI generate from author URI + poll ID + vote choice.
-		id := fmt.Sprintf("%s#%s/votes/%d", author.URI, poll.ID, choice)
+		id := author.URI + "#" + poll.ID + "/votes/" + strconv.Itoa(choice)
 		ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(note), id)
 
 		// Attach new name property to note with vote choice.

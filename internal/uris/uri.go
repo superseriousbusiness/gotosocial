@@ -50,73 +50,127 @@ const (
 	RejectsPath      = "rejects"       // RejectsPath represents the activitypub Reject's location
 )
 
-// UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
+// UserURIs contains a bunch of UserURIs
+// and URLs for a user, host, account, etc.
 type UserURIs struct {
-	// The web URL of the instance host, eg https://example.org
+
+	// The web URL of the instance
+	// host, eg https://example.org
 	HostURL string
-	// The web URL of the user, eg., https://example.org/@example_user
+
+	// The web URL of the user,
+	// eg., https://example.org/@example_user
 	UserURL string
-	// The web URL for statuses of this user, eg., https://example.org/@example_user/statuses
+
+	// The web URL for statuses of this user,
+	// eg., https://example.org/@example_user/statuses
 	StatusesURL string
 
-	// The activitypub URI of this user, eg., https://example.org/users/example_user
+	// The activitypub URI of this user,
+	// eg., https://example.org/users/example_user
 	UserURI string
-	// The activitypub URI for this user's statuses, eg., https://example.org/users/example_user/statuses
+
+	// The activitypub URI for this user's statuses,
+	// eg., https://example.org/users/example_user/statuses
 	StatusesURI string
-	// The activitypub URI for this user's activitypub inbox, eg., https://example.org/users/example_user/inbox
+
+	// The activitypub URI for this user's activitypub inbox,
+	// eg., https://example.org/users/example_user/inbox
 	InboxURI string
-	// The activitypub URI for this user's activitypub outbox, eg., https://example.org/users/example_user/outbox
+
+	// The activitypub URI for this user's activitypub outbox,
+	// eg., https://example.org/users/example_user/outbox
 	OutboxURI string
-	// The activitypub URI for this user's followers, eg., https://example.org/users/example_user/followers
+
+	// The activitypub URI for this user's followers,
+	// eg., https://example.org/users/example_user/followers
 	FollowersURI string
-	// The activitypub URI for this user's following, eg., https://example.org/users/example_user/following
+
+	// The activitypub URI for this user's following,
+	// eg., https://example.org/users/example_user/following
 	FollowingURI string
-	// The activitypub URI for this user's liked posts eg., https://example.org/users/example_user/liked
+
+	// The activitypub URI for this user's liked posts.
+	// eg., https://example.org/users/example_user/liked
 	LikedURI string
-	// The activitypub URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
+
+	// The activitypub URI for this user's featured collections,
+	// eg., https://example.org/users/example_user/collections/featured
 	FeaturedCollectionURI string
-	// The URI for this user's public key, eg., https://example.org/users/example_user/publickey
+
+	// The URI for this user's public key,
+	// eg., https://example.org/users/example_user/publickey
 	PublicKeyURI string
 }
 
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
 // https://example.org/users/whatever_user/follow/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForFollow(username string, thisFollowID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		FollowPath,
+		thisFollowID,
+	)
 }
 
 // GenerateURIForLike returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForLike(username string, thisFavedID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		LikedPath,
+		thisFavedID,
+	)
 }
 
 // GenerateURIForUpdate returns the AP URI for a new update activity -- something like:
 // https://example.org/users/whatever_user#updates/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForUpdate(username string, thisUpdateID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		UpdatePath,
+		thisUpdateID,
+	)
 }
 
 // GenerateURIForBlock returns the AP URI for a new block activity -- something like:
 // https://example.org/users/whatever_user/blocks/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForBlock(username string, thisBlockID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		BlocksPath,
+		thisBlockID,
+	)
 }
 
 // GenerateURIForMove returns the AP URI for a new Move activity -- something like:
 // https://example.org/users/whatever_user/moves/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForMove(username string, thisMoveID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, MovesPath, thisMoveID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		MovesPath,
+		thisMoveID,
+	)
 }
 
 // GenerateURIForReport returns the API URI for a new Flag activity -- something like:
@@ -125,57 +179,74 @@ func GenerateURIForMove(username string, thisMoveID string) string {
 // This path specifically doesn't contain any info about the user who did the reporting,
 // to protect their privacy.
 func GenerateURIForReport(thisReportID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, ReportsPath, thisReportID)
+	return buildURL2(proto,
+		host,
+		ReportsPath,
+		thisReportID,
+	)
 }
 
 // GenerateURIForEmailConfirm returns a link for email confirmation -- something like:
 // https://example.org/confirm_email?token=490e337c-0162-454f-ac48-4b22bb92a205
 func GenerateURIForEmailConfirm(token string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s?token=%s", protocol, host, ConfirmEmailPath, token)
+	return buildURL1(proto, host, ConfirmEmailPath) + "?token=" + token
 }
 
 // GenerateURIForAccept returns the AP URI for a new Accept activity -- something like:
 // https://example.org/users/whatever_user/accepts/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForAccept(username string, thisAcceptID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, AcceptsPath, thisAcceptID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		AcceptsPath,
+		thisAcceptID,
+	)
 }
 
 // GenerateURIForReject returns the AP URI for a new Reject activity -- something like:
 // https://example.org/users/whatever_user/rejects/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForReject(username string, thisRejectID string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, RejectsPath, thisRejectID)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		RejectsPath,
+		thisRejectID,
+	)
 }
 
-// GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
-func GenerateURIsForAccount(username string) *UserURIs {
-	protocol := config.GetProtocol()
+// GenerateURIsForAccount throws together a bunch of URIs
+// for the given username, with the given protocol and host.
+func GenerateURIsForAccount(username string) UserURIs {
+	proto := config.GetProtocol()
 	host := config.GetHost()
 
-	// The below URLs are used for serving web requests
-	hostURL := fmt.Sprintf("%s://%s", protocol, host)
-	userURL := fmt.Sprintf("%s/@%s", hostURL, username)
-	statusesURL := fmt.Sprintf("%s/%s", userURL, StatusesPath)
+	// URLs for serving web requests.
+	hostURL := proto + "://" + host
+	userURL := hostURL + "/@" + username
+	statusesURL := userURL + "/" + StatusesPath
 
 	// the below URIs are used in ActivityPub and Webfinger
-	userURI := fmt.Sprintf("%s/%s/%s", hostURL, UsersPath, username)
-	statusesURI := fmt.Sprintf("%s/%s", userURI, StatusesPath)
-	inboxURI := fmt.Sprintf("%s/%s", userURI, InboxPath)
-	outboxURI := fmt.Sprintf("%s/%s", userURI, OutboxPath)
-	followersURI := fmt.Sprintf("%s/%s", userURI, FollowersPath)
-	followingURI := fmt.Sprintf("%s/%s", userURI, FollowingPath)
-	likedURI := fmt.Sprintf("%s/%s", userURI, LikedPath)
-	collectionURI := fmt.Sprintf("%s/%s/%s", userURI, CollectionsPath, FeaturedPath)
-	publicKeyURI := fmt.Sprintf("%s/%s", userURI, PublicKeyPath)
+	userURI := hostURL + "/" + UsersPath + "/" + username
+	statusesURI := userURI + "/" + StatusesPath
+	inboxURI := userURI + "/" + InboxPath
+	outboxURI := userURI + "/" + OutboxPath
+	followersURI := userURI + "/" + FollowersPath
+	followingURI := userURI + "/" + FollowingPath
+	likedURI := userURI + "/" + LikedPath
+	collectionURI := userURI + "/" + CollectionsPath + "/" + FeaturedPath
+	publicKeyURI := userURI + "/" + PublicKeyPath
 
-	return &UserURIs{
+	return UserURIs{
 		HostURL:     hostURL,
 		UserURL:     userURL,
 		StatusesURL: statusesURL,
@@ -205,19 +276,16 @@ func URIForAttachment(
 	mediaID string,
 	extension string,
 ) string {
-	const format = "%s://%s/%s/%s/%s/%s/%s.%s"
-
-	return fmt.Sprintf(
-		format,
-		config.GetProtocol(),
-		config.GetHost(),
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL5(proto,
+		host,
 		FileserverPath,
 		accountID,
 		mediaType,
 		mediaSize,
 		mediaID,
-		extension,
-	)
+	) + "." + extension
 }
 
 // StoragePathForAttachment generates a storage
@@ -233,16 +301,12 @@ func StoragePathForAttachment(
 	mediaID string,
 	extension string,
 ) string {
-	const format = "%s/%s/%s/%s.%s"
-
-	return fmt.Sprintf(
-		format,
+	return buildPath4(
 		accountID,
 		mediaType,
 		mediaSize,
 		mediaID,
-		extension,
-	)
+	) + "." + extension
 }
 
 // URIForEmoji generates an
@@ -252,12 +316,10 @@ func StoragePathForAttachment(
 //
 //	"https://example.org/emoji/01FPST9QK4V5XWS3F9Z4F2G1X7"
 func URIForEmoji(emojiID string) string {
-	const format = "%s://%s/%s/%s"
-
-	return fmt.Sprintf(
-		format,
-		config.GetProtocol(),
-		config.GetHost(),
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL2(proto,
+		host,
 		EmojiPath,
 		emojiID,
 	)
@@ -265,9 +327,14 @@ func URIForEmoji(emojiID string) string {
 
 // URIForTag generates an activitypub uri for a tag.
 func URIForTag(name string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, TagsPath, strings.ToLower(name))
+	name = strings.ToLower(name)
+	return buildURL2(proto,
+		host,
+		TagsPath,
+		name,
+	)
 }
 
 // IsUserPath returns true if the given URL path corresponds to eg /users/example_username

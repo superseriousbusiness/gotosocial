@@ -18,8 +18,8 @@
 package util
 
 import (
-	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -71,7 +71,7 @@ func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableR
 		nextRaw := params.NextMaxIDKey + "=" + params.NextMaxIDValue
 
 		if params.Limit != 0 {
-			nextRaw = fmt.Sprintf("limit=%d&", params.Limit) + nextRaw
+			nextRaw = "limit=" + strconv.Itoa(params.Limit) + "&" + nextRaw
 		}
 
 		for _, p := range params.ExtraQueryParams {
@@ -96,7 +96,7 @@ func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableR
 		prevRaw := params.PrevMinIDKey + "=" + params.PrevMinIDValue
 
 		if params.Limit != 0 {
-			prevRaw = fmt.Sprintf("limit=%d&", params.Limit) + prevRaw
+			prevRaw = "limit=" + strconv.Itoa(params.Limit) + "&" + prevRaw
 		}
 
 		for _, p := range params.ExtraQueryParams {
