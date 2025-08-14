@@ -64,30 +64,29 @@ func (p *Processor) Create(ctx context.Context, requester *gtsmodel.Account, for
 	}
 
 	// Create new attached filter keywords.
-	for _, keyword := range form.Keywords {
-		filterKeyword := &gtsmodel.FilterKeyword{
-			ID:        id.NewULID(),
-			FilterID:  filter.ID,
-			Keyword:   keyword.Keyword,
-			WholeWord: keyword.WholeWord,
-		}
-
-		// Append the new filter key word to filter itself.
-		filter.Keywords = append(filter.Keywords, filterKeyword)
-		filter.KeywordIDs = append(filter.KeywordIDs, filterKeyword.ID)
+	keywordQueries, errWithCode := p.createFilterKeywords(ctx,
+		filter, form.Keywords)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	// Create new attached filter statuses.
-	for _, status := range form.Statuses {
-		filterStatus := &gtsmodel.FilterStatus{
-			ID:       id.NewULID(),
-			FilterID: filter.ID,
-			StatusID: status.StatusID,
-		}
+	statusQueries, errWithCode := p.createFilterStatuses(ctx,
+		filter, form.Statuses)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
 
-		// Append the new filter status to filter itself.
-		filter.Statuses = append(filter.Statuses, filterStatus)
-		filter.StatusIDs = append(filter.StatusIDs, filterStatus.ID)
+	for _, keywordCreate := range keywordQueries {
+		if errWithCode := keywordCreate(); errWithCode != nil {
+			return nil, errWithCode
+		}
+	}
+
+	for _, statusCreate := range statusQueries {
+		if errWithCode := statusCreate(); errWithCode != nil {
+			return nil, errWithCode
+		}
 	}
 
 	// Insert the new filter model into the database.
@@ -109,4 +108,105 @@ func (p *Processor) Create(ctx context.Context, requester *gtsmodel.Account, for
 
 	// Return as converted frontend filter model.
 	return typeutils.FilterToAPIFilterV2(filter), nil
+}
+
+func (p *Processor) createFilterKeywords(ctx context.Context, filter *gtsmodel.Filter, form []apimodel.FilterKeywordCreateUpdateRequest) ([]func() gtserror.WithCode, gtserror.WithCode) {
+	if len(form) == 0 {
+		// No keywords created.
+		return nil, nil
+	}
+
+	var deferred []func() gtserror.WithCode
+
+	// Create filter keywords in the database.
+	for _, request := range form {
+		// Check for valid request.
+		if request.Keyword == "" {
+			const text = "missing keyword"
+			return deferred, gtserror.NewWithCode(http.StatusBadRequest, text)
+		}
+
+		// Create new filter keyword for insert.
+		filterKeyword := &gtsmodel.FilterKeyword{
+			ID:        id.NewULID(),
+			FilterID:  filter.ID,
+			Keyword:   request.Keyword,
+			WholeWord: request.WholeWord,
+		}
+
+		// Verify that this is valid regular expression.
+		if err := filterKeyword.Compile(); err != nil {
+			const text = "invalid regular expression"
+			err := gtserror.Newf("invalid regular expression: %w", err)
+			return deferred, gtserror.NewWithCodeSafe(
+				http.StatusBadRequest,
+				err, text,
+			)
+		}
+
+		// Append new filter keyword to filter and list of IDs.
+		filter.Keywords = append(filter.Keywords, filterKeyword)
+		filter.KeywordIDs = append(filter.KeywordIDs, filterKeyword.ID)
+
+		// Append database insert to funcs for later processing by caller.
+		deferred = append(deferred, func() gtserror.WithCode {
+			if err := p.state.DB.PutFilterKeyword(ctx, filterKeyword); //
+			err != nil {
+				if errors.Is(err, db.ErrAlreadyExists) {
+					const text = "duplicate keyword"
+					return gtserror.NewWithCode(http.StatusConflict, text)
+				}
+				err := gtserror.Newf("error inserting filter keyword: %w", err)
+				return gtserror.NewErrorInternalError(err)
+			}
+			return nil
+		})
+	}
+
+	return deferred, nil
+}
+
+func (p *Processor) createFilterStatuses(ctx context.Context, filter *gtsmodel.Filter, form []apimodel.FilterStatusCreateRequest) ([]func() gtserror.WithCode, gtserror.WithCode) {
+	if len(form) == 0 {
+		// No statuses added.
+		return nil, nil
+	}
+
+	var deferred []func() gtserror.WithCode
+
+	// Create filter statuses in the database.
+	for _, request := range form {
+		// Check for valid request.
+		if request.StatusID == "" {
+			const text = "missing status"
+			return deferred, gtserror.NewWithCode(http.StatusBadRequest, text)
+		}
+
+		// Create new filter status for insert.
+		filterStatus := &gtsmodel.FilterStatus{
+			ID:       id.NewULID(),
+			FilterID: filter.ID,
+			StatusID: request.StatusID,
+		}
+
+		// Append new filter status to filter and list of IDs.
+		filter.Statuses = append(filter.Statuses, filterStatus)
+		filter.StatusIDs = append(filter.StatusIDs, filterStatus.ID)
+
+		// Append database insert to funcs for later processing by caller.
+		deferred = append(deferred, func() gtserror.WithCode {
+			if err := p.state.DB.PutFilterStatus(ctx, filterStatus); //
+			err != nil {
+				if errors.Is(err, db.ErrAlreadyExists) {
+					const text = "duplicate status"
+					return gtserror.NewWithCode(http.StatusConflict, text)
+				}
+				err := gtserror.Newf("error inserting filter status: %w", err)
+				return gtserror.NewErrorInternalError(err)
+			}
+			return nil
+		})
+	}
+
+	return deferred, nil
 }
