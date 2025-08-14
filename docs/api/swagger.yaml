@@ -11064,7 +11064,6 @@ paths:
             tags:
                 - scheduled_statuses
         put:
-            description: Update a scheduled status's publishing date
             operationId: updateScheduledStatus
             parameters:
                 - description: ID of the status
@@ -11103,6 +11102,7 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - write:statuses
+            summary: Update a scheduled status's publishing date.
             tags:
                 - scheduled_statuses
     /api/v1/statuses:

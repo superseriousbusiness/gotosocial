@@ -30,7 +30,7 @@ import (
 
 // ScheduledStatusPUTHandler swagger:operation PUT /api/v1/scheduled_statuses/{id} updateScheduledStatus
 //
-// Update a scheduled status's publishing date
+// Update a scheduled status's publishing date.
 //
 //	---
 //	tags:

@@ -272,7 +272,7 @@ func (s *scheduledStatusDB) PutScheduledStatus(ctx context.Context, status *gtsm
 			if _, err := tx.NewInsert().
 				Model(status).
 				Exec(ctx); err != nil {
-				return gtserror.Newf("error selecting boosted status: %w", err)
+				return gtserror.Newf("error inserting scheduled status: %w", err)
 			}
 
 			// change the scheduled status ID of the
