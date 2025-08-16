@@ -55,6 +55,12 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 		// i.e. no transcode.
 		"-codec", "copy",
 
+		// Ensure we include
+		// ALL audio / video
+		// / subtitle streams,
+		// not just the first.
+		"-map", "0",
+
 		// Overwrite.
 		"-y",
 
