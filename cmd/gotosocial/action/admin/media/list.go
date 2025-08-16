@@ -18,12 +18,10 @@
 package media
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"os"
-	"path"
 
 	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -33,84 +31,168 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-fastpath/v2"
 )
 
 // check function conformance.
 var _ action.GTSAction = ListAttachments
 var _ action.GTSAction = ListEmojis
 
+// ListAttachments lists local, remote, or all attachment paths.
+func ListAttachments(ctx context.Context) error {
+	list, err := setupList(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Ensure lister gets shutdown on exit.
+		if err := list.shutdown(); err != nil {
+			log.Errorf(ctx, "error shutting down: %v", err)
+		}
+	}()
+
+	// List attachment media paths from db.
+	return list.ListAttachmentPaths(ctx)
+}
+
+// ListEmojis lists local, remote, or all emoji filepaths.
+func ListEmojis(ctx context.Context) error {
+	list, err := setupList(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Ensure lister gets shutdown on exit.
+		if err := list.shutdown(); err != nil {
+			log.Errorf(ctx, "error shutting down: %v", err)
+		}
+	}()
+
+	// List emoji media paths from db.
+	return list.ListEmojiPaths(ctx)
+}
+
 type list struct {
-	dbService  db.DB
 	state      *state.State
-	page       paging.Page
 	localOnly  bool
 	remoteOnly bool
-	out        *bufio.Writer
 }
 
-// Get a list of attachment using a custom filter
-func (l *list) GetAllAttachmentPaths(ctx context.Context, filter func(*gtsmodel.MediaAttachment) string) ([]string, error) {
-	res := make([]string, 0, 100)
+func (l *list) ListAttachmentPaths(ctx context.Context) error {
+	// Page reused for iterative
+	// attachment queries, with
+	// predefined limit.
+	var page paging.Page
+	page.Limit = 500
+
+	// Storage base path, used for path building.
+	basePath := config.GetStorageLocalBasePath()
 
 	for {
-		// Get the next page of media attachments up to max ID.
-		attachments, err := l.dbService.GetAttachments(ctx, &l.page)
+		// Get next page of media attachments up to max ID.
+		medias, err := l.state.DB.GetAttachments(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
+			return fmt.Errorf("failed to fetch media from database: %w", err)
 		}
 
 		// Get current max ID.
-		maxID := l.page.Max.Value
+		maxID := page.Max.Value
 
-		// If no attachments or the same group is returned, we reached the end.
-		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
+		// If no media or the same group is returned, we reached end.
+		if len(medias) == 0 || maxID == medias[len(medias)-1].ID {
 			break
 		}
 
-		// Use last ID as the next 'maxID' value.
-		maxID = attachments[len(attachments)-1].ID
-		l.page.Max = paging.MaxID(maxID)
+		// Use last ID as the next 'maxID'.
+		maxID = medias[len(medias)-1].ID
+		page.Max.Value = maxID
 
-		for _, a := range attachments {
-			v := filter(a)
-			if v != "" {
-				res = append(res, v)
+		switch {
+		case l.localOnly:
+			// Only print local media paths.
+			for _, media := range medias {
+				if media.RemoteURL == "" {
+					printMediaPaths(basePath, media)
+				}
+			}
+
+		case l.remoteOnly:
+			// Only print remote media paths.
+			for _, media := range medias {
+				if media.RemoteURL != "" {
+					printMediaPaths(basePath, media)
+				}
+			}
+
+		default:
+			// Print all known media paths.
+			for _, media := range medias {
+				printMediaPaths(basePath, media)
 			}
 		}
 	}
-	return res, nil
+
+	return nil
 }
 
-// Get a list of emojis using a custom filter
-func (l *list) GetAllEmojisPaths(ctx context.Context, filter func(*gtsmodel.Emoji) string) ([]string, error) {
-	res := make([]string, 0, 100)
+func (l *list) ListEmojiPaths(ctx context.Context) error {
+	// Page reused for iterative
+	// attachment queries, with
+	// predefined limit.
+	var page paging.Page
+	page.Limit = 500
+
+	// Storage base path, used for path building.
+	basePath := config.GetStorageLocalBasePath()
+
 	for {
 		// Get the next page of emoji media up to max ID.
-		attachments, err := l.dbService.GetEmojis(ctx, &l.page)
+		emojis, err := l.state.DB.GetEmojis(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
+			return fmt.Errorf("failed to fetch emojis from database: %w", err)
 		}
 
 		// Get current max ID.
-		maxID := l.page.Max.Value
+		maxID := page.Max.Value
 
-		// If no attachments or the same group is returned, we reached the end.
-		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
+		// If no emojis or the same group is returned, we reached end.
+		if len(emojis) == 0 || maxID == emojis[len(emojis)-1].ID {
 			break
 		}
 
-		// Use last ID as the next 'maxID' value.
-		maxID = attachments[len(attachments)-1].ID
-		l.page.Max = paging.MaxID(maxID)
+		// Use last ID as the next 'maxID'.
+		maxID = emojis[len(emojis)-1].ID
+		page.Max.Value = maxID
 
-		for _, a := range attachments {
-			v := filter(a)
-			if v != "" {
-				res = append(res, v)
+		switch {
+		case l.localOnly:
+			// Only print local emoji paths.
+			for _, emoji := range emojis {
+				if emoji.ImageRemoteURL == "" {
+					printEmojiPaths(basePath, emoji)
+				}
+			}
+
+		case l.remoteOnly:
+			// Only print remote emoji paths.
+			for _, emoji := range emojis {
+				if emoji.ImageRemoteURL != "" {
+					printEmojiPaths(basePath, emoji)
+				}
+			}
+
+		default:
+			// Print all known emoji paths.
+			for _, emoji := range emojis {
+				printEmojiPaths(basePath, emoji)
 			}
 		}
 	}
-	return res, nil
+
+	return nil
 }
 
 func setupList(ctx context.Context) (*list, error) {
@@ -128,150 +210,84 @@ func setupList(ctx context.Context) (*list, error) {
 		)
 	}
 
+	// Initialize caches.
 	state.Caches.Init()
+
+	// Ensure background cache tasks are running.
 	if err := state.Caches.Start(); err != nil {
 		return nil, fmt.Errorf("error starting caches: %w", err)
 	}
 
+	var err error
+
 	// Only set state DB connection.
 	// Don't need Actions or Workers for this.
-	dbService, err := bundb.NewBunDBService(ctx, &state)
+	state.DB, err = bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)
 	}
-	state.DB = dbService
 
 	return &list{
-		dbService:  dbService,
 		state:      &state,
-		page:       paging.Page{Limit: 200},
 		localOnly:  localOnly,
 		remoteOnly: remoteOnly,
-		out:        bufio.NewWriter(os.Stdout),
 	}, nil
 }
 
 func (l *list) shutdown() error {
-	l.out.Flush()
-	err := l.dbService.Close()
+	err := l.state.DB.Close()
 	l.state.Caches.Stop()
 	return err
 }
 
-// ListAttachments lists local, remote, or all attachment paths.
-func ListAttachments(ctx context.Context) error {
-	list, err := setupList(ctx)
-	if err != nil {
-		return err
+// reusable path building buffer,
+// only usable here as we're not
+// performing concurrent writes.
+var pb fastpath.Builder
+
+// reusable string output buffer,
+// only usable here as we're not
+// performing concurrent writes.
+var outbuf byteutil.Buffer
+
+func printMediaPaths(basePath string, media *gtsmodel.MediaAttachment) {
+	// Append file path if present.
+	if media.File.Path != "" {
+		path := pb.Join(basePath, media.File.Path)
+		_, _ = outbuf.WriteString(path + "\n")
 	}
 
-	defer func() {
-		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(); err != nil {
-			log.Error(ctx, err)
-		}
-	}()
-
-	var (
-		mediaPath = config.GetStorageLocalBasePath()
-		filter    func(*gtsmodel.MediaAttachment) string
-	)
-
-	switch {
-	case list.localOnly:
-		filter = func(m *gtsmodel.MediaAttachment) string {
-			if m.RemoteURL != "" {
-				// Remote, not
-				// interested.
-				return ""
-			}
-
-			return path.Join(mediaPath, m.File.Path)
-		}
-
-	case list.remoteOnly:
-		filter = func(m *gtsmodel.MediaAttachment) string {
-			if m.RemoteURL == "" {
-				// Local, not
-				// interested.
-				return ""
-			}
-
-			return path.Join(mediaPath, m.File.Path)
-		}
-
-	default:
-		filter = func(m *gtsmodel.MediaAttachment) string {
-			return path.Join(mediaPath, m.File.Path)
-		}
+	// Append thumb path if present.
+	if media.Thumbnail.Path != "" {
+		path := pb.Join(basePath, media.Thumbnail.Path)
+		_, _ = outbuf.WriteString(path + "\n")
 	}
 
-	attachments, err := list.GetAllAttachmentPaths(ctx, filter)
-	if err != nil {
-		return err
+	// Only write if any
+	// string was prepared.
+	if outbuf.Len() > 0 {
+		_, _ = os.Stdout.Write(outbuf.B)
+		outbuf.Reset()
 	}
-
-	for _, a := range attachments {
-		_, _ = list.out.WriteString(a + "\n")
-	}
-	return nil
 }
 
-// ListEmojis lists local, remote, or all emoji filepaths.
-func ListEmojis(ctx context.Context) error {
-	list, err := setupList(ctx)
-	if err != nil {
-		return err
+func printEmojiPaths(basePath string, emoji *gtsmodel.Emoji) {
+	// Append image path if present.
+	if emoji.ImagePath != "" {
+		path := pb.Join(basePath, emoji.ImagePath)
+		_, _ = outbuf.WriteString(path + "\n")
 	}
 
-	defer func() {
-		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(); err != nil {
-			log.Error(ctx, err)
-		}
-	}()
-
-	var (
-		mediaPath = config.GetStorageLocalBasePath()
-		filter    func(*gtsmodel.Emoji) string
-	)
-
-	switch {
-	case list.localOnly:
-		filter = func(e *gtsmodel.Emoji) string {
-			if e.ImageRemoteURL != "" {
-				// Remote, not
-				// interested.
-				return ""
-			}
-
-			return path.Join(mediaPath, e.ImagePath)
-		}
-
-	case list.remoteOnly:
-		filter = func(e *gtsmodel.Emoji) string {
-			if e.ImageRemoteURL == "" {
-				// Local, not
-				// interested.
-				return ""
-			}
-
-			return path.Join(mediaPath, e.ImagePath)
-		}
-
-	default:
-		filter = func(e *gtsmodel.Emoji) string {
-			return path.Join(mediaPath, e.ImagePath)
-		}
+	// Append static path if present.
+	if emoji.ImageStaticPath != "" {
+		path := pb.Join(basePath, emoji.ImageStaticPath)
+		_, _ = outbuf.WriteString(path + "\n")
 	}
 
-	emojis, err := list.GetAllEmojisPaths(ctx, filter)
-	if err != nil {
-		return err
+	// Only write if any
+	// string was prepared.
+	if outbuf.Len() > 0 {
+		_, _ = os.Stdout.Write(outbuf.B)
+		outbuf.Reset()
 	}
-
-	for _, e := range emojis {
-		_, _ = list.out.WriteString(e + "\n")
-	}
-	return nil
 }
