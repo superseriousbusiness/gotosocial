@@ -85,6 +85,11 @@ func (p *FnWorkerPool) Stop() {
 	p.workers = p.workers[:0]
 }
 
+// Len returns number of currently active workers.
+func (p *FnWorkerPool) Len() int {
+	return len(p.workers)
+}
+
 // FnWorker wraps a queue.SimpleQueue{} which
 // it feeds from to provide it with function
 // tasks to execute. It does so in a single

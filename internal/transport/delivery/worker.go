@@ -110,6 +110,11 @@ func (p *WorkerPool) Stop() {
 	p.workers = p.workers[:0]
 }
 
+// Len returns number of currently active workers.
+func (p *WorkerPool) Len() int {
+	return len(p.workers)
+}
+
 // Worker wraps an httpclient.Client{} to feed
 // from queue.StructQueue{} for ActivityPub reqs
 // to deliver. It does so while prioritizing new

@@ -96,6 +96,11 @@ func (p *MsgWorkerPool[T]) Stop() {
 	p.workers = p.workers[:0]
 }
 
+// Len returns number of currently active workers.
+func (p *MsgWorkerPool[T]) Len() int {
+	return len(p.workers)
+}
+
 // MsgWorker wraps a processing function to
 // feed from a queue.StructQueue{} for messages
 // to process. It does so in a single goroutine

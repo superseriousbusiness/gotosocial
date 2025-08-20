@@ -392,7 +392,7 @@ func Start(ctx context.Context) error {
 	}
 
 	// Initialize metrics.
-	if err := observability.InitializeMetrics(ctx, state.DB); err != nil {
+	if err := observability.InitializeMetrics(ctx, state); err != nil {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
