@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -89,7 +90,7 @@ type Timeline[StructType any, PK cmp.Ordered] struct {
 // Init initializes the timeline with given configuration
 // including struct fields to index, and necessary fns.
 func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
-	rt := reflect.TypeOf((*T)(nil)).Elem()
+	ti := get_type_iter[T]()
 
 	if len(config.Indices) == 0 {
 		panic("no indices provided")
@@ -97,6 +98,17 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 
 	if config.Copy == nil {
 		panic("copy function must be provided")
+	}
+
+	if strings.Contains(config.PKey.Fields, ",") {
+		panic("primary key must contain only 1 field")
+	}
+
+	// Verify primary key parameter type is correct.
+	names := strings.Split(config.PKey.Fields, ".")
+	if _, ftype := find_field(ti, names); //
+	ftype != reflect.TypeFor[PK]() {
+		panic("primary key field path and generic parameter type do not match")
 	}
 
 	// Safely copy over
@@ -108,21 +120,17 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 	// other indices are created as expected.
 	t.indices = make([]Index, len(config.Indices)+1)
 	t.indices[0].ptr = unsafe.Pointer(t)
-	t.indices[0].init(rt, config.PKey, 0)
-	if len(t.indices[0].fields) > 1 {
-		panic("primary key must contain only 1 field")
-	}
+	t.indices[0].init(ti, config.PKey, 0)
 	for i, cfg := range config.Indices {
 		t.indices[i+1].ptr = unsafe.Pointer(t)
-		t.indices[i+1].init(rt, cfg, 0)
+		t.indices[i+1].init(ti, cfg, 0)
 	}
 
 	// Extract pkey details from index.
 	field := t.indices[0].fields[0]
 	t.pkey = pkey_field{
-		rtype:   field.rtype,
+		zero:    field.zero,
 		offsets: field.offsets,
-		likeptr: field.likeptr,
 	}
 
 	// Copy over remaining.
@@ -220,15 +228,7 @@ func (t *Timeline[T, PK]) Insert(values ...T) int {
 
 		// Extract primary key from vptr.
 		kptr := extract_pkey(vptr, t.pkey)
-
-		var pkey PK
-		if kptr != nil {
-			// Cast as PK type.
-			pkey = *(*PK)(kptr)
-		} else {
-			// Use zero value pointer.
-			kptr = unsafe.Pointer(&pkey)
-		}
+		pkey := *(*PK)(kptr)
 
 		// Append wrapped value to slice with
 		// the acquire pointers and primary key.
@@ -241,10 +241,8 @@ func (t *Timeline[T, PK]) Insert(values ...T) int {
 		}
 	}
 
-	var last *list_elem
-
 	// BEFORE inserting the prepared slice of value copies w/ primary
-	// keys, sort them by their primary key, ascending. This permits
+	// keys, sort them by their primary key, descending. This permits
 	// us to re-use the 'last' timeline position as next insert cursor.
 	// Otherwise we would have to iterate from 'head' every single time.
 	slices.SortFunc(with_keys, func(a, b value_with_pk[T, PK]) int {
@@ -258,6 +256,8 @@ func (t *Timeline[T, PK]) Insert(values ...T) int {
 			return 0
 		}
 	})
+
+	var last *list_elem
 
 	// Store each value in the timeline,
 	// updating the last used list element
@@ -1071,7 +1071,7 @@ indexing:
 }
 
 func (t *Timeline[T, PK]) delete(i *timeline_item) {
-	for len(i.indexed) != 0 {
+	for len(i.indexed) > 0 {
 		// Pop last indexed entry from list.
 		entry := i.indexed[len(i.indexed)-1]
 		i.indexed[len(i.indexed)-1] = nil
@@ -1126,9 +1126,9 @@ func from_timeline_item(item *timeline_item) *indexed_item {
 func to_timeline_item(item *indexed_item) *timeline_item {
 	to := (*timeline_item)(unsafe.Pointer(item))
 	if to.ck != ^uint(0) {
-		// ensure check bits are set indicating
+		// ensure check bits set, indicating
 		// it was a timeline_item originally.
-		panic(assert("check bits are set"))
+		panic(assert("t.ck = ^uint(0)"))
 	}
 	return to
 }

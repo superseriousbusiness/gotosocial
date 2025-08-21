@@ -586,6 +586,9 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 // status ID, including those that may be a boost of the given status.
 func (t *StatusTimeline) RemoveByStatusIDs(statusIDs ...string) {
 	keys := make([]structr.Key, len(statusIDs))
+	if len(keys) != len(statusIDs) {
+		panic(gtserror.New("BCE"))
+	}
 
 	// Nil check indices outside loops.
 	if t.idx_ID == nil ||
@@ -595,16 +598,11 @@ func (t *StatusTimeline) RemoveByStatusIDs(statusIDs ...string) {
 
 	// Convert statusIDs to index keys.
 	for i, id := range statusIDs {
-		keys[i] = t.idx_ID.Key(id)
+		keys[i] = structr.MakeKey(id)
 	}
 
 	// Invalidate all cached entries with IDs.
 	t.cache.Invalidate(t.idx_ID, keys...)
-
-	// Convert statusIDs to index keys.
-	for i, id := range statusIDs {
-		keys[i] = t.idx_BoostOfID.Key(id)
-	}
 
 	// Invalidate all cached entries as boost of IDs.
 	t.cache.Invalidate(t.idx_BoostOfID, keys...)
@@ -614,6 +612,9 @@ func (t *StatusTimeline) RemoveByStatusIDs(statusIDs ...string) {
 // account ID, including those that may be boosted by account ID.
 func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 	keys := make([]structr.Key, len(accountIDs))
+	if len(keys) != len(accountIDs) {
+		panic(gtserror.New("BCE"))
+	}
 
 	// Nil check indices outside loops.
 	if t.idx_AccountID == nil ||
@@ -623,16 +624,11 @@ func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 
 	// Convert accountIDs to index keys.
 	for i, id := range accountIDs {
-		keys[i] = t.idx_AccountID.Key(id)
+		keys[i] = structr.MakeKey(id)
 	}
 
 	// Invalidate all cached entries as by IDs.
 	t.cache.Invalidate(t.idx_AccountID, keys...)
-
-	// Convert accountIDs to index keys.
-	for i, id := range accountIDs {
-		keys[i] = t.idx_BoostOfAccountID.Key(id)
-	}
 
 	// Invalidate all cached entries as boosted by IDs.
 	t.cache.Invalidate(t.idx_BoostOfAccountID, keys...)
@@ -642,6 +638,9 @@ func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 // timeline entries pertaining to status ID, including boosts of given status.
 func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	keys := make([]structr.Key, len(statusIDs))
+	if len(keys) != len(statusIDs) {
+		panic(gtserror.New("BCE"))
+	}
 
 	// Nil check indices outside loops.
 	if t.idx_ID == nil ||
@@ -651,17 +650,12 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 
 	// Convert statusIDs to index keys.
 	for i, id := range statusIDs {
-		keys[i] = t.idx_ID.Key(id)
+		keys[i] = structr.MakeKey(id)
 	}
 
 	// Unprepare all statuses stored under StatusMeta.ID.
 	for meta := range t.cache.RangeKeysUnsafe(t.idx_ID, keys...) {
 		meta.prepared = nil
-	}
-
-	// Convert statusIDs to index keys.
-	for i, id := range statusIDs {
-		keys[i] = t.idx_BoostOfID.Key(id)
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfID.
@@ -683,17 +677,12 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 
 	// Convert accountIDs to index keys.
 	for i, id := range accountIDs {
-		keys[i] = t.idx_AccountID.Key(id)
+		keys[i] = structr.MakeKey(id)
 	}
 
 	// Unprepare all statuses stored under StatusMeta.AccountID.
 	for meta := range t.cache.RangeKeysUnsafe(t.idx_AccountID, keys...) {
 		meta.prepared = nil
-	}
-
-	// Convert accountIDs to index keys.
-	for i, id := range accountIDs {
-		keys[i] = t.idx_BoostOfAccountID.Key(id)
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfAccountID.

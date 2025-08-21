@@ -20,6 +20,7 @@ package cache
 import (
 	"slices"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"codeberg.org/gruf/go-cache/v3/simple"
 	"codeberg.org/gruf/go-structr"
 )
@@ -86,22 +87,19 @@ func (c *StructCache[T]) Init(config structr.CacheConfig[T]) {
 // GetOne calls structr.Cache{}.GetOne(), using a cached structr.Index{} by 'index' name.
 // Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) GetOne(index string, key ...any) (T, bool) {
-	i := c.index[index]
-	return c.Cache.GetOne(i, i.Key(key...))
+	return c.Cache.GetOne(c.index[index], structr.MakeKey(key...))
 }
 
 // Get calls structr.Cache{}.Get(), using a cached structr.Index{} by 'index' name.
 // Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) Get(index string, keys ...[]any) []T {
-	i := c.index[index]
-	return c.Cache.Get(i, i.Keys(keys...)...)
+	return c.Cache.Get(c.index[index], structr.MakeKeys(keys...)...)
 }
 
 // LoadOne calls structr.Cache{}.LoadOne(), using a cached structr.Index{} by 'index' name.
 // Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) LoadOne(index string, load func() (T, error), key ...any) (T, error) {
-	i := c.index[index]
-	return c.Cache.LoadOne(i, i.Key(key...), load)
+	return c.Cache.LoadOne(c.index[index], structr.MakeKey(key...), load)
 }
 
 // LoadIDs calls structr.Cache{}.Load(), using a cached structr.Index{} by 'index' name. Note: this also handles
@@ -109,28 +107,26 @@ func (c *StructCache[T]) LoadOne(index string, load func() (T, error), key ...an
 //
 // If you need to load multiple cache keys other than by ID strings, please create another convenience wrapper.
 func (c *StructCache[T]) LoadIDs(index string, ids []string, load func([]string) ([]T, error)) ([]T, error) {
-	i := c.index[index]
-	if i == nil {
-		// we only perform this check here as
-		// we're going to use the index before
-		// passing it to cache in main .Load().
-		panic("missing index for cache type")
-	}
 
 	// Generate cache keys for ID types.
 	keys := make([]structr.Key, len(ids))
+	if len(keys) != len(ids) {
+		panic(gtserror.New("BCE"))
+	}
 	for x, id := range ids {
-		keys[x] = i.Key(id)
+		keys[x] = structr.MakeKey(id)
 	}
 
-	// Pass loader callback with wrapper onto main cache load function.
-	return c.Cache.Load(i, keys, func(uncached []structr.Key) ([]T, error) {
-		uncachedIDs := make([]string, len(uncached))
-		for i := range uncached {
-			uncachedIDs[i] = uncached[i].Values()[0].(string)
-		}
-		return load(uncachedIDs)
-	})
+	// Pass loader callback with
+	// wrapper onto main cache load function.
+	return c.Cache.Load(c.index[index], keys,
+		func(uncached []structr.Key) ([]T, error) {
+			uncachedIDs := make([]string, len(uncached))
+			for i := range uncached {
+				uncachedIDs[i] = uncached[i].Values()[0].(string)
+			}
+			return load(uncachedIDs)
+		})
 }
 
 // LoadIDs2Part works as LoadIDs, except using a two-part key,
@@ -147,8 +143,11 @@ func (c *StructCache[T]) LoadIDs2Part(index string, id1 string, id2s []string, l
 
 	// Generate cache keys for two-part IDs.
 	keys := make([]structr.Key, len(id2s))
+	if len(keys) != len(id2s) {
+		panic(gtserror.New("BCE"))
+	}
 	for x, id2 := range id2s {
-		keys[x] = i.Key(id1, id2)
+		keys[x] = structr.MakeKey(id1, id2)
 	}
 
 	// Pass loader callback with wrapper onto main cache load function.
@@ -164,8 +163,7 @@ func (c *StructCache[T]) LoadIDs2Part(index string, id1 string, id2s []string, l
 // Invalidate calls structr.Cache{}.Invalidate(), using a cached structr.Index{} by 'index' name.
 // Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) Invalidate(index string, key ...any) {
-	i := c.index[index]
-	c.Cache.Invalidate(i, i.Key(key...))
+	c.Cache.Invalidate(c.index[index], structr.MakeKey(key...))
 }
 
 // InvalidateIDs calls structr.Cache{}.Invalidate(), using a cached structr.Index{} by 'index' name. Note: this also
@@ -173,20 +171,17 @@ func (c *StructCache[T]) Invalidate(index string, key ...any) {
 //
 // If you need to invalidate multiple cache keys other than by ID strings, please create another convenience wrapper.
 func (c *StructCache[T]) InvalidateIDs(index string, ids []string) {
-	i := c.index[index]
-	if i == nil {
-		// we only perform this check here as
-		// we're going to use the index before
-		// passing it to cache in main .Load().
-		panic("missing index for cache type")
-	}
 
 	// Generate cache keys for ID types.
 	keys := make([]structr.Key, len(ids))
+	if len(keys) != len(ids) {
+		panic(gtserror.New("BCE"))
+	}
 	for x, id := range ids {
-		keys[x] = i.Key(id)
+		keys[x] = structr.MakeKey(id)
 	}
 
 	// Pass to main invalidate func.
-	c.Cache.Invalidate(i, keys...)
+	c.Cache.Invalidate(c.index[index],
+		keys...)
 }

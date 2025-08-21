@@ -94,8 +94,10 @@ var (
 // methods for byte sizes in both IEC and SI units.
 type Size uint64
 
-// ParseSize will parse a valid Size from given string. Both IEC and SI units are supported.
+// ParseSize will parse a valid Size from given
+// string. Both IEC and SI units are supported.
 func ParseSize(s string) (Size, error) {
+
 	// Parse units from string
 	unit, l, err := parseUnit(s)
 	if err != nil {
@@ -121,10 +123,15 @@ func (sz *Size) Set(in string) error {
 	return nil
 }
 
+// AppendText implements encoding.TextAppender{}.
+func (sz Size) AppendText(b []byte) ([]byte, error) {
+	return sz.AppendFormatIEC(b), nil
+}
+
 // MarshalText implements encoding.TextMarshaler{}.
-func (sz *Size) MarshalText() ([]byte, error) {
+func (sz Size) MarshalText() ([]byte, error) {
 	const maxLen = 7 // max IEC string length
-	return sz.AppendFormatIEC(make([]byte, 0, maxLen)), nil
+	return sz.AppendText(make([]byte, 0, maxLen))
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler{}.
@@ -143,8 +150,12 @@ func (sz Size) AppendFormatSI(dst []byte) []byte {
 		dst = itoa(dst, uint64(sz))
 		dst = append(dst, 'B')
 		return dst
-	} // above is fast-path, .appendFormat() is outlined
-	return sz.appendFormat(dst, 1000, &sipows, "B")
+	}
+	f, u := sztof(sz, 1000, sipows)
+	dst = ftoa(dst, f)
+	dst = append(dst, u)
+	dst = append(dst, 'B')
+	return dst
 }
 
 // AppendFormatIEC will append IEC formatted size to 'dst'.
@@ -153,35 +164,11 @@ func (sz Size) AppendFormatIEC(dst []byte) []byte {
 		dst = itoa(dst, uint64(sz))
 		dst = append(dst, 'B')
 		return dst
-	} // above is fast-path, .appendFormat() is outlined
-	return sz.appendFormat(dst, 1024, &iecpows, "iB")
-}
-
-// appendFormat will append formatted Size to 'dst', depending on base, powers table and single unit suffix.
-func (sz Size) appendFormat(dst []byte, base uint64, pows *[6]float64, sunit string) []byte {
-	const (
-		// min "small" unit threshold
-		min = 0.75
-
-		// binary unit chars.
-		units = `kMGTPE`
-	)
-
-	// Larger number: get value of
-	// i / unit size. We have a 'min'
-	// threshold after which we prefer
-	// using the unit 1 down
-	n := bits.Len64(uint64(sz)) / 10
-	f := float64(sz) / pows[n-1]
-	if f < min {
-		f *= float64(base)
-		n--
 	}
-
-	// Append formatted float with units
+	f, u := sztof(sz, 1024, iecpows)
 	dst = ftoa(dst, f)
-	dst = append(dst, units[n-1])
-	dst = append(dst, sunit...)
+	dst = append(dst, u)
+	dst = append(dst, 'i', 'B')
 	return dst
 }
 
@@ -259,6 +246,31 @@ func parseUnit(s string) (float64, int, error) {
 
 	// Return parsed SI unit size
 	return sivals[c], l, nil
+}
+
+// sztof divides a Size with base and power units to a float value with power.
+func sztof(sz Size, base float64, pows [6]float64) (float64, byte) {
+	const (
+		// min "small"
+		// unit threshold.
+		min = 0.75
+
+		// binary unit chars.
+		units = `kMGTPE`
+	)
+
+	// Larger number: get value of
+	// i / unit size. We have a 'min'
+	// threshold after which we prefer
+	// using the unit 1 down
+	n := bits.Len64(uint64(sz)) / 10
+	f := float64(sz) / pows[n-1]
+	if f < min {
+		f *= base
+		n--
+	}
+
+	return f, units[n-1]
 }
 
 // ftoa appends string formatted 'f' to 'dst', assumed < ~800.

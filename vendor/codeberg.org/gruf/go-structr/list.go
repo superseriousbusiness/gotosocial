@@ -177,11 +177,3 @@ func (l *list) remove(elem *list_elem) {
 	// Decr count
 	l.len--
 }
-
-// func (l *list) range_up(yield func(*list_elem) bool) {
-
-// }
-
-// func (l *list) range_down(yield func(*list_elem) bool) {
-
-// }

@@ -1,4 +1,4 @@
-//go:build go1.22 && !go1.25
+//go:build go1.22 && !go1.26
 
 package mutexes
 
@@ -21,7 +21,7 @@ func syncCond_last_ticket(c *sync.Cond) uint32 {
 	// this does not alter the first
 	// 2 fields which are all we need.
 	type notifyList struct {
-		_      atomic.Uint32
+		_      uint32
 		notify uint32
 		// ... other fields
 	}

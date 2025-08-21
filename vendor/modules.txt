@@ -221,7 +221,7 @@ code.superseriousbusiness.org/oauth2/v4/server
 # codeberg.org/gruf/go-bitutil v1.1.0
 ## explicit; go 1.19
 codeberg.org/gruf/go-bitutil
-# codeberg.org/gruf/go-bytesize v1.0.3
+# codeberg.org/gruf/go-bytesize v1.0.4
 ## explicit; go 1.17
 codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.3.0
@@ -247,7 +247,7 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-ffmpreg v0.6.8
+# codeberg.org/gruf/go-ffmpreg v0.6.9
 ## explicit; go 1.22.0
 codeberg.org/gruf/go-ffmpreg/embed
 codeberg.org/gruf/go-ffmpreg/wasm
@@ -258,23 +258,23 @@ codeberg.org/gruf/go-iotools
 ## explicit; go 1.20
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
-# codeberg.org/gruf/go-kv/v2 v2.0.6
+# codeberg.org/gruf/go-kv/v2 v2.0.7
 ## explicit; go 1.24.5
 codeberg.org/gruf/go-kv/v2
 codeberg.org/gruf/go-kv/v2/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 ## explicit; go 1.21.3
 codeberg.org/gruf/go-list
-# codeberg.org/gruf/go-mangler v1.4.4
-## explicit; go 1.19
-codeberg.org/gruf/go-mangler
+# codeberg.org/gruf/go-mangler/v2 v2.0.6
+## explicit; go 1.24.5
+codeberg.org/gruf/go-mangler/v2
 # codeberg.org/gruf/go-maps v1.0.4
 ## explicit; go 1.20
 codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mempool
-# codeberg.org/gruf/go-mutexes v1.5.2
+# codeberg.org/gruf/go-mutexes v1.5.3
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.6.3
@@ -293,8 +293,8 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.9.7
-## explicit; go 1.22
+# codeberg.org/gruf/go-structr v0.9.8
+## explicit; go 1.24.5
 codeberg.org/gruf/go-structr
 # codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73
 ## explicit; go 1.24.5
@@ -916,8 +916,8 @@ github.com/tinylib/msgp/msgp
 # github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
 ## explicit
 github.com/tmthrgd/go-hex
-# github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
-## explicit
+# github.com/tomnomnom/linkheader v0.0.0-20250811210735-e5fe3b51442e
+## explicit; go 1.13
 github.com/tomnomnom/linkheader
 # github.com/toqueteos/webbrowser v1.2.0
 ## explicit; go 1.12

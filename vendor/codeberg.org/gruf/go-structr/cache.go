@@ -3,7 +3,6 @@ package structr
 import (
 	"context"
 	"errors"
-	"reflect"
 	"sync"
 	"unsafe"
 )
@@ -83,7 +82,7 @@ type Cache[StructType any] struct {
 // Init initializes the cache with given configuration
 // including struct fields to index, and necessary fns.
 func (c *Cache[T]) Init(config CacheConfig[T]) {
-	t := reflect.TypeOf((*T)(nil)).Elem()
+	t := get_type_iter[T]()
 
 	if len(config.Indices) == 0 {
 		panic("no indices provided")
@@ -182,9 +181,14 @@ func (c *Cache[T]) Put(values ...T) {
 	// Acquire lock.
 	c.mutex.Lock()
 
-	// Wrap unlock to only do once.
-	unlock := once(c.mutex.Unlock)
-	defer unlock()
+	// Ensure mutex
+	// gets unlocked.
+	var unlocked bool
+	defer func() {
+		if !unlocked {
+			c.mutex.Unlock()
+		}
+	}()
 
 	// Check cache init.
 	if c.copy == nil {
@@ -202,9 +206,9 @@ func (c *Cache[T]) Put(values ...T) {
 	// Get func ptrs.
 	invalid := c.invalid
 
-	// Done with
-	// the lock.
-	unlock()
+	// Done with lock.
+	c.mutex.Unlock()
+	unlocked = true
 
 	if invalid != nil {
 		// Pass all invalidated values
@@ -241,9 +245,14 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 	// Acquire lock.
 	c.mutex.Lock()
 
-	// Wrap unlock to only do once.
-	unlock := once(c.mutex.Unlock)
-	defer unlock()
+	// Ensure mutex
+	// gets unlocked.
+	var unlocked bool
+	defer func() {
+		if !unlocked {
+			c.mutex.Unlock()
+		}
+	}()
 
 	// Check init'd.
 	if c.copy == nil ||
@@ -276,9 +285,9 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 	// Get func ptrs.
 	ignore := c.ignore
 
-	// Done with
-	// the lock.
-	unlock()
+	// Done with lock.
+	c.mutex.Unlock()
+	unlocked = true
 
 	if ok {
 		// item found!
@@ -295,6 +304,7 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 
 	// Acquire lock.
 	c.mutex.Lock()
+	unlocked = false
 
 	// Index this new loaded item.
 	// Note this handles copying of
@@ -308,6 +318,7 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 
 	// Done with lock.
 	c.mutex.Unlock()
+	unlocked = true
 
 	return val, err
 }
@@ -328,9 +339,14 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 	// Acquire lock.
 	c.mutex.Lock()
 
-	// Wrap unlock to only do once.
-	unlock := once(c.mutex.Unlock)
-	defer unlock()
+	// Ensure mutex
+	// gets unlocked.
+	var unlocked bool
+	defer func() {
+		if !unlocked {
+			c.mutex.Unlock()
+		}
+	}()
 
 	// Check init'd.
 	if c.copy == nil {
@@ -366,9 +382,9 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 		}
 	}
 
-	// Done with
-	// the lock.
-	unlock()
+	// Done with lock.
+	c.mutex.Unlock()
+	unlocked = true
 
 	if len(toLoad) == 0 {
 		// We loaded everything!
@@ -383,6 +399,7 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 
 	// Acquire lock.
 	c.mutex.Lock()
+	unlocked = false
 
 	// Store all uncached values.
 	for i := range uncached {
@@ -394,6 +411,7 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 
 	// Done with lock.
 	c.mutex.Unlock()
+	unlocked = true
 
 	// Append uncached to return values.
 	values = append(values, uncached...)
@@ -685,7 +703,7 @@ func (c *Cache[T]) store_error(index *Index, key string, err error) {
 }
 
 func (c *Cache[T]) delete(i *indexed_item) {
-	for len(i.indexed) != 0 {
+	for len(i.indexed) > 0 {
 		// Pop last indexed entry from list.
 		entry := i.indexed[len(i.indexed)-1]
 		i.indexed[len(i.indexed)-1] = nil

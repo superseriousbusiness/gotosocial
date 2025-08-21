@@ -1,7 +1,6 @@
 package structr
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"unsafe"
 
 	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-xunsafe"
 )
 
 // IndexConfig defines config variables
@@ -29,7 +29,7 @@ type IndexConfig struct {
 	// is nil then it will not be indexed.
 	//
 	// Field types supported include any of those
-	// supported by the `go-mangler` library.
+	// supported by the `go-mangler/v2` library.
 	Fields string
 
 	// Multiple indicates whether to accept multiple
@@ -58,7 +58,7 @@ type IndexConfig struct {
 type Index struct {
 
 	// ptr is a pointer to
-	// the source Cache/Queue
+	// the source type this
 	// index is attached to.
 	ptr unsafe.Pointer
 
@@ -68,14 +68,12 @@ type Index struct {
 	name string
 
 	// backing data store of the index, containing
-	// the cached results contained within wrapping
-	// index_entry{} which also contains the exact
-	// key each result is stored under. the hash map
-	// only keys by the xxh3 hash checksum for speed.
+	// list{}s of index_entry{}s which each contain
+	// the exact key each result is stored under.
 	data hashmap
 
-	// struct fields encompassed by
-	// keys (+ hashes) of this index.
+	// struct fields encompassed
+	// by keys of this index.
 	fields []struct_field
 
 	// index flags:
@@ -89,55 +87,14 @@ func (i *Index) Name() string {
 	return i.name
 }
 
-// Key generates Key{} from given parts for
-// the type of lookup this Index uses in cache.
-// NOTE: panics on incorrect no. parts / types given.
-func (i *Index) Key(parts ...any) Key {
-	ptrs := make([]unsafe.Pointer, len(parts))
-	for x, part := range parts {
-		ptrs[x] = eface_data(part)
-	}
-	buf := new_buffer()
-	key := i.key(buf, ptrs)
-	free_buffer(buf)
-	return Key{
-		raw: parts,
-		key: key,
-	}
-}
-
-// Keys generates []Key{} from given (multiple) parts
-// for the type of lookup this Index uses in the cache.
-// NOTE: panics on incorrect no. parts / types given.
-func (i *Index) Keys(parts ...[]any) []Key {
-	keys := make([]Key, 0, len(parts))
-	buf := new_buffer()
-	for _, parts := range parts {
-		ptrs := make([]unsafe.Pointer, len(parts))
-		for x, part := range parts {
-			ptrs[x] = eface_data(part)
-		}
-		key := i.key(buf, ptrs)
-		if key == "" {
-			continue
-		}
-		keys = append(keys, Key{
-			raw: parts,
-			key: key,
-		})
-	}
-	free_buffer(buf)
-	return keys
-}
-
 // init will initialize the cache with given type, config and capacity.
-func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
+func (i *Index) init(t xunsafe.TypeIter, cfg IndexConfig, cap int) {
 	switch {
 	// The only 2 types we support are
 	// structs, and ptrs to a struct.
-	case t.Kind() == reflect.Struct:
-	case t.Kind() == reflect.Pointer &&
-		t.Elem().Kind() == reflect.Struct:
+	case t.Type.Kind() == reflect.Struct:
+	case t.Type.Kind() == reflect.Pointer &&
+		t.Type.Elem().Kind() == reflect.Struct:
 	default:
 		panic("index only support struct{} and *struct{}")
 	}
@@ -164,8 +121,8 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 		// Split name to account for nesting.
 		names := strings.Split(name, ".")
 
-		// Look for usable struct field.
-		i.fields[x] = find_field(t, names)
+		// Look for struct field by names.
+		i.fields[x], _ = find_field(t, names)
 	}
 
 	// Initialize store for
@@ -219,15 +176,12 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 	}
 }
 
-// key uses hasher to generate Key{} from given raw parts.
+// key ...
 func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
-	buf.B = buf.B[:0]
 	if len(parts) != len(i.fields) {
-		panic(fmt.Sprintf("incorrect number key parts: want=%d received=%d",
-			len(i.fields),
-			len(parts),
-		))
+		panic(assert("len(parts) = len(i.fields)"))
 	}
+	buf.B = buf.B[:0]
 	if !allow_zero(i.flags) {
 		for x, field := range i.fields {
 			before := len(buf.B)
@@ -401,7 +355,7 @@ func (i *Index) delete_entry(entry *index_entry) {
 
 // index_entry represents a single entry
 // in an Index{}, where it will be accessible
-// by Key{} pointing to a containing list{}.
+// by .key pointing to a containing list{}.
 type index_entry struct {
 
 	// list elem that entry is stored

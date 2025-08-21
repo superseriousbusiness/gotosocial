@@ -1,7 +1,6 @@
 package structr
 
 import (
-	"reflect"
 	"sync"
 	"unsafe"
 )
@@ -48,7 +47,7 @@ type Queue[StructType any] struct {
 // Init initializes the queue with given configuration
 // including struct fields to index, and necessary fns.
 func (q *Queue[T]) Init(config QueueConfig[T]) {
-	t := reflect.TypeOf((*T)(nil)).Elem()
+	t := get_type_iter[T]()
 
 	if len(config.Indices) == 0 {
 		panic("no indices provided")
@@ -323,7 +322,7 @@ func (q *Queue[T]) index(value T) *indexed_item {
 }
 
 func (q *Queue[T]) delete(i *indexed_item) {
-	for len(i.indexed) != 0 {
+	for len(i.indexed) > 0 {
 		// Pop last indexed entry from list.
 		entry := i.indexed[len(i.indexed)-1]
 		i.indexed[len(i.indexed)-1] = nil

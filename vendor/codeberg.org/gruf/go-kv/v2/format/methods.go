@@ -84,8 +84,8 @@ func getInterfaceStringerType(t xunsafe.TypeIter) FormatFunc {
 // (i.e. non-interface{}) type that has a Stringer{} method receiver.
 func getConcreteStringerType(t xunsafe.TypeIter) FormatFunc {
 	itab := xunsafe.GetIfaceITab[Stringer](t.Type)
-	switch t.Indirect() && !t.IfaceIndir() {
-	case true:
+	switch {
+	case t.Indirect() && !t.IfaceIndir():
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
 			if s.P == nil {
@@ -95,13 +95,23 @@ func getConcreteStringerType(t xunsafe.TypeIter) FormatFunc {
 			v := *(*Stringer)(xunsafe.PackIface(itab, s.P))
 			appendString(s, v.String())
 		})
-	case false:
+	case t.Type.Kind() == reflect.Pointer && t.Type.Implements(stringerType):
+		// if the interface implementation is received by
+		// value type, the pointer type will also support
+		// it but it requires an extra dereference check.
 		return with_typestr_ptrs(t, func(s *State) {
+			if s.P == nil {
+				appendNil(s)
+				return
+			}
 			v := *(*Stringer)(xunsafe.PackIface(itab, s.P))
 			appendString(s, v.String())
 		})
 	default:
-		panic("unreachable")
+		return with_typestr_ptrs(t, func(s *State) {
+			v := *(*Stringer)(xunsafe.PackIface(itab, s.P))
+			appendString(s, v.String())
+		})
 	}
 }
 
@@ -137,8 +147,8 @@ func getInterfaceFormattableType(t xunsafe.TypeIter) FormatFunc {
 // (i.e. non-interface{}) type that has a Formattable{} method receiver.
 func getConcreteFormattableType(t xunsafe.TypeIter) FormatFunc {
 	itab := xunsafe.GetIfaceITab[Formattable](t.Type)
-	switch t.Indirect() && !t.IfaceIndir() {
-	case true:
+	switch {
+	case t.Indirect() && !t.IfaceIndir():
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
 			if s.P == nil {
@@ -148,13 +158,23 @@ func getConcreteFormattableType(t xunsafe.TypeIter) FormatFunc {
 			v := *(*Formattable)(xunsafe.PackIface(itab, s.P))
 			v.Format(s)
 		})
-	case false:
+	case t.Type.Kind() == reflect.Pointer && t.Type.Implements(formattableType):
+		// if the interface implementation is received by
+		// value type, the pointer type will also support
+		// it but it requires an extra dereference check.
 		return with_typestr_ptrs(t, func(s *State) {
+			if s.P == nil {
+				appendNil(s)
+				return
+			}
 			v := *(*Formattable)(xunsafe.PackIface(itab, s.P))
 			v.Format(s)
 		})
 	default:
-		panic("unreachable")
+		return with_typestr_ptrs(t, func(s *State) {
+			v := *(*Formattable)(xunsafe.PackIface(itab, s.P))
+			v.Format(s)
+		})
 	}
 }
 
@@ -190,8 +210,8 @@ func getInterfaceErrorType(t xunsafe.TypeIter) FormatFunc {
 // (i.e. non-interface{}) type that has an error{} method receiver.
 func getConcreteErrorType(t xunsafe.TypeIter) FormatFunc {
 	itab := xunsafe.GetIfaceITab[error](t.Type)
-	switch t.Indirect() && !t.IfaceIndir() {
-	case true:
+	switch {
+	case t.Indirect() && !t.IfaceIndir():
 		return with_typestr_ptrs(t, func(s *State) {
 			s.P = *(*unsafe.Pointer)(s.P)
 			if s.P == nil {
@@ -201,12 +221,22 @@ func getConcreteErrorType(t xunsafe.TypeIter) FormatFunc {
 			v := *(*error)(xunsafe.PackIface(itab, s.P))
 			appendString(s, v.Error())
 		})
-	case false:
+	case t.Type.Kind() == reflect.Pointer && t.Type.Implements(errorType):
+		// if the interface implementation is received by
+		// value type, the pointer type will also support
+		// it but it requires an extra dereference check.
 		return with_typestr_ptrs(t, func(s *State) {
+			if s.P == nil {
+				appendNil(s)
+				return
+			}
 			v := *(*error)(xunsafe.PackIface(itab, s.P))
 			appendString(s, v.Error())
 		})
 	default:
-		panic("unreachable")
+		return with_typestr_ptrs(t, func(s *State) {
+			v := *(*error)(xunsafe.PackIface(itab, s.P))
+			appendString(s, v.Error())
+		})
 	}
 }

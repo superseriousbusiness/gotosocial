@@ -1,5 +1,3 @@
-//go:build go1.22 && !go1.25
-
 package structr
 
 import (
@@ -11,17 +9,16 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"codeberg.org/gruf/go-mangler"
+	"codeberg.org/gruf/go-mangler/v2"
+	"codeberg.org/gruf/go-xunsafe"
 )
 
 // struct_field contains pre-prepared type
 // information about a struct's field member,
 // including memory offset and hash function.
 type struct_field struct {
-	rtype reflect.Type
 
-	// struct field type mangling
-	// (i.e. fast serializing) fn.
+	// mangle ...
 	mangle mangler.Mangler
 
 	// zero value data, used when
@@ -30,18 +27,13 @@ type struct_field struct {
 	zero unsafe.Pointer
 
 	// mangled zero value string,
-	// if set this indicates zero
-	// values of field not allowed
+	// to check zero value keys.
 	zerostr string
 
 	// offsets defines whereabouts in
-	// memory this field is located.
+	// memory this field is located,
+	// and after how many dereferences.
 	offsets []next_offset
-
-	// determines whether field type
-	// is ptr-like in-memory, and so
-	// requires a further dereference.
-	likeptr bool
 }
 
 // next_offset defines a next offset location
@@ -49,13 +41,22 @@ type struct_field struct {
 // derefences required, then by offset from
 // that final memory location.
 type next_offset struct {
-	derefs uint
+	derefs int
 	offset uintptr
+}
+
+// get_type_iter returns a prepared xunsafe.TypeIter{} for generic parameter type,
+// with flagIndir specifically set as we always take a reference to value type.
+func get_type_iter[T any]() xunsafe.TypeIter {
+	rtype := reflect.TypeOf((*T)(nil)).Elem()
+	flags := xunsafe.Reflect_flag(xunsafe.Abi_Type_Kind(rtype))
+	flags |= xunsafe.Reflect_flagIndir // always comes from unsafe ptr
+	return xunsafe.ToTypeIter(rtype, flags)
 }
 
 // find_field will search for a struct field with given set of names,
 // where names is a len > 0 slice of names account for struct nesting.
-func find_field(t reflect.Type, names []string) (sfield struct_field) {
+func find_field(t xunsafe.TypeIter, names []string) (sfield struct_field, ftype reflect.Type) {
 	var (
 		// is_exported returns whether name is exported
 		// from a package; can be func or struct field.
@@ -84,23 +85,42 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 		// Pop next name.
 		name := pop_name()
 
-		var off next_offset
+		var n int
+		rtype := t.Type
+		flags := t.Flag
 
-		// Dereference any ptrs to struct.
-		for t.Kind() == reflect.Pointer {
-			t = t.Elem()
-			off.derefs++
+		// Iteratively dereference pointer types.
+		for rtype.Kind() == reflect.Pointer {
+
+			// If this actual indirect memory,
+			// increase dereferences counter.
+			if flags&xunsafe.Reflect_flagIndir != 0 {
+				n++
+			}
+
+			// Get next elem type.
+			rtype = rtype.Elem()
+
+			// Get next set of dereferenced element type flags.
+			flags = xunsafe.ReflectPointerElemFlags(flags, rtype)
+
+			// Update type iter info.
+			t = t.Child(rtype, flags)
 		}
 
 		// Check for valid struct type.
-		if t.Kind() != reflect.Struct {
-			panic(fmt.Sprintf("field %s is not struct (or ptr-to): %s", t, name))
+		if rtype.Kind() != reflect.Struct {
+			panic(fmt.Sprintf("field %s is not struct (or ptr-to): %s", rtype, name))
 		}
+
+		// Set offset info.
+		var off next_offset
+		off.derefs = n
 
 		var ok bool
 
-		// Look for next field by name.
-		field, ok = t.FieldByName(name)
+		// Look for the next field by name.
+		field, ok = rtype.FieldByName(name)
 		if !ok {
 			panic(fmt.Sprintf("unknown field: %s", name))
 		}
@@ -109,24 +129,29 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 		off.offset = field.Offset
 		sfield.offsets = append(sfield.offsets, off)
 
-		// Set the next type.
-		t = field.Type
+		// Calculate value flags, and set next nested field type.
+		flags = xunsafe.ReflectStructFieldFlags(t.Flag, field.Type)
+		t = t.Child(field.Type, flags)
 	}
 
-	// Check if ptr-like in-memory.
-	sfield.likeptr = like_ptr(t)
+	// Set final field type.
+	ftype = t.TypeInfo.Type
 
-	// Set final type.
-	sfield.rtype = t
-
-	// Find mangler for field type.
+	// Get mangler from type info.
 	sfield.mangle = mangler.Get(t)
 
-	// Get new zero value data ptr.
-	v := reflect.New(t).Elem()
-	zptr := eface_data(v.Interface())
-	zstr := sfield.mangle(nil, zptr)
-	sfield.zerostr = string(zstr)
+	// Get field type as zero interface.
+	v := reflect.New(t.Type).Elem()
+	vi := v.Interface()
+
+	// Get argument mangler from iface.
+	ti := xunsafe.TypeIterFrom(vi)
+	mangleArg := mangler.Get(ti)
+
+	// Calculate zero value string.
+	zptr := xunsafe.UnpackEface(vi)
+	zstr := string(mangleArg(nil, zptr))
+	sfield.zerostr = zstr
 	sfield.zero = zptr
 
 	return
@@ -158,11 +183,6 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []unsafe.Pointer 
 				offset.offset)
 		}
 
-		if field.likeptr && fptr != nil {
-			// Further dereference value ptr.
-			fptr = *(*unsafe.Pointer)(fptr)
-		}
-
 		if fptr == nil {
 			// Use zero value.
 			fptr = field.zero
@@ -179,26 +199,26 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []unsafe.Pointer 
 // information about a primary key struct's
 // field member, including memory offset.
 type pkey_field struct {
-	rtype reflect.Type
+
+	// zero value data, used when
+	// nil encountered during ptr
+	// offset following.
+	zero unsafe.Pointer
 
 	// offsets defines whereabouts in
 	// memory this field is located.
 	offsets []next_offset
-
-	// determines whether field type
-	// is ptr-like in-memory, and so
-	// requires a further dereference.
-	likeptr bool
 }
 
 // extract_pkey will extract a pointer from 'ptr', to
 // the primary key struct field defined by 'field'.
 func extract_pkey(ptr unsafe.Pointer, field pkey_field) unsafe.Pointer {
 	for _, offset := range field.offsets {
+
 		// Dereference any ptrs to offset.
 		ptr = deref(ptr, offset.derefs)
 		if ptr == nil {
-			return nil
+			break
 		}
 
 		// Jump forward by offset to next ptr.
@@ -206,43 +226,16 @@ func extract_pkey(ptr unsafe.Pointer, field pkey_field) unsafe.Pointer {
 			offset.offset)
 	}
 
-	if field.likeptr && ptr != nil {
-		// Further dereference value ptr.
-		ptr = *(*unsafe.Pointer)(ptr)
+	if ptr == nil {
+		// Use zero value.
+		ptr = field.zero
 	}
 
 	return ptr
 }
 
-// like_ptr returns whether type's kind is ptr-like in-memory,
-// which indicates it may need a final additional dereference.
-func like_ptr(t reflect.Type) bool {
-	switch t.Kind() {
-	case reflect.Array:
-		switch n := t.Len(); n {
-		case 1:
-			// specifically single elem arrays
-			// follow like_ptr for contained type.
-			return like_ptr(t.Elem())
-		}
-	case reflect.Struct:
-		switch n := t.NumField(); n {
-		case 1:
-			// specifically single field structs
-			// follow like_ptr for contained type.
-			return like_ptr(t.Field(0).Type)
-		}
-	case reflect.Pointer,
-		reflect.Map,
-		reflect.Chan,
-		reflect.Func:
-		return true
-	}
-	return false
-}
-
 // deref will dereference ptr 'n' times (or until nil).
-func deref(p unsafe.Pointer, n uint) unsafe.Pointer {
+func deref(p unsafe.Pointer, n int) unsafe.Pointer {
 	for ; n > 0; n-- {
 		if p == nil {
 			return nil
@@ -252,24 +245,16 @@ func deref(p unsafe.Pointer, n uint) unsafe.Pointer {
 	return p
 }
 
-// eface_data returns the data ptr from an empty interface.
-func eface_data(a any) unsafe.Pointer {
-	type eface struct{ _, data unsafe.Pointer }
-	return (*eface)(unsafe.Pointer(&a)).data
-}
-
 // assert can be called to indicated a block
 // of code should not be able to be reached,
 // it returns a BUG report with callsite.
-//
-//go:noinline
 func assert(assert string) string {
 	pcs := make([]uintptr, 1)
 	_ = runtime.Callers(2, pcs)
-	fn := runtime.FuncForPC(pcs[0])
 	funcname := "go-structr" // by default use just our library name
-	if fn != nil {
-		funcname = fn.Name()
+	if frames := runtime.CallersFrames(pcs); frames != nil {
+		frame, _ := frames.Next()
+		funcname = frame.Function
 		if i := strings.LastIndexByte(funcname, '/'); i != -1 {
 			funcname = funcname[i+1:]
 		}

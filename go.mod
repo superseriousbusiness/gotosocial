@@ -14,24 +14,25 @@ require (
 	code.superseriousbusiness.org/httpsig v1.4.0
 	code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384
 	codeberg.org/gruf/go-bitutil v1.1.0
-	codeberg.org/gruf/go-bytesize v1.0.3
+	codeberg.org/gruf/go-bytesize v1.0.4
 	codeberg.org/gruf/go-byteutil v1.3.0
 	codeberg.org/gruf/go-cache/v3 v3.6.1
 	codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
-	codeberg.org/gruf/go-ffmpreg v0.6.8
+	codeberg.org/gruf/go-fastpath/v2 v2.0.0
+	codeberg.org/gruf/go-ffmpreg v0.6.9
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
-	codeberg.org/gruf/go-kv/v2 v2.0.6
+	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
-	codeberg.org/gruf/go-mutexes v1.5.2
+	codeberg.org/gruf/go-mutexes v1.5.3
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-split v1.2.0
 	codeberg.org/gruf/go-storage v0.3.1
-	codeberg.org/gruf/go-structr v0.9.7
+	codeberg.org/gruf/go-structr v0.9.8
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.4
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -66,7 +67,7 @@ require (
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
 	github.com/tetratelabs/wazero v1.9.0
-	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
+	github.com/tomnomnom/linkheader v0.0.0-20250811210735-e5fe3b51442e
 	github.com/ulule/limiter/v3 v3.11.2
 	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/dialect/pgdialect v1.2.15
@@ -97,9 +98,8 @@ require (
 require (
 	code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0 // indirect
 	code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 // indirect
-	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-kv v1.6.5 // indirect
-	codeberg.org/gruf/go-mangler v1.4.4 // indirect
+	codeberg.org/gruf/go-mangler/v2 v2.0.6 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
 	codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect

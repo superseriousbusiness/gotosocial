@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-mangler/v2"
 )
 
 // Key represents one key to
@@ -12,6 +13,37 @@ import (
 type Key struct {
 	key string
 	raw []any
+}
+
+// MakeKey generates Key{} from given parts.
+func MakeKey(parts ...any) Key {
+	buf := new_buffer()
+	buf.B = mangler.AppendMulti(buf.B[:0], parts...)
+	key := string(buf.B)
+	free_buffer(buf)
+	return Key{
+		raw: parts,
+		key: key,
+	}
+}
+
+// MakeKeys generates []Key{} from given (multiple) parts.
+func MakeKeys(parts ...[]any) []Key {
+	keys := make([]Key, len(parts))
+	if len(keys) != len(parts) {
+		panic(assert("BCE"))
+	}
+	buf := new_buffer()
+	for x, parts := range parts {
+		buf.B = mangler.AppendMulti(buf.B[:0], parts...)
+		key := string(buf.B)
+		keys[x] = Key{
+			raw: parts,
+			key: key,
+		}
+	}
+	free_buffer(buf)
+	return keys
 }
 
 // Key returns the underlying cache key string.
@@ -29,11 +61,6 @@ func (k Key) Equal(o Key) bool {
 // values that comprise this Key.
 func (k Key) Values() []any {
 	return k.raw
-}
-
-// Zero indicates a zero value key.
-func (k Key) Zero() bool {
-	return (k.key == "")
 }
 
 var buf_pool sync.Pool

@@ -62,8 +62,7 @@ func (q *StructQueue[T]) Push(values ...T) {
 
 // Delete pops (and drops!) all queued entries under index with key.
 func (q *StructQueue[T]) Delete(index string, key ...any) {
-	i := q.index[index]
-	_ = q.queue.Pop(i, i.Key(key...))
+	_ = q.queue.Pop(q.index[index], structr.MakeKey(key...))
 }
 
 // Len: see structr.Queue{}.Len().
