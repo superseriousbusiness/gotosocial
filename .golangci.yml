@@ -74,6 +74,12 @@ linters:
           disabled: true
         - name: unused-parameter
           disabled: true
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - skip-package-name-checks: true
+
     # https://golangci-lint.run/usage/linters/#staticcheck
     staticcheck:
       # Enable all checks, but disable SA1012: nil context passing.

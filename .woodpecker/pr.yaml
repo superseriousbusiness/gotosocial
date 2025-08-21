@@ -22,7 +22,7 @@ steps:
 
     # We use golangci-lint for linting.
     # See: https://golangci-lint.run/
-    image: golangci/golangci-lint:v2.1.6
+    image: golangci/golangci-lint:v2.3.1
     pull: true
 
     # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user
