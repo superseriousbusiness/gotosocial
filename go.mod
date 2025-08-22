@@ -32,7 +32,7 @@ require (
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-split v1.2.0
 	codeberg.org/gruf/go-storage v0.3.1
-	codeberg.org/gruf/go-structr v0.9.8
+	codeberg.org/gruf/go-structr v0.9.9
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.4
 	github.com/SherClockHolmes/webpush-go v1.4.0

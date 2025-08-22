@@ -21,12 +21,9 @@ type IndexConfig struct {
 	// be specified using periods. An example:
 	// "Username,Favorites.Color"
 	//
-	// Note that nested fields where the nested
-	// struct field is a ptr are supported, but
-	// nil ptr values in nesting will result in
-	// that particular value NOT being indexed.
-	// e.g. with "Favorites.Color" if *Favorites
-	// is nil then it will not be indexed.
+	// If a nested field encounters a nil pointer
+	// along the way, e.g. "Favourites == nil", then
+	// a zero value for "Favorites.Color" is used.
 	//
 	// Field types supported include any of those
 	// supported by the `go-mangler/v2` library.

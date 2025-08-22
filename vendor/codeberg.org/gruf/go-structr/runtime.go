@@ -18,7 +18,8 @@ import (
 // including memory offset and hash function.
 type struct_field struct {
 
-	// mangle ...
+	// struct field type mangling
+	// (i.e. fast serializing) fn.
 	mangle mangler.Mangler
 
 	// zero value data, used when
@@ -81,6 +82,10 @@ func find_field(t xunsafe.TypeIter, names []string) (sfield struct_field, ftype 
 		field reflect.StructField
 	)
 
+	// Take reference
+	// of parent iter.
+	o := t
+
 	for len(names) > 0 {
 		// Pop next name.
 		name := pop_name()
@@ -140,21 +145,39 @@ func find_field(t xunsafe.TypeIter, names []string) (sfield struct_field, ftype 
 	// Get mangler from type info.
 	sfield.mangle = mangler.Get(t)
 
-	// Get field type as zero interface.
-	v := reflect.New(t.Type).Elem()
-	vi := v.Interface()
-
-	// Get argument mangler from iface.
-	ti := xunsafe.TypeIterFrom(vi)
-	mangleArg := mangler.Get(ti)
-
 	// Calculate zero value string.
-	zptr := xunsafe.UnpackEface(vi)
-	zstr := string(mangleArg(nil, zptr))
+	zptr := zero_value_field(o, sfield.offsets)
+	zstr := string(sfield.mangle(nil, zptr))
 	sfield.zerostr = zstr
 	sfield.zero = zptr
 
 	return
+}
+
+// zero_value ...
+func zero_value(t xunsafe.TypeIter, offsets []next_offset) reflect.Value {
+	v := reflect.New(t.Type).Elem()
+	for _, offset := range offsets {
+		for range offset.derefs {
+			if v.IsNil() {
+				new := reflect.New(v.Type().Elem())
+				v.Set(new)
+			}
+			v = v.Elem()
+		}
+		for i := 0; i < v.NumField(); i++ {
+			if v.Type().Field(i).Offset == offset.offset {
+				v = v.Field(i)
+				break
+			}
+		}
+	}
+	return v
+}
+
+// zero_value_field ...
+func zero_value_field(t xunsafe.TypeIter, offsets []next_offset) unsafe.Pointer {
+	return zero_value(t, offsets).Addr().UnsafePointer()
 }
 
 // extract_fields extracts given structfields from the provided value type,

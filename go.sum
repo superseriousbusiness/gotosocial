@@ -56,8 +56,8 @@ codeberg.org/gruf/go-split v1.2.0 h1:PmzL23nVEVHm8VxjsJmv4m4wGQz2bGgQw52dgSSj65c
 codeberg.org/gruf/go-split v1.2.0/go.mod h1:0rejWJpqvOoFAd7nwm5tIXYKaAqjtFGOXmTqQV+VO38=
 codeberg.org/gruf/go-storage v0.3.1 h1:g66UIM/xXnEk9ejT+W0T9s/PODBZhXa/8ajzeY/MELI=
 codeberg.org/gruf/go-storage v0.3.1/go.mod h1:r43n/zi7YGOCl2iSl7AMI27D1zcWS65Bi2+5xDzypeo=
-codeberg.org/gruf/go-structr v0.9.8 h1:IouxZ+HPJznegpBmqsJmTu+7ZURwUbnwby/VO6PMaAs=
-codeberg.org/gruf/go-structr v0.9.8/go.mod h1:5dsazOsIeJyV8Dl2DdSXqCDEZUx3e3dc41N6f2mPtgw=
+codeberg.org/gruf/go-structr v0.9.9 h1:fwIzi/94yBNSWleXZIfVW/QyNK5+/xxI2reVYzu5V/c=
+codeberg.org/gruf/go-structr v0.9.9/go.mod h1:5dsazOsIeJyV8Dl2DdSXqCDEZUx3e3dc41N6f2mPtgw=
 codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73 h1:pRaOwIOS1WSZoPCAvE0H1zpv+D4gF37OVppybffqdI8=
 codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73/go.mod h1:9wkq+dmHjUhB/0ZxDUWAwsWuXwwGyx5N1dDCB9hpWs8=
 codeberg.org/superseriousbusiness/go-swagger v0.32.3-gts-go1.23-fix h1:k76/Th+bruqU/d+dB0Ru466ctTF2aVjKpisy/471ILE=
