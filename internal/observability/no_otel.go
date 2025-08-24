@@ -22,13 +22,12 @@ package observability
 import (
 	"context"
 
-	"code.superseriousbusiness.org/gotosocial/internal/db"
-
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 )
 
-func InitializeMetrics(ctx context.Context, db db.DB) error {
+func InitializeMetrics(ctx context.Context, state *state.State) error {
 	return nil
 }
 
