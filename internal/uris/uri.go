@@ -215,9 +215,15 @@ func GenerateURIForAccept(username string, thisAcceptID string) string {
 // ie., LikeAuthorization, ReplyAuthorization, or AnnounceAuthorization.
 // Eg., https://example.org/users/whatever_user/authorizations/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForAuthorization(username string, id string) string {
-	protocol := config.GetProtocol()
+	proto := config.GetProtocol()
 	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, AuthorizationsPath, id)
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		AuthorizationsPath,
+		id,
+	)
 }
 
 // GenerateURIForReject returns the AP URI for a new Reject activity -- something like:
