@@ -43,9 +43,8 @@ func (p *Processor) AuthorizationGet(
 	}
 
 	if auth.handshakingURI != nil {
-		// We're currently handshaking, which means
-		// we don't know this account yet. This should
-		// be a very rare race condition.
+		// We're currently handshaking, which means we don't know
+		// this account yet. This should be a very rare race condition.
 		err := gtserror.Newf("network race handshaking %s", auth.handshakingURI)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -58,8 +57,8 @@ func (p *Processor) AuthorizationGet(
 	}
 
 	if req == nil || !req.IsAccepted() {
-		err := gtserror.Newf("interaction request %s not found", reqID)
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "interaction request not found"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
 	if req.TargetAccountID != auth.receivingAcct.ID {

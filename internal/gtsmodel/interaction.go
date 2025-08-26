@@ -141,10 +141,9 @@ func (ir *InteractionRequest) IsRejected() bool {
 	return !ir.RejectedAt.IsZero()
 }
 
-// IsPolite returns true if this interaction request
-// was done "politely" with a *Request type, or false
-// if it was done "impolitely" with direct send of
-// a like, reply, or announce.
+// IsPolite returns true if this interaction request was done
+// "politely" with a *Request type, or false if it was done
+// "impolitely" with direct send of a like, reply, or announce.
 func (ir *InteractionRequest) IsPolite() bool {
 	return ir.InteractionRequestURI != ""
 }
