@@ -3415,7 +3415,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		"this is a public status, please forward it!",
 		"",
 		URLMustParse("http://example.org/users/Some_User"),
-		[]*url.URL{ap.PublicURI()},
+		[]*url.URL{ap.PublicIRI()},
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
@@ -3480,7 +3480,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		"<p>some unknown media included</p>",
 		URLMustParse("http://example.org/users/Some_User"),
 		[]*url.URL{
-			ap.PublicURI(),
+			ap.PublicIRI(),
 		},
 		[]*url.URL{
 			URLMustParse("http://example.org/users/Some_User/followers"),
@@ -3855,7 +3855,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"this is a public status, please forward it!",
 			"",
 			URLMustParse("http://example.org/users/Some_User"),
-			[]*url.URL{ap.PublicURI()},
+			[]*url.URL{ap.PublicIRI()},
 			nil,
 			false,
 			[]vocab.ActivityStreamsMention{},
@@ -3876,7 +3876,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				ap.PublicURI(),
+				ap.PublicIRI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3892,7 +3892,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				ap.PublicURI(),
+				ap.PublicIRI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3913,7 +3913,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				ap.PublicURI(),
+				ap.PublicIRI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3934,7 +3934,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://turnip.farm/users/turniplover6969"),
 			[]*url.URL{
-				ap.PublicURI(),
+				ap.PublicIRI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3957,7 +3957,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 			[]*url.URL{
-				ap.PublicURI(),
+				ap.PublicIRI(),
 			},
 			[]*url.URL{},
 			false,

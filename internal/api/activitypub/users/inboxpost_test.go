@@ -192,7 +192,7 @@ func (suite *InboxPostTestSuite) newDelete(actorIRI string, objectIRI string, de
 
 	// Set the To of the delete as public
 	deleteTo := streams.NewActivityStreamsToProperty()
-	deleteTo.AppendIRI(ap.PublicURI())
+	deleteTo.AppendIRI(ap.PublicIRI())
 	delete.SetActivityStreamsTo(deleteTo)
 
 	// set some random-ass ID for the activity

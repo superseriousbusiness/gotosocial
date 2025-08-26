@@ -23,15 +23,18 @@ import (
 	"code.superseriousbusiness.org/activity/pub"
 )
 
-// PublicURI returns a fresh copy of the *url.URL version of the
-// magic ActivityPub URI https://www.w3.org/ns/activitystreams#Public
-func PublicURI() *url.URL {
-	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
+// publicIRI is a pre-parsed global public IRI instance.
+var publicIRI = func() *url.URL {
+	url, err := url.Parse(pub.PublicActivityPubIRI)
 	if err != nil {
 		panic(err)
 	}
-	return publicURI
-}
+	return url
+}()
+
+// PublicIRI returns a fresh copy of the *url.URL version of the
+// magic ActivityPub URI https://www.w3.org/ns/activitystreams#Public
+func PublicIRI() *url.URL { var u url.URL; u = *publicIRI; return &u }
 
 // https://www.w3.org/TR/activitystreams-vocabulary
 const (
