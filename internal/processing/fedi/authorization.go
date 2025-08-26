@@ -49,34 +49,42 @@ func (p *Processor) AuthorizationGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	//
+	// Check the database for an interaction request with ID.
 	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Ensure that this is an existing
+	// and *accepted* interaction request.
 	if req == nil || !req.IsAccepted() {
 		const text = "interaction request not found"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
+	// Ensure request is targeting expected account.
 	if req.TargetAccountID != auth.receivingAcct.ID {
 		const text = "interaction request does not belong to receiving account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
+	// Ensure this is a polite, i.e. latest
+	// version of interaction request, otherwise
+	// they shouldn't be querying this endpoint.
 	if !req.IsPolite() {
 		const text = "interaction request was not made politely, no Authorization to serve"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
+	// Create an Accept activity for ActivityPub API endpoint.
 	accept, err := p.converter.InteractionReqToASAccept(ctx, req)
 	if err != nil {
 		err := gtserror.Newf("error converting accept: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Serialize to "raw" JSON map.
 	data, err := ap.Serialize(accept)
 	if err != nil {
 		err := gtserror.Newf("error serializing accept: %w", err)
