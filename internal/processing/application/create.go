@@ -86,10 +86,7 @@ func (p *Processor) Create(
 	}
 
 	// Generate random client ID.
-	clientID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	clientID := id.NewRandomULID()
 
 	// Generate + store app
 	// to put in the database.

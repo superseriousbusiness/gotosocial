@@ -111,11 +111,9 @@ func (f *DB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error
 		// based on actor (i.e. followER not the followEE).
 		if uri := ap.GetActorIRIs(follow); len(uri) == 1 {
 			if actorAccount, err := f.state.DB.GetAccountByURI(ctx, uri[0].String()); err == nil {
-				newID, err := id.NewRandomULID()
-				if err != nil {
-					return nil, err
-				}
-				return url.Parse(uris.GenerateURIForFollow(actorAccount.Username, newID))
+				newID := id.NewRandomULID()
+				uri := uris.GenerateURIForFollow(actorAccount.Username, newID)
+				return url.Parse(uri)
 			}
 		}
 	}

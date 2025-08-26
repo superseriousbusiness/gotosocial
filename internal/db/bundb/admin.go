@@ -106,12 +106,7 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 	// with this username, create one now.
 	if account == nil {
 		uris := uris.GenerateURIsForAccount(newSignup.Username)
-
-		accountID, err := id.NewRandomULID()
-		if err != nil {
-			err := gtserror.Newf("error creating new account id: %w", err)
-			return nil, err
-		}
+		accountID := id.NewRandomULID()
 
 		privKey, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 		if err != nil {
@@ -174,12 +169,9 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		return user, nil
 	}
 
-	// Had no user for this account, time to create one!
-	newUserID, err := id.NewRandomULID()
-	if err != nil {
-		err := gtserror.Newf("error creating new user id: %w", err)
-		return nil, err
-	}
+	// Had no user for this
+	// account, time to create one!
+	newUserID := id.NewRandomULID()
 
 	encryptedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(newSignup.Password),
@@ -273,14 +265,9 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) error {
 		return err
 	}
 
-	aID, err := id.NewRandomULID()
-	if err != nil {
-		return err
-	}
-
 	newAccountURIs := uris.GenerateURIsForAccount(username)
 	acct := &gtsmodel.Account{
-		ID:                    aID,
+		ID:                    id.NewRandomULID(),
 		Username:              username,
 		DisplayName:           username,
 		URL:                   newAccountURIs.UserURL,
@@ -325,13 +312,8 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 		return nil
 	}
 
-	iID, err := id.NewRandomULID()
-	if err != nil {
-		return err
-	}
-
 	i := &gtsmodel.Instance{
-		ID:     iID,
+		ID:     id.NewRandomULID(),
 		Domain: host,
 		Title:  host,
 		URI:    fmt.Sprintf("%s://%s", protocol, host),

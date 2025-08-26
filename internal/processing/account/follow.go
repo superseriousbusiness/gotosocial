@@ -82,10 +82,7 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 
 	// Neither follows nor follow requests, so
 	// create and store a new follow request.
-	followID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	followID := id.NewRandomULID()
 	followURI := uris.GenerateURIForFollow(requestingAccount.Username, followID)
 
 	fr := &gtsmodel.FollowRequest{
