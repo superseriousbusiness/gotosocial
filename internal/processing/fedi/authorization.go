@@ -26,7 +26,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
-// AcceptGet handles the getting of a fedi/activitypub
+// AuthorizationGet handles the getting of a fedi/activitypub
 // representation of a local interaction authorization.
 //
 // It performs appropriate authentication before
@@ -50,7 +50,7 @@ func (p *Processor) AuthorizationGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// 
+	//
 	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
