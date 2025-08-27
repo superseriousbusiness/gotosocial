@@ -76,15 +76,15 @@ import (
 	that's a job for future refactoring by future tobi/kimbe.
 */
 
-// firstPassIntReq represents a partially-parsed
-// interaction request returned from the util
-// function parseInteractionReq.
-type firstPassIntReq struct {
-	intReqURI  string
-	requesting *gtsmodel.Account
-	receiving  *gtsmodel.Account
-	object     *gtsmodel.Status
-	instrument vocab.Type
+// partialInteractionRequest represents a
+// partially-parsed interaction request
+// returned from the util function parseInteractionReq.
+type partialInteractionRequest struct {
+	intRequestURI string
+	requesting    *gtsmodel.Account
+	receiving     *gtsmodel.Account
+	object        *gtsmodel.Status
+	instrument    vocab.Type
 }
 
 // parseIntReq does some first-pass parsing
@@ -96,16 +96,14 @@ type firstPassIntReq struct {
 //   - object status belongs to receiving account
 //   - interaction request has a single instrument
 //
-// It returns a firstPassIntReq struct, or an error
-// if something goes wrong.
-func (f *DB) parseIntReq(ctx context.Context, intReq ap.InteractionRequestable) (*firstPassIntReq, error) {
+// It returns a partialInteractionRequest struct,
+// or an error if something goes wrong.
+func (f *DB) parseInteractionRequest(ctx context.Context, intRequest ap.InteractionRequestable) (*partialInteractionRequest, error) {
 
-	// Get and stringify the
-	// ID/URI of the int req once.
-	intReqURI := ap.GetJSONLDId(intReq).String()
-
-	// Mark activity as handled.
-	f.activityIDs.Set(intReqURI, struct{}{})
+	// Get and stringify the ID/URI of interaction request once,
+	// and mark this particular activity as handled in ID cache.
+	intRequestURI := ap.GetJSONLDId(intRequest).String()
+	f.activityIDs.Set(intRequestURI, struct{}{})
 
 	// Extract relevant values from passed ctx.
 	activityContext := getActivityContext(ctx)
@@ -132,35 +130,35 @@ func (f *DB) parseIntReq(ctx context.Context, intReq ap.InteractionRequestable) 
 
 	// Make sure we have a single
 	// object of the interaction request.
-	objectIRIs := ap.GetObjectIRIs(intReq)
+	objectIRIs := ap.GetObjectIRIs(intRequest)
 	if l := len(objectIRIs); l != 1 {
 		return nil, gtserror.NewfWithCode(
 			http.StatusBadRequest,
 			"invalid object len %d, wanted 1", l,
 		)
 	}
+
+	// Extract the status URI str.
 	statusIRI := objectIRIs[0]
 	statusIRIStr := statusIRI.String()
 
-	// Object should be a status.
+	// Fetch status by given URI from the database.
 	status, err := f.state.DB.GetStatusByURI(ctx, statusIRIStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting object status %s: %w", statusIRIStr, err)
-		return nil, err
+		return nil, gtserror.Newf("db error getting object status %s: %w", statusIRIStr, err)
 	}
 
-	// Ensure int req received by correct account.
+	// Ensure received by correct account.
 	if status.AccountID != receiving.ID {
-		err := gtserror.NewfWithCode(
+		return nil, gtserror.NewfWithCode(
 			http.StatusForbidden,
 			"receiver %s is not owner of interaction-requested status",
 			receiving.URI,
 		)
-		return nil, err
 	}
 
-	// We should have one instrument.
-	instruments := ap.ExtractInstruments(intReq)
+	// Ensure we have the expected one instrument.
+	instruments := ap.ExtractInstruments(intRequest)
 	if l := len(instruments); l != 1 {
 		return nil, gtserror.NewfWithCode(
 			http.StatusBadRequest,
@@ -174,22 +172,20 @@ func (f *DB) parseIntReq(ctx context.Context, intReq ap.InteractionRequestable) 
 	if instrument == nil {
 		return nil, gtserror.NewWithCode(
 			http.StatusBadRequest,
-			"instrument was not a type",
+			"instrument was not vocab.Type",
 		)
 	}
 
-	// Check the instrument is
-	// something that can be approved.
+	// Check the instrument is an approveable type.
 	approvable, ok := instrument.(ap.WithApprovedBy)
 	if !ok {
 		return nil, gtserror.NewWithCode(
 			http.StatusBadRequest,
-			"instrument was not an Approvable",
+			"instrument was not Approvable",
 		)
 	}
 
-	// Make sure `approvedBy` isn't
-	// already set on the instrument.
+	// Ensure that `approvedBy` isn't already set.
 	if u := ap.GetApprovedBy(approvable); u != nil {
 		return nil, gtserror.NewfWithCode(
 			http.StatusBadRequest,
@@ -198,37 +194,30 @@ func (f *DB) parseIntReq(ctx context.Context, intReq ap.InteractionRequestable) 
 		)
 	}
 
-	return &firstPassIntReq{
-		intReqURI:  ap.GetJSONLDId(intReq).String(),
-		requesting: requesting,
-		receiving:  receiving,
-		object:     status,
-		instrument: instrument,
+	return &partialInteractionRequest{
+		intRequestURI: intRequestURI,
+		requesting:    requesting,
+		receiving:     receiving,
+		object:        status,
+		instrument:    instrument,
 	}, nil
 }
 
 func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeRequest) error {
 	log.DebugKV(ctx, "LikeRequest", serialize{likeReq})
 
-	// Parse out basic interaction request stuff.
-	fpir, err := f.parseIntReq(ctx, likeReq)
+	// Parse out base level interaction request information.
+	partial, err := f.parseInteractionRequest(ctx, likeReq)
 	if err != nil {
 		return err
 	}
 
-	// Parse instrument vocab.Type to Like.
-	if fpir.instrument.GetTypeName() != ap.ActivityLike {
-		return gtserror.NewWithCode(
-			http.StatusBadRequest,
-			"instrument of LikeRequest was not a Like",
-		)
-	}
-
-	likeable, ok := fpir.instrument.(vocab.ActivityStreamsLike)
+	// Ensure the instrument vocab.Type is Likeable.
+	likeable, ok := ap.ToLikeable(partial.instrument)
 	if !ok {
 		return gtserror.NewWithCode(
 			http.StatusBadRequest,
-			"could not parse instrument of LikeRequest to Like",
+			"could not parse instrument to Likeable",
 		)
 	}
 
@@ -240,27 +229,26 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 	}
 
 	// Ensure fave enacted by correct account.
-	if fave.AccountID != fpir.requesting.ID {
+	if fave.AccountID != partial.requesting.ID {
 		return gtserror.NewfWithCode(
 			http.StatusForbidden,
 			"requester %s is not expected actor %s",
-			fpir.requesting.URI, fave.Account.URI,
+			partial.requesting.URI, fave.Account.URI,
 		)
 	}
 
 	// Ensure fave received by correct account.
-	if fave.TargetAccountID != fpir.receiving.ID {
-		err := gtserror.NewfWithCode(
+	if fave.TargetAccountID != partial.receiving.ID {
+		return gtserror.NewfWithCode(
 			http.StatusForbidden,
 			"receiver %s is not expected %s",
-			fpir.receiving.URI, fave.TargetAccount.URI,
+			partial.receiving.URI, fave.TargetAccount.URI,
 		)
-		return err
 	}
 
-	// Ensure not invalid Like target for requester.
-	policyCheckResult, err := f.intFilter.StatusLikeable(ctx,
-		fpir.requesting,
+	// Ensure this is a valid Like target for requester.
+	policyResult, err := f.intFilter.StatusLikeable(ctx,
+		partial.requesting,
 		fave.Status,
 	)
 	if err != nil {
@@ -268,9 +256,7 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 			"error seeing if status %s is likeable: %w",
 			fave.Status.URI, err,
 		)
-	}
-
-	if policyCheckResult.Forbidden() {
+	} else if policyResult.Forbidden() {
 		return gtserror.NewWithCode(
 			http.StatusForbidden,
 			"requester does not have permission to Like status",
@@ -287,30 +273,25 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 		TargetAccount:         fave.TargetAccount,
 		InteractingAccountID:  fave.AccountID,
 		InteractingAccount:    fave.Account,
-		InteractionRequestURI: fpir.intReqURI,
+		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        fave.URI,
 		InteractionType:       gtsmodel.InteractionLike,
 		Like:                  fave,
 	}
-
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {
 	case err == nil:
 		// No problem.
 
 	case errors.Is(err, db.ErrAlreadyExists):
-		// Already processed this, race
-		// condition? Just warn + return.
-		log.Warnf(ctx,
-			"avoided storing duplicate interaction request %s",
-			fpir.intReqURI,
-		)
+		// Already processed this, race condition? Just warn + return.
+		log.Warnf(ctx, "received duplicate interaction request: %s", partial.intRequestURI)
 		return nil
 
 	default:
 		// Proper DB error.
 		return gtserror.Newf(
 			"db error storing interaction request %s",
-			fpir.intReqURI,
+			partial.intRequestURI,
 		)
 	}
 
@@ -320,8 +301,7 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 	// pending fave and store it.
 	fave.ID = id.NewULID()
 	fave.PendingApproval = util.Ptr(true)
-	fave.PreApproved = policyCheckResult.AutomaticApproval()
-
+	fave.PreApproved = policyResult.AutomaticApproval()
 	if err := f.state.DB.PutStatusFave(ctx, fave); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// The fave already exists in the
@@ -330,17 +310,18 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 			// return nil here and be done with it.
 			return nil
 		}
+
 		return gtserror.Newf("error inserting %s into db: %w", fave.URI, err)
 	}
 
 	// Further processing will be carried out
-	// asynchronously, return 202 Accepted.
+	// asynchronously, and our caller will return 202 Accepted.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APActivityType: ap.ActivityCreate,
 		APObjectType:   ap.ActivityLikeRequest,
 		GTSModel:       intReq,
-		Receiving:      fpir.receiving,
-		Requesting:     fpir.requesting,
+		Receiving:      partial.receiving,
+		Requesting:     partial.requesting,
 	})
 
 	return nil
@@ -349,26 +330,26 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyRequest) error {
 	log.DebugKV(ctx, "ReplyRequest", serialize{replyReq})
 
-	// Parse out basic interaction request stuff.
-	fpir, err := f.parseIntReq(ctx, replyReq)
+	// Parse out base level interaction request information.
+	partial, err := f.parseInteractionRequest(ctx, replyReq)
 	if err != nil {
 		return err
 	}
 
-	// Parse instrument vocab.Type to Statusable.
-	statusable, ok := ap.ToStatusable(fpir.instrument)
+	// Ensure the instrument vocab.Type is Statusable.
+	statusable, ok := ap.ToStatusable(partial.instrument)
 	if !ok {
 		return gtserror.NewWithCode(
 			http.StatusBadRequest,
-			"could not parse instrument of ReplyRequest to Statusable",
+			"could not parse instrument to Statusable",
 		)
 	}
 
 	// Check for spam / relevance.
 	ok, err = f.statusableOK(
 		ctx,
-		fpir.receiving,
-		fpir.requesting,
+		partial.receiving,
+		partial.requesting,
 		statusable,
 	)
 	if err != nil {
@@ -394,48 +375,41 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 	inReplyToURI := inReplyToURIs[0]
 	inReplyToURIStr := inReplyToURI.String()
 
-	// Make sure we have the status this replies to.
+	// Make sure we have the status this interaction reply encompasses.
 	inReplyTo, err := f.state.DB.GetStatusByURI(ctx, inReplyToURIStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf(
-			"db error getting inReplyTo status %s: %w",
-			inReplyToURIStr, err,
-		)
+		return gtserror.Newf("db error getting inReplyTo status %s: %w", inReplyToURIStr, err)
 	}
 
+	// Check status exists.
 	if inReplyTo == nil {
-		// Status doesn't seem to exist,
-		// just drop this ReplyRequest.
-		log.Debugf(ctx,
-			"got ReplyRequest for non-existent status %s",
-			inReplyToURIStr,
-		)
+		log.Warnf(ctx, "received ReplyRequest for non-existent status: %s", inReplyToURIStr)
 		return nil
 	}
 
-	// Make sure replied-to status is owned
-	// by receiver / target of the ReplyRequest.
-	if inReplyTo.AccountURI != fpir.receiving.URI {
+	// Make sure the parent status is owned by receiver.
+	if inReplyTo.AccountURI != partial.receiving.URI {
 		return gtserror.NewfWithCode(
 			http.StatusBadRequest,
 			"inReplyTo status %s not owned by receiving account %s",
-			inReplyToURIStr, fpir.receiving.URI,
+			inReplyToURIStr, partial.receiving.URI,
 		)
 	}
 
-	// Make sure reply is attributed to requester.
+	// Extract the attributed to (i.e. author) URI of status.
 	attributedToURI, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
 		err := gtserror.Newf("invalid status attributedTo value: %w", err)
 		return gtserror.WrapWithCode(http.StatusBadRequest, err)
 	}
-	attributedToURIStr := attributedToURI.String()
 
-	if attributedToURIStr != fpir.requesting.URI {
+	// Ensure status author is account of requester.
+	attributedToURIStr := attributedToURI.String()
+	if attributedToURIStr != partial.requesting.URI {
 		return gtserror.NewfWithCode(
 			http.StatusBadRequest,
-			"inReplyTo status %s not attributed to requesting account %s",
-			inReplyToURIStr, fpir.requesting.URI,
+			"status attributedTo %s not requesting account %s",
+			inReplyToURIStr, partial.requesting.URI,
 		)
 	}
 
@@ -447,32 +421,27 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 		TargetStatus:          inReplyTo,
 		TargetAccountID:       inReplyTo.AccountID,
 		TargetAccount:         inReplyTo.Account,
-		InteractingAccountID:  fpir.requesting.ID,
-		InteractingAccount:    fpir.requesting,
-		InteractionRequestURI: fpir.intReqURI,
+		InteractingAccountID:  partial.requesting.ID,
+		InteractingAccount:    partial.requesting,
+		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        ap.GetJSONLDId(statusable).String(),
 		InteractionType:       gtsmodel.InteractionReply,
 		Reply:                 nil, // Not settable yet.
 	}
-
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {
 	case err == nil:
 		// No problem.
 
 	case errors.Is(err, db.ErrAlreadyExists):
-		// Already processed this, race
-		// condition? Just warn + return.
-		log.Warnf(ctx,
-			"avoided storing duplicate interaction request %s",
-			fpir.intReqURI,
-		)
+		// Already processed this, race condition? Just warn + return.
+		log.Warnf(ctx, "received duplicate interaction request: %s", partial.intRequestURI)
 		return nil
 
 	default:
 		// Proper DB error.
 		return gtserror.Newf(
 			"db error storing interaction request %s",
-			fpir.intReqURI,
+			partial.intRequestURI,
 		)
 	}
 
@@ -483,8 +452,8 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 		APObjectType:   ap.ActivityReplyRequest,
 		GTSModel:       intReq,
 		APObject:       statusable,
-		Receiving:      fpir.receiving,
-		Requesting:     fpir.requesting,
+		Receiving:      partial.receiving,
+		Requesting:     partial.requesting,
 	})
 
 	return nil
@@ -493,25 +462,18 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAnnounceRequest) error {
 	log.DebugKV(ctx, "AnnounceRequest", serialize{announceReq})
 
-	// Parse out basic interaction request stuff.
-	fpir, err := f.parseIntReq(ctx, announceReq)
+	// Parse out base level interaction request information.
+	partial, err := f.parseInteractionRequest(ctx, announceReq)
 	if err != nil {
 		return err
 	}
 
-	// Parse instrument vocab.Type to Announce.
-	if fpir.instrument.GetTypeName() != ap.ActivityAnnounce {
-		return gtserror.NewWithCode(
-			http.StatusBadRequest,
-			"instrument of AnnounceRequest was not an Announce",
-		)
-	}
-
-	announceable, ok := fpir.instrument.(vocab.ActivityStreamsAnnounce)
+	// Ensure the instrument vocab.Type is Announceable.
+	announceable, ok := ap.ToAnnounceable(partial.instrument)
 	if !ok {
 		return gtserror.NewWithCode(
 			http.StatusBadRequest,
-			"could not parse instrument of AnnounceRequest to Announce",
+			"could not parse instrument to Announceable",
 		)
 	}
 
@@ -524,11 +486,11 @@ func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAn
 
 	if !new {
 		// We already have this announce, just return.
-		log.Debugf(ctx, "announce %s already stored", boost.URI)
+		log.Warnf(ctx, "received AnnounceRequest for existing announce: %s", boost.URI)
 		return nil
 	}
 
-	// We must have the boosted status stored.
+	// Fetch origin status that this boost is targetting from database.
 	targetStatus, err := f.state.DB.GetStatusByURI(ctx, boost.BoostOfURI)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf(
@@ -538,30 +500,26 @@ func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAn
 	}
 
 	if targetStatus == nil {
-		// Status doesn't seem to exist,
-		// just drop this AnnounceRequest.
-		log.Debugf(ctx,
-			"got AnnounceRequest for non-existent status %s",
-			boost.BoostOfURI,
-		)
+		// Status doesn't seem to exist, just drop this AnnounceRequest.
+		log.Warnf(ctx, "received AnnounceRequest for non-existent status %s", boost.BoostOfURI)
 		return nil
 	}
 
-	// Status must belong to receiver.
-	if targetStatus.AccountID != fpir.receiving.ID {
+	// Ensure target status is owned by receiving account.
+	if targetStatus.AccountID != partial.receiving.ID {
 		return gtserror.NewfWithCode(
 			http.StatusBadRequest,
 			"announce object %s not owned by receiving account %s",
-			boost.BoostOfURI, fpir.receiving.URI,
+			boost.BoostOfURI, partial.receiving.URI,
 		)
 	}
 
 	// Ensure announce enacted by correct account.
-	if boost.AccountID != fpir.requesting.ID {
+	if boost.AccountID != partial.requesting.ID {
 		return gtserror.NewfWithCode(
 			http.StatusForbidden,
 			"requester %s is not expected actor %s",
-			fpir.requesting.URI, boost.Account.URI,
+			partial.requesting.URI, boost.Account.URI,
 		)
 	}
 
@@ -575,30 +533,25 @@ func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAn
 		TargetAccount:         targetStatus.Account,
 		InteractingAccountID:  boost.AccountID,
 		InteractingAccount:    boost.Account,
-		InteractionRequestURI: fpir.intReqURI,
+		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        boost.URI,
 		InteractionType:       gtsmodel.InteractionAnnounce,
 		Announce:              boost,
 	}
-
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {
 	case err == nil:
 		// No problem.
 
 	case errors.Is(err, db.ErrAlreadyExists):
-		// Already processed this, race
-		// condition? Just warn + return.
-		log.Warnf(ctx,
-			"avoided storing duplicate interaction request %s",
-			fpir.intReqURI,
-		)
+		// Already processed this, race condition? Just warn + return.
+		log.Warnf(ctx, "received duplicate interaction request: %s", partial.intRequestURI)
 		return nil
 
 	default:
 		// Proper DB error.
 		return gtserror.Newf(
 			"db error storing interaction request %s",
-			fpir.intReqURI,
+			partial.intRequestURI,
 		)
 	}
 
@@ -608,8 +561,8 @@ func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAn
 		APActivityType: ap.ActivityCreate,
 		APObjectType:   ap.ActivityAnnounceRequest,
 		GTSModel:       intReq,
-		Receiving:      fpir.receiving,
-		Requesting:     fpir.requesting,
+		Receiving:      partial.receiving,
+		Requesting:     partial.requesting,
 	})
 
 	return nil
