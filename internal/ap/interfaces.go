@@ -299,8 +299,9 @@ type Acceptable interface {
 	WithResult
 }
 
-// Approvable represents the minimum activitypub interface
-// for a LikeApproval, ReplyApproval, or AnnounceApproval.
+// DEPRECATED: replaced by Authorizable.
+// Approvable represents the minimum activitypub
+// interface for a LikeApproval, ReplyApproval, or AnnounceApproval.
 type Approvable interface {
 	vocab.Type
 
@@ -308,6 +309,17 @@ type Approvable interface {
 	WithObject
 	WithTarget
 }
+
+// Authorizationable represents the minimum interface for a
+// LikeAuthorization, ReplyAuthorization, AnnounceAuthorization.
+type Authorizationable interface {
+	vocab.Type
+
+	WithAttributedTo
+	WithInteractingObject
+	WithInteractionTarget
+}
+
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).
 // This interface is fulfilled by: Audio, Document, Image, Video
@@ -801,4 +813,16 @@ type WithApprovedBy interface {
 type WithResult interface {
 	GetActivityStreamsResult() vocab.ActivityStreamsResultProperty
 	SetActivityStreamsResult(vocab.ActivityStreamsResultProperty)
+}
+
+// WithInteractingObject represents an activity or object with the InteractingObject property.
+type WithInteractingObject interface {
+	GetGoToSocialInteractingObject() vocab.GoToSocialInteractingObjectProperty
+	SetGoToSocialInteractingObject(vocab.GoToSocialInteractingObjectProperty)
+}
+
+// WithInteractionTarget represents an activity or object with the InteractionTarget property.
+type WithInteractionTarget interface {
+	GetGoToSocialInteractionTarget() vocab.GoToSocialInteractionTargetProperty
+	SetGoToSocialInteractionTarget(vocab.GoToSocialInteractionTargetProperty)
 }

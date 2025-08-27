@@ -286,6 +286,42 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 	}, attribTo...)
 }
 
+// GetInteractingObject returns IRIs contained in the interactingObject property of 'with'.
+func GetInteractingObject(with WithInteractingObject) []*url.URL {
+	intObjProp := with.GetGoToSocialInteractingObject()
+	return getIRIs(intObjProp)
+}
+
+// AppendInteractingObject appends the given IRIs to the interactingObject property of 'with'.
+func AppendInteractingObject(with WithInteractingObject, interactingObject ...*url.URL) {
+	appendIRIs(func() Property[vocab.GoToSocialInteractingObjectPropertyIterator] {
+		intObjProp := with.GetGoToSocialInteractingObject()
+		if intObjProp == nil {
+			intObjProp = streams.NewGoToSocialInteractingObjectProperty()
+			with.SetGoToSocialInteractingObject(intObjProp)
+		}
+		return intObjProp
+	}, interactingObject...)
+}
+
+// GetInteractionTarget returns IRIs contained in the interactionTarget property of 'with'.
+func GetInteractionTarget(with WithInteractionTarget) []*url.URL {
+	intTargetProp := with.GetGoToSocialInteractionTarget()
+	return getIRIs(intTargetProp)
+}
+
+// AppendInteractionTarget appends the given IRIs to the interactionTarget property of 'with'.
+func AppendInteractionTarget(with WithInteractionTarget, interactionTarget ...*url.URL) {
+	appendIRIs(func() Property[vocab.GoToSocialInteractionTargetPropertyIterator] {
+		intTargetProp := with.GetGoToSocialInteractionTarget()
+		if intTargetProp == nil {
+			intTargetProp = streams.NewGoToSocialInteractionTargetProperty()
+			with.SetGoToSocialInteractionTarget(intTargetProp)
+		}
+		return intTargetProp
+	}, interactionTarget...)
+}
+
 // GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'.
 func GetInReplyTo(with WithInReplyTo) []*url.URL {
 	replyProp := with.GetActivityStreamsInReplyTo()

@@ -1476,6 +1476,57 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLikePolite() {
 }`, string(b))
 }
 
+func (suite *InternalToASTestSuite) TestInteractionReqToASAuthorization() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AuthorizationURI:      "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	auth, err := suite.typeconverter.InteractionReqToASAuthorization(
+		suite.T().Context(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(auth)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "interactingObject": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "interactionTarget": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+  "type": "LikeAuthorization"
+}`, string(b))
+}
+
 func TestInternalToASTestSuite(t *testing.T) {
 	suite.Run(t, new(InternalToASTestSuite))
 }

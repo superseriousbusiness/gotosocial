@@ -49,7 +49,6 @@ func (p *Processor) AuthorizationGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	//
 	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
@@ -61,23 +60,23 @@ func (p *Processor) AuthorizationGet(
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	if req.TargetAccountID != auth.receivingAcct.ID {
-		const text = "interaction request does not belong to receiving account"
-		return nil, gtserror.NewErrorNotFound(errors.New(text))
-	}
-
 	if !req.IsPolite() {
 		const text = "interaction request was not made politely, no Authorization to serve"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	accept, err := p.converter.InteractionReqToASAccept(ctx, req)
+	if req.TargetAccountID != auth.receivingAcct.ID {
+		const text = "interaction request does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
+	authorization, err := p.converter.InteractionReqToASAuthorization(ctx, req)
 	if err != nil {
-		err := gtserror.Newf("error converting accept: %w", err)
+		err := gtserror.Newf("error converting authorization: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := ap.Serialize(accept)
+	data, err := ap.Serialize(authorization)
 	if err != nil {
 		err := gtserror.Newf("error serializing accept: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

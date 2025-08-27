@@ -2415,3 +2415,74 @@ func (c *Converter) InteractionReqToASReject(
 
 	return reject, nil
 }
+
+// InteractionReqToASAuthorization converts a polite, approved *gtsmodel.InteractionRequest
+// to a LikeAuthorization, ReplyAuthorization, or AnnounceAuthorization object.
+//
+// End result will look something like this:
+//
+//	{
+//	  "@context": [
+//	    "https://gotosocial.org/ns",
+//	    "https://www.w3.org/ns/activitystreams"
+//	  ],
+//	  "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+//	  "id": "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+//	  "interactingObject": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+//	  "interactionTarget": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+//	  "type": "LikeAuthorization"
+//	}
+func (c *Converter) InteractionReqToASAuthorization(
+	ctx context.Context,
+	req *gtsmodel.InteractionRequest,
+) (ap.Authorizationable, error) {
+	if !req.IsPolite() {
+		const text = "cannot convert impolite interaction request to Authorization type"
+		return nil, gtserror.New(text)
+	}
+
+	if req.AcceptedAt.IsZero() {
+		const text = "cannot convert not-accepted interaction request to Authorization type"
+		return nil, gtserror.New(text)
+	}
+
+	if err := c.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
+		return nil, gtserror.Newf("error populating interaction request: %w", err)
+	}
+
+	var auth ap.Authorizationable
+	switch req.InteractionType {
+	case gtsmodel.InteractionLike:
+		auth = streams.NewGoToSocialLikeAuthorization()
+	case gtsmodel.InteractionReply:
+		auth = streams.NewGoToSocialReplyAuthorization()
+	case gtsmodel.InteractionAnnounce:
+		auth = streams.NewGoToSocialAnnounceAuthorization()
+	}
+
+	// Set the ID.
+	ap.SetJSONLDIdStr(auth, req.AuthorizationURI)
+
+	// Set attributed to actor URI.
+	attributedToURI, err := url.Parse(req.TargetAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid target account URI: %w", err)
+	}
+	ap.AppendAttributedTo(auth, attributedToURI)
+
+	// Set interaction URI (eg., uri of the fave, reply, or announce).
+	intObjURI, err := url.Parse(req.InteractionURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interaction URI: %w", err)
+	}
+	ap.AppendInteractingObject(auth, intObjURI)
+
+	// Set interaction target URI (ie., uri of the status interacted with).
+	intTargetURI, err := url.Parse(req.TargetStatus.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interaction target URI: %w", err)
+	}
+	ap.AppendInteractionTarget(auth, intTargetURI)
+
+	return auth, nil
+}
