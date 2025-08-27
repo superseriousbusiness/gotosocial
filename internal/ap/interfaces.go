@@ -188,6 +188,36 @@ func ToAttachmentable(t vocab.Type) (Attachmentable, bool) {
 	return attachmentable, true
 }
 
+// IsAnnounceable returns whether AS vocab type name
+// is something that can be cast to vocab.ActivityStreamsAnnounce.
+func IsAnnounceable(typeName string) bool {
+	return typeName == ActivityAnnounce
+}
+
+// ToAnnounceable safely tries to cast vocab.Type as vocab.ActivityStreamsAnnounce.
+func ToAnnounceable(t vocab.Type) (vocab.ActivityStreamsAnnounce, bool) {
+	announceable, ok := t.(vocab.ActivityStreamsAnnounce)
+	if !ok || t.GetTypeName() != ActivityAnnounce {
+		return nil, false
+	}
+	return announceable, true
+}
+
+// IsLikeable returns whether AS vocab type name
+// is something that can be cast to vocab.ActivityStreamsLike.
+func IsLikeable(typeName string) bool {
+	return typeName == ActivityLike
+}
+
+// ToAnnouncToLikeableeable safely tries to cast vocab.Type as vocab.ActivityStreamsLike.
+func ToLikeable(t vocab.Type) (vocab.ActivityStreamsLike, bool) {
+	likeable, ok := t.(vocab.ActivityStreamsLike)
+	if !ok || t.GetTypeName() != ActivityLike {
+		return nil, false
+	}
+	return likeable, true
+}
+
 // Activityable represents the minimum activitypub interface for representing an 'activity'.
 // (see: IsActivityable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Activityable types).
@@ -319,7 +349,6 @@ type Authorizationable interface {
 	WithInteractingObject
 	WithInteractionTarget
 }
-
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).
 // This interface is fulfilled by: Audio, Document, Image, Video
