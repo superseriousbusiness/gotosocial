@@ -144,6 +144,32 @@ func (ir *InteractionRequest) IsRejected() bool {
 // IsPolite returns true if this interaction request was done
 // "politely" with a *Request type, or false if it was done
 // "impolitely" with direct send of a like, reply, or announce.
+//
+// The following information is not strictly needed but provides
+// useful context for why interaction requests are determined to
+// be either "polite" or "impolite".
+//
+// A "polite" interaction request flow indicates that it was
+// performed with the latest currently accepted manner of doing
+// things. This manner is different to that initially introduced
+// by us (GoToSocial) pre-v0.20.0, as it is the result of our
+// previous design going through many iterations with Mastodon
+// developers as part of designing their similar quote post flow.
+//
+// An "impolite" interaction request flow is that produced either
+// by an older interaction-policy-AWARE GoToSocial instance, or
+// by any interaction-policy-UNAWARE server instance.
+//
+// Regarding per-version GoToSocial behaviour (summarized by tobi):
+//
+//   - from v0.19.0 and before, we know about and can respond only to
+//     impolite interactions, and we send out impolite as well
+//
+//   - from v0.20.0 onwards, we know about and can respond to both
+//     polite / impolite interaction requests, but we still send out impolite
+//
+//   - from v0.21.0 onwards, we know about and can respond to both
+//     polite and impolite interaction requests, and we send out polite
 func (ir *InteractionRequest) IsPolite() bool {
 	return ir.InteractionRequestURI != ""
 }

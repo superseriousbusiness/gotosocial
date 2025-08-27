@@ -55,6 +55,8 @@ func (p *Processor) AuthorizationGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Ensure that this is an existing
+	// and *accepted* interaction request.
 	if req == nil || !req.IsAccepted() {
 		const text = "interaction request not found"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))

@@ -622,10 +622,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		return nil, gtserror.Newf("error parsing url %s: %w", s.Account.FollowersURI, err)
 	}
 
-	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", pub.PublicActivityPubIRI, err)
-	}
+	publicURI := ap.PublicIRI()
 
 	// to and cc
 	toProp := streams.NewActivityStreamsToProperty()
@@ -875,10 +872,7 @@ func (c *Converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 	// At worst, a remote instance becomes aware of the
 	// URI for a status which is now deleted anyway.
 	if s.Visibility != gtsmodel.VisibilityDirect {
-		publicURI, err := url.Parse(pub.PublicActivityPubIRI)
-		if err != nil {
-			return nil, fmt.Errorf("StatusToASDelete: error parsing url %s: %w", pub.PublicActivityPubIRI, err)
-		}
+		publicURI := ap.PublicIRI()
 		toProp.AppendIRI(publicURI)
 
 		actorFollowersURI, err := url.Parse(s.Account.FollowersURI)
@@ -1382,10 +1376,7 @@ func (c *Converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 	// maybe CC it to public depending on the boosted status visibility
 	switch boostWrapperStatus.BoostOf.Visibility {
 	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
-		publicURI, err := url.Parse(pub.PublicActivityPubIRI)
-		if err != nil {
-			return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", pub.PublicActivityPubIRI, err)
-		}
+		publicURI := ap.PublicIRI()
 		ccProp.AppendIRI(publicURI)
 	}
 
@@ -2304,10 +2295,7 @@ func (c *Converter) InteractionReqToASAccept(
 	}
 
 	if cc {
-		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
-		if err != nil {
-			return nil, gtserror.Newf("invalid public uri: %w", err)
-		}
+		publicIRI := ap.PublicIRI()
 
 		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
 		if err != nil {
@@ -2400,10 +2388,7 @@ func (c *Converter) InteractionReqToASReject(
 	}
 
 	if cc {
-		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
-		if err != nil {
-			return nil, gtserror.Newf("invalid public uri: %w", err)
-		}
+		publicIRI := ap.PublicIRI()
 
 		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
 		if err != nil {

@@ -115,7 +115,7 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 
 	// Address the delete CC public.
 	deleteCC := streams.NewActivityStreamsCcProperty()
-	deleteCC.AppendIRI(ap.PublicURI())
+	deleteCC.AppendIRI(ap.PublicIRI())
 	delete.SetActivityStreamsCc(deleteCC)
 
 	// Send the Delete via the Actor's outbox.
@@ -1104,7 +1104,7 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 	ap.AppendTo(move, followersIRI)
 
 	// Address the move CC public.
-	ap.AppendCc(move, ap.PublicURI())
+	ap.AppendCc(move, ap.PublicIRI())
 
 	// Send the Move via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(
