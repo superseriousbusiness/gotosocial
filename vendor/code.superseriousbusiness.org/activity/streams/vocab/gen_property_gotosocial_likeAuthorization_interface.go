@@ -4,18 +4,14 @@ package vocab
 
 import "net/url"
 
-// Indicates that the actor prefers to hide their cc-public-addressed statusables
-// (Notes, Articles, etc) from unauthenticated (ie., logged-out) access via
-// web pages, web apps, web APIs, etc. This setting has no bearing on
-// dereferences via HTTP GET to ActivityPub endpoints (application/ld+json;
-// profile="https://www.w3.org/ns/activitystreams").
-type GoToSocialHidesCcPublicFromUnauthedWebProperty interface {
+// URI/ID of a LikeAuthorization permitting the Like this property is attached to.
+type GoToSocialLikeAuthorizationProperty interface {
 	// Clear ensures no value of this property is set. Calling
-	// IsXMLSchemaBoolean afterwards will return false.
+	// IsXMLSchemaAnyURI afterwards will return false.
 	Clear()
-	// Get returns the value of this property. When IsXMLSchemaBoolean returns
+	// Get returns the value of this property. When IsXMLSchemaAnyURI returns
 	// false, Get will return any arbitrary value.
-	Get() bool
+	Get() *url.URL
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return any arbitrary value.
 	GetIRI() *url.URL
@@ -23,8 +19,8 @@ type GoToSocialHidesCcPublicFromUnauthedWebProperty interface {
 	HasAny() bool
 	// IsIRI returns true if this property is an IRI.
 	IsIRI() bool
-	// IsXMLSchemaBoolean returns true if this property is set and not an IRI.
-	IsXMLSchemaBoolean() bool
+	// IsXMLSchemaAnyURI returns true if this property is set and not an IRI.
+	IsXMLSchemaAnyURI() bool
 	// JSONLDContext returns the JSONLD URIs required in the context string
 	// for this property and the specific values that are set. The value
 	// in the map is the alias used to import the property's value or
@@ -38,8 +34,8 @@ type GoToSocialHidesCcPublicFromUnauthedWebProperty interface {
 	// stable comparison. Applications should not use this because it is
 	// only meant to help alternative implementations to go-fed to be able
 	// to normalize nonfunctional properties.
-	LessThan(o GoToSocialHidesCcPublicFromUnauthedWebProperty) bool
-	// Name returns the name of this property: "hidesCcPublicFromUnauthedWeb".
+	LessThan(o GoToSocialLikeAuthorizationProperty) bool
+	// Name returns the name of this property: "likeAuthorization".
 	Name() string
 	// Serialize converts this into an interface representation suitable for
 	// marshalling into a text or binary format. Applications should not
@@ -47,9 +43,9 @@ type GoToSocialHidesCcPublicFromUnauthedWebProperty interface {
 	// instead of individual properties. It is exposed for alternatives to
 	// go-fed implementations to use.
 	Serialize() (interface{}, error)
-	// Set sets the value of this property. Calling IsXMLSchemaBoolean
+	// Set sets the value of this property. Calling IsXMLSchemaAnyURI
 	// afterwards will return true.
-	Set(v bool)
+	Set(v *url.URL)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards will
 	// return true.
 	SetIRI(v *url.URL)

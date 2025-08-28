@@ -667,11 +667,11 @@ func SetHidesCcPublicFromUnauthedWeb(with WithHidesCcPublicFromUnauthedWeb, hide
 // GetApprovedBy returns the URL contained in
 // the ApprovedBy property of 'with', if set.
 func GetApprovedBy(with WithApprovedBy) *url.URL {
-	mafProp := with.GetGoToSocialApprovedBy()
-	if mafProp == nil || !mafProp.IsIRI() {
+	abProp := with.GetGoToSocialApprovedBy()
+	if abProp == nil || !abProp.IsIRI() {
 		return nil
 	}
-	return mafProp.Get()
+	return abProp.Get()
 }
 
 // SetApprovedBy sets the given url
@@ -683,6 +683,69 @@ func SetApprovedBy(with WithApprovedBy, approvedBy *url.URL) {
 		with.SetGoToSocialApprovedBy(abProp)
 	}
 	abProp.Set(approvedBy)
+}
+
+// GetLikeAuthorization returns the URL contained in
+// the likeAuthorization property of 'with', if set.
+func GetLikeAuthorization(with WithLikeAuthorization) *url.URL {
+	laProp := with.GetGoToSocialLikeAuthorization()
+	if laProp == nil || !laProp.IsIRI() {
+		return nil
+	}
+	return laProp.Get()
+}
+
+// SetLikeAuthorization sets the given url on
+// the 'likeAuthorization' property of 'with'.
+func SetLikeAuthorization(with WithLikeAuthorization, likeAuthorization *url.URL) {
+	laProp := with.GetGoToSocialLikeAuthorization()
+	if laProp == nil {
+		laProp = streams.NewGoToSocialLikeAuthorizationProperty()
+		with.SetGoToSocialLikeAuthorization(laProp)
+	}
+	laProp.Set(likeAuthorization)
+}
+
+// GetReplyAuthorization returns the URL contained in
+// the replyAuthorization property of 'with', if set.
+func GetReplyAuthorization(with WithReplyAuthorization) *url.URL {
+	raProp := with.GetGoToSocialReplyAuthorization()
+	if raProp == nil || !raProp.IsIRI() {
+		return nil
+	}
+	return raProp.Get()
+}
+
+// SetReplyAuthorization sets the given url on
+// the 'replyAuthorization' property of 'with'.
+func SetReplyAuthorization(with WithReplyAuthorization, replyAuthorization *url.URL) {
+	raProp := with.GetGoToSocialReplyAuthorization()
+	if raProp == nil {
+		raProp = streams.NewGoToSocialReplyAuthorizationProperty()
+		with.SetGoToSocialReplyAuthorization(raProp)
+	}
+	raProp.Set(replyAuthorization)
+}
+
+// GetAnnounceAuthorization returns the URL contained in
+// the announceAuthorization property of 'with', if set.
+func GetAnnounceAuthorization(with WithAnnounceAuthorization) *url.URL {
+	aaProp := with.GetGoToSocialAnnounceAuthorization()
+	if aaProp == nil || !aaProp.IsIRI() {
+		return nil
+	}
+	return aaProp.Get()
+}
+
+// SetAnnounceAuthorization sets the given url on
+// the 'announceAuthorization' property of 'with'.
+func SetAnnounceAuthorization(with WithAnnounceAuthorization, announceAuthorization *url.URL) {
+	aaProp := with.GetGoToSocialAnnounceAuthorization()
+	if aaProp == nil {
+		aaProp = streams.NewGoToSocialAnnounceAuthorizationProperty()
+		with.SetGoToSocialAnnounceAuthorization(aaProp)
+	}
+	aaProp.Set(announceAuthorization)
 }
 
 // GetMediaType returns the string contained in

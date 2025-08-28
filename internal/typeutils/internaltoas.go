@@ -712,7 +712,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	status.SetActivityStreamsSensitive(sensitiveProp)
 
 	// interactionPolicy
-	if ipa, ok := status.(ap.InteractionPolicyAware); ok {
+	if wip, ok := status.(ap.WithInteractionPolicy); ok {
 		var p *gtsmodel.InteractionPolicy
 		if s.InteractionPolicy != nil {
 			// Use InteractionPolicy
@@ -731,18 +731,31 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		// Set interaction policy.
 		policyProp := streams.NewGoToSocialInteractionPolicyProperty()
 		policyProp.AppendGoToSocialInteractionPolicy(policy)
-		ipa.SetGoToSocialInteractionPolicy(policyProp)
+		wip.SetGoToSocialInteractionPolicy(policyProp)
+	}
 
-		// Parse + set approvedBy.
-		if s.ApprovedByURI != "" {
-			approvedBy, err := url.Parse(s.ApprovedByURI)
-			if err != nil {
-				return nil, fmt.Errorf("error parsing approvedBy: %w", err)
-			}
+	// If the status is a reply that's been
+	// authorized, set the authorization URI here.
+	if s.ApprovedByURI != "" {
+		authedByURI, err := url.Parse(s.ApprovedByURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+		}
 
-			approvedByProp := streams.NewGoToSocialApprovedByProperty()
-			approvedByProp.Set(approvedBy)
-			ipa.SetGoToSocialApprovedBy(approvedByProp)
+		// Dear Kim: I left a breaking bit of code here to remind me that we need
+		// to decide what to do here re: setting either the URI of the Authorization
+		// in replyAuthorization, and/or the URI of the Accept in approvedBy.
+		aaaa
+
+		// Set approvedBy if possible.
+		// Deprecated: remove this in v0.21.0.
+		if wap, ok := status.(ap.WithApprovedBy); ok {
+			ap.SetApprovedBy(wap, authedByURI)
+		}
+
+		// Set the replyAuthorization property
+		if wra, ok := status.(ap.WithReplyAuthorization); ok {
+			ap.SetReplyAuthorization(wra, authedByURI)
 		}
 	}
 
@@ -1295,16 +1308,13 @@ func (c *Converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 	toProp.AppendIRI(toIRI)
 	like.SetActivityStreamsTo(toProp)
 
-	// Parse + set approvedBy.
+	// Parse + set authorization.
 	if f.ApprovedByURI != "" {
 		approvedBy, err := url.Parse(f.ApprovedByURI)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
 		}
-
-		approvedByProp := streams.NewGoToSocialApprovedByProperty()
-		approvedByProp.Set(approvedBy)
-		like.SetGoToSocialApprovedBy(approvedByProp)
+		ap.SetApprovedBy(like, approvedBy)
 	}
 
 	return like, nil
@@ -1382,16 +1392,13 @@ func (c *Converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 
 	announce.SetActivityStreamsCc(ccProp)
 
-	// Parse + set approvedBy.
+	// Parse + set authorization.
 	if boostWrapperStatus.ApprovedByURI != "" {
 		approvedBy, err := url.Parse(boostWrapperStatus.ApprovedByURI)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
 		}
-
-		approvedByProp := streams.NewGoToSocialApprovedByProperty()
-		approvedByProp.Set(approvedBy)
-		announce.SetGoToSocialApprovedBy(approvedByProp)
+		ap.SetApprovedBy(announce, approvedBy)
 	}
 
 	return announce, nil

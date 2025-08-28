@@ -140,6 +140,7 @@ import (
 	typelibrary "code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_library"
 	typetrack "code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_track"
 	propertyalways "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_always"
+	propertyannounceauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_announceauthorization"
 	propertyapprovalrequired "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvedby"
 	propertyautomaticapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_automaticapproval"
@@ -152,7 +153,9 @@ import (
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
+	propertylikeauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_likeauthorization"
 	propertymanualapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_manualapproval"
+	propertyreplyauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_replyauthorization"
 	typeannounceapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceapproval"
 	typeannounceauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceauthorization"
 	typeannouncerequest "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announcerequest"
@@ -337,6 +340,7 @@ func init() {
 	typelibrary.SetManager(mgr)
 	typetrack.SetManager(mgr)
 	propertyalways.SetManager(mgr)
+	propertyannounceauthorization.SetManager(mgr)
 	propertyapprovalrequired.SetManager(mgr)
 	propertyapprovedby.SetManager(mgr)
 	propertyautomaticapproval.SetManager(mgr)
@@ -349,7 +353,9 @@ func init() {
 	propertyinteractingobject.SetManager(mgr)
 	propertyinteractionpolicy.SetManager(mgr)
 	propertyinteractiontarget.SetManager(mgr)
+	propertylikeauthorization.SetManager(mgr)
 	propertymanualapproval.SetManager(mgr)
+	propertyreplyauthorization.SetManager(mgr)
 	typeannounceapproval.SetManager(mgr)
 	typeannounceauthorization.SetManager(mgr)
 	typeannouncerequest.SetManager(mgr)

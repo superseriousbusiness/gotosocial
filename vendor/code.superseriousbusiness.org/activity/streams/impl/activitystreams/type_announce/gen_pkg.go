@@ -19,6 +19,11 @@ type privateManager interface {
 	// method for the "ActivityStreamsAltitudeProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeAltitudePropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAltitudeProperty, error)
+	// DeserializeAnnounceAuthorizationPropertyGoToSocial returns the
+	// deserialization method for the
+	// "GoToSocialAnnounceAuthorizationProperty" non-functional property
+	// in the vocabulary "GoToSocial"
+	DeserializeAnnounceAuthorizationPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceAuthorizationProperty, error)
 	// DeserializeApprovedByPropertyGoToSocial returns the deserialization
 	// method for the "GoToSocialApprovedByProperty" non-functional
 	// property in the vocabulary "GoToSocial"

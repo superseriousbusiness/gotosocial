@@ -288,11 +288,6 @@ type Statusable interface {
 	WithReplies
 }
 
-type InteractionPolicyAware interface {
-	WithInteractionPolicy
-	WithApprovedBy
-}
-
 // Pollable represents the minimum activitypub interface for representing a 'poll' (it's a subset of a status).
 // (see: IsPollable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Pollable types).
@@ -832,10 +827,28 @@ type WithPolicyRules interface {
 	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty // Deprecated
 }
 
-// WithApprovedBy represents a Statusable with the approvedBy property.
+// WithApprovedBy represents an object with the approvedBy property.
 type WithApprovedBy interface {
 	GetGoToSocialApprovedBy() vocab.GoToSocialApprovedByProperty
 	SetGoToSocialApprovedBy(vocab.GoToSocialApprovedByProperty)
+}
+
+// WithLikeAuthorization represents a Likeable with the likeAuthorization property.
+type WithLikeAuthorization interface {
+	GetGoToSocialLikeAuthorization() vocab.GoToSocialLikeAuthorizationProperty
+	SetGoToSocialLikeAuthorization(vocab.GoToSocialLikeAuthorizationProperty)
+}
+
+// WithReplyAuthorization represents a statusable with the replyAuthorization property.
+type WithReplyAuthorization interface {
+	GetGoToSocialReplyAuthorization() vocab.GoToSocialReplyAuthorizationProperty
+	SetGoToSocialReplyAuthorization(vocab.GoToSocialReplyAuthorizationProperty)
+}
+
+// WithAnnounceAuthorization represents an Announceable with the announceAuthorization property.
+type WithAnnounceAuthorization interface {
+	GetGoToSocialAnnounceAuthorization() vocab.GoToSocialAnnounceAuthorizationProperty
+	SetGoToSocialAnnounceAuthorization(vocab.GoToSocialAnnounceAuthorizationProperty)
 }
 
 // WithResult represents an activity or object with the result property.

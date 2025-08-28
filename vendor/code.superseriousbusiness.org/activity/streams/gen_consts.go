@@ -254,6 +254,9 @@ var ActivityStreamsAltitudePropertyName string = "altitude"
 // GoToSocialAlwaysPropertyName is the string literal of the name for the always property in the GoToSocial vocabulary.
 var GoToSocialAlwaysPropertyName string = "always"
 
+// GoToSocialAnnounceAuthorizationPropertyName is the string literal of the name for the announceAuthorization property in the GoToSocial vocabulary.
+var GoToSocialAnnounceAuthorizationPropertyName string = "announceAuthorization"
+
 // ActivityStreamsAnyOfPropertyName is the string literal of the name for the anyOf property in the ActivityStreams vocabulary.
 var ActivityStreamsAnyOfPropertyName string = "anyOf"
 
@@ -404,6 +407,9 @@ var ActivityStreamsLastPropertyName string = "last"
 // ActivityStreamsLatitudePropertyName is the string literal of the name for the latitude property in the ActivityStreams vocabulary.
 var ActivityStreamsLatitudePropertyName string = "latitude"
 
+// GoToSocialLikeAuthorizationPropertyName is the string literal of the name for the likeAuthorization property in the GoToSocial vocabulary.
+var GoToSocialLikeAuthorizationPropertyName string = "likeAuthorization"
+
 // ActivityStreamsLikedPropertyName is the string literal of the name for the liked property in the ActivityStreams vocabulary.
 var ActivityStreamsLikedPropertyName string = "liked"
 
@@ -490,6 +496,9 @@ var ActivityStreamsRelationshipPropertyName string = "relationship"
 
 // ActivityStreamsRepliesPropertyName is the string literal of the name for the replies property in the ActivityStreams vocabulary.
 var ActivityStreamsRepliesPropertyName string = "replies"
+
+// GoToSocialReplyAuthorizationPropertyName is the string literal of the name for the replyAuthorization property in the GoToSocial vocabulary.
+var GoToSocialReplyAuthorizationPropertyName string = "replyAuthorization"
 
 // ActivityStreamsResultPropertyName is the string literal of the name for the result property in the ActivityStreams vocabulary.
 var ActivityStreamsResultPropertyName string = "result"

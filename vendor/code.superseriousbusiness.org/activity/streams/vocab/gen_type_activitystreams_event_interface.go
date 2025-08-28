@@ -115,6 +115,9 @@ type ActivityStreamsEvent interface {
 	// GetGoToSocialInteractionPolicy returns the "interactionPolicy" property
 	// if it exists, and nil otherwise.
 	GetGoToSocialInteractionPolicy() GoToSocialInteractionPolicyProperty
+	// GetGoToSocialReplyAuthorization returns the "replyAuthorization"
+	// property if it exists, and nil otherwise.
+	GetGoToSocialReplyAuthorization() GoToSocialReplyAuthorizationProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetJSONLDType returns the "type" property if it exists, and nil
@@ -210,6 +213,8 @@ type ActivityStreamsEvent interface {
 	SetGoToSocialApprovedBy(i GoToSocialApprovedByProperty)
 	// SetGoToSocialInteractionPolicy sets the "interactionPolicy" property.
 	SetGoToSocialInteractionPolicy(i GoToSocialInteractionPolicyProperty)
+	// SetGoToSocialReplyAuthorization sets the "replyAuthorization" property.
+	SetGoToSocialReplyAuthorization(i GoToSocialReplyAuthorizationProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// SetJSONLDType sets the "type" property.

@@ -9,7 +9,7 @@ replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.2-concurrency-workaround
 
 require (
-	code.superseriousbusiness.org/activity v1.16.0
+	code.superseriousbusiness.org/activity v1.17.0
 	code.superseriousbusiness.org/exif-terminator v0.11.0
 	code.superseriousbusiness.org/httpsig v1.4.0
 	code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384

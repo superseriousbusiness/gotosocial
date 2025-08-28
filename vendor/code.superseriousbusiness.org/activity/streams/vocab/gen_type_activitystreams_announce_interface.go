@@ -136,6 +136,9 @@ type ActivityStreamsAnnounce interface {
 	// GetActivityStreamsUrl returns the "url" property if it exists, and nil
 	// otherwise.
 	GetActivityStreamsUrl() ActivityStreamsUrlProperty
+	// GetGoToSocialAnnounceAuthorization returns the "announceAuthorization"
+	// property if it exists, and nil otherwise.
+	GetGoToSocialAnnounceAuthorization() GoToSocialAnnounceAuthorizationProperty
 	// GetGoToSocialApprovedBy returns the "approvedBy" property if it exists,
 	// and nil otherwise.
 	GetGoToSocialApprovedBy() GoToSocialApprovedByProperty
@@ -241,6 +244,9 @@ type ActivityStreamsAnnounce interface {
 	SetActivityStreamsUpdated(i ActivityStreamsUpdatedProperty)
 	// SetActivityStreamsUrl sets the "url" property.
 	SetActivityStreamsUrl(i ActivityStreamsUrlProperty)
+	// SetGoToSocialAnnounceAuthorization sets the "announceAuthorization"
+	// property.
+	SetGoToSocialAnnounceAuthorization(i GoToSocialAnnounceAuthorizationProperty)
 	// SetGoToSocialApprovedBy sets the "approvedBy" property.
 	SetGoToSocialApprovedBy(i GoToSocialApprovedByProperty)
 	// SetJSONLDId sets the "id" property.

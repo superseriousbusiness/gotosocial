@@ -42,6 +42,7 @@ type ActivityStreamsLike struct {
 	ActivityStreamsImage        vocab.ActivityStreamsImageProperty
 	ActivityStreamsInReplyTo    vocab.ActivityStreamsInReplyToProperty
 	ActivityStreamsInstrument   vocab.ActivityStreamsInstrumentProperty
+	GoToSocialLikeAuthorization vocab.GoToSocialLikeAuthorizationProperty
 	ActivityStreamsLikes        vocab.ActivityStreamsLikesProperty
 	ActivityStreamsLocation     vocab.ActivityStreamsLocationProperty
 	ActivityStreamsMediaType    vocab.ActivityStreamsMediaTypeProperty
@@ -211,6 +212,11 @@ func DeserializeLike(m map[string]interface{}, aliasMap map[string]string) (*Act
 	} else if p != nil {
 		this.ActivityStreamsInstrument = p
 	}
+	if p, err := mgr.DeserializeLikeAuthorizationPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialLikeAuthorization = p
+	}
 	if p, err := mgr.DeserializeLikesPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -360,6 +366,8 @@ func DeserializeLike(m map[string]interface{}, aliasMap map[string]string) (*Act
 		} else if k == "inReplyTo" {
 			continue
 		} else if k == "instrument" {
+			continue
+		} else if k == "likeAuthorization" {
 			continue
 		} else if k == "likes" {
 			continue
@@ -682,6 +690,12 @@ func (this ActivityStreamsLike) GetGoToSocialApprovedBy() vocab.GoToSocialApprov
 	return this.GoToSocialApprovedBy
 }
 
+// GetGoToSocialLikeAuthorization returns the "likeAuthorization" property if it
+// exists, and nil otherwise.
+func (this ActivityStreamsLike) GetGoToSocialLikeAuthorization() vocab.GoToSocialLikeAuthorizationProperty {
+	return this.GoToSocialLikeAuthorization
+}
+
 // GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 func (this ActivityStreamsLike) GetJSONLDId() vocab.JSONLDIdProperty {
 	return this.JSONLDId
@@ -736,6 +750,7 @@ func (this ActivityStreamsLike) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsImage, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsInReplyTo, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsInstrument, m)
+	m = this.helperJSONLDContext(this.GoToSocialLikeAuthorization, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsLikes, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsLocation, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsMediaType, m)
@@ -1019,6 +1034,20 @@ func (this ActivityStreamsLike) LessThan(o vocab.ActivityStreamsLike) bool {
 	} // Else: Both are nil
 	// Compare property "instrument"
 	if lhs, rhs := this.ActivityStreamsInstrument, o.GetActivityStreamsInstrument(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "likeAuthorization"
+	if lhs, rhs := this.GoToSocialLikeAuthorization, o.GetGoToSocialLikeAuthorization(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1500,6 +1529,14 @@ func (this ActivityStreamsLike) Serialize() (map[string]interface{}, error) {
 			m[this.ActivityStreamsInstrument.Name()] = i
 		}
 	}
+	// Maybe serialize property "likeAuthorization"
+	if this.GoToSocialLikeAuthorization != nil {
+		if i, err := this.GoToSocialLikeAuthorization.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialLikeAuthorization.Name()] = i
+		}
+	}
 	// Maybe serialize property "likes"
 	if this.ActivityStreamsLikes != nil {
 		if i, err := this.ActivityStreamsLikes.Serialize(); err != nil {
@@ -1870,6 +1907,11 @@ func (this *ActivityStreamsLike) SetActivityStreamsUrl(i vocab.ActivityStreamsUr
 // SetGoToSocialApprovedBy sets the "approvedBy" property.
 func (this *ActivityStreamsLike) SetGoToSocialApprovedBy(i vocab.GoToSocialApprovedByProperty) {
 	this.GoToSocialApprovedBy = i
+}
+
+// SetGoToSocialLikeAuthorization sets the "likeAuthorization" property.
+func (this *ActivityStreamsLike) SetGoToSocialLikeAuthorization(i vocab.GoToSocialLikeAuthorizationProperty) {
+	this.GoToSocialLikeAuthorization = i
 }
 
 // SetJSONLDId sets the "id" property.
