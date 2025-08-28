@@ -2228,7 +2228,9 @@ func (c *Converter) InteractionReqToASAccept(
 		}
 
 		// URI of the interaction request.
-		ap.SetJSONLDIdStr(ir, req.InteractionRequestURI)
+		if err := ap.SetJSONLDIdStr(ir, req.InteractionRequestURI); err != nil {
+			return nil, err
+		}
 
 		// URI of the interacting actor.
 		ap.AppendActorIRIs(ir, toIRI)
@@ -2446,7 +2448,9 @@ func (c *Converter) InteractionReqToASAuthorization(
 	}
 
 	// Set the ID.
-	ap.SetJSONLDIdStr(auth, req.AuthorizationURI)
+	if err := ap.SetJSONLDIdStr(auth, req.AuthorizationURI); err != nil {
+		return nil, err
+	}
 
 	// Set attributed to actor URI.
 	attributedToURI, err := url.Parse(req.TargetAccount.URI)

@@ -329,7 +329,7 @@ type Acceptable interface {
 	WithResult
 }
 
-// DEPRECATED: replaced by Authorizable.
+// Deprecated: replaced by Authorizable.
 // Approvable represents the minimum activitypub
 // interface for a LikeApproval, ReplyApproval, or AnnounceApproval.
 type Approvable interface {

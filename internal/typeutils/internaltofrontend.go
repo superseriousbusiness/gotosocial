@@ -2928,14 +2928,14 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	}
 
 	return &apimodel.InteractionRequest{
-		ID:          req.ID,
-		Type:        req.InteractionType.String(),
-		CreatedAt:   util.FormatISO8601(createdAt),
-		Account:     interactingAcct,
-		Status:      interactedStatus,
-		Reply:       reply,
-		AcceptedAt:  acceptedAt,
-		RejectedAt:  rejectedAt,
+		ID:         req.ID,
+		Type:       req.InteractionType.String(),
+		CreatedAt:  util.FormatISO8601(createdAt),
+		Account:    interactingAcct,
+		Status:     interactedStatus,
+		Reply:      reply,
+		AcceptedAt: acceptedAt,
+		RejectedAt: rejectedAt,
 	}, nil
 }
 

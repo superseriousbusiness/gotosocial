@@ -112,7 +112,7 @@ func init() {
 						InteractingAccountID:  oldIntReq.InteractingAccountID,
 						InteractionRequestURI: "", // This wasn't supported yet by old int reqs.
 						InteractionURI:        oldIntReq.InteractionURI,
-						InteractionType:       int16(oldIntReq.InteractionType),
+						InteractionType:       int16(oldIntReq.InteractionType), // #nosec G115
 						AcceptedAt:            oldIntReq.AcceptedAt,
 						RejectedAt:            oldIntReq.RejectedAt,
 						ResponseURI:           oldIntReq.URI,
