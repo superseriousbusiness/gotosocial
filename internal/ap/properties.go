@@ -812,6 +812,50 @@ func SetBlurhash(with WithBlurhash, mediaType string) {
 	bProp.Set(mediaType)
 }
 
+// AppendSensitive appends the given sensitive
+// boolean to the `sensitive` property of 'with'.
+func AppendSensitive(with WithSensitive, sensitive bool) {
+	sProp := with.GetActivityStreamsSensitive()
+	if sProp == nil {
+		sProp = streams.NewActivityStreamsSensitiveProperty()
+		with.SetActivityStreamsSensitive(sProp)
+	}
+	sProp.AppendXMLSchemaBoolean(sensitive)
+}
+
+// AppendContent appends the given content
+// string to the `content` property of 'with'.
+func AppendContent(with WithContent, content string) {
+	cProp := with.GetActivityStreamsContent()
+	if cProp == nil {
+		cProp = streams.NewActivityStreamsContentProperty()
+		with.SetActivityStreamsContent(cProp)
+	}
+	cProp.AppendXMLSchemaString(content)
+}
+
+// AppendContentMap appends the given content
+// language map to the `content` property of 'with'.
+func AppendContentMap(with WithContent, contentMap map[string]string) {
+	cProp := with.GetActivityStreamsContent()
+	if cProp == nil {
+		cProp = streams.NewActivityStreamsContentProperty()
+		with.SetActivityStreamsContent(cProp)
+	}
+	cProp.AppendRDFLangString(contentMap)
+}
+
+// SetReplies sets the given replies collection
+// to the `replies` property of 'with'.
+func SetReplies(with WithReplies, replies vocab.ActivityStreamsCollection) {
+	rProp := with.GetActivityStreamsReplies()
+	if rProp == nil {
+		rProp = streams.NewActivityStreamsRepliesProperty()
+		with.SetActivityStreamsReplies(rProp)
+	}
+	rProp.SetActivityStreamsCollection(replies)
+}
+
 // extractIRIs extracts just the AP IRIs from an iterable
 // property that may contain types (with IRIs) or just IRIs.
 //

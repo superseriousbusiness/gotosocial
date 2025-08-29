@@ -33,6 +33,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -489,8 +490,9 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		return nil, gtserror.Newf("error populating status: %w", err)
 	}
 
-	var status ap.Statusable
-
+	// TODO: in future, allow longer
+	// posts to be federated as Articles.
+	var statusable ap.Statusable
 	if s.Poll != nil {
 		// If status has poll available, we convert
 		// it as an AS Question (similar to a Note).
@@ -502,80 +504,56 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		}
 
 		// Set poll as status.
-		status = poll
+		statusable = poll
 	} else {
 		// Else we converter it as an AS Note.
-		status = streams.NewActivityStreamsNote()
+		statusable = streams.NewActivityStreamsNote()
 	}
 
-	// id
-	statusURI, err := url.Parse(s.URI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", s.URI, err)
+	// `id` property.
+	if err := ap.SetJSONLDIdStr(statusable, s.URI); err != nil {
+		return nil, gtserror.Newf("error setting id: %w", err)
 	}
-	statusIDProp := streams.NewJSONLDIdProperty()
-	statusIDProp.SetIRI(statusURI)
-	status.SetJSONLDId(statusIDProp)
 
-	// type
-	// will be set automatically by go-fed
+	// `summary` property.
+	ap.AppendSummary(statusable, s.ContentWarning)
 
-	// summary aka cw
-	statusSummaryProp := streams.NewActivityStreamsSummaryProperty()
-	statusSummaryProp.AppendXMLSchemaString(s.ContentWarning)
-	status.SetActivityStreamsSummary(statusSummaryProp)
-
-	// inReplyTo
+	// `inReplyTo` property.
 	if s.InReplyToURI != "" {
 		rURI, err := url.Parse(s.InReplyToURI)
 		if err != nil {
-			return nil, gtserror.Newf("error parsing url %s: %w", s.InReplyToURI, err)
+			return nil, gtserror.Newf("error parsing inReplyTo: %w", err)
 		}
-
-		inReplyToProp := streams.NewActivityStreamsInReplyToProperty()
-		inReplyToProp.AppendIRI(rURI)
-		status.SetActivityStreamsInReplyTo(inReplyToProp)
+		ap.AppendInReplyTo(statusable, rURI)
 	}
 
-	// Set created / updated at properties.
-	ap.SetPublished(status, s.CreatedAt)
+	// `published` and `updatedAt` properties.
+	ap.SetPublished(statusable, s.CreatedAt)
 	if at := s.EditedAt; !at.IsZero() {
-		ap.SetUpdated(status, at)
+		ap.SetUpdated(statusable, at)
 	}
 
-	// url
+	// Web-accessible `url` property.
 	if s.URL != "" {
 		sURL, err := url.Parse(s.URL)
 		if err != nil {
-			return nil, gtserror.Newf("error parsing url %s: %w", s.URL, err)
+			return nil, gtserror.Newf("error parsing url: %w", err)
 		}
-
-		urlProp := streams.NewActivityStreamsUrlProperty()
-		urlProp.AppendIRI(sURL)
-		status.SetActivityStreamsUrl(urlProp)
+		ap.AppendURL(statusable, sURL)
 	}
 
-	// attributedTo
-	authorAccountURI, err := url.Parse(s.Account.URI)
+	// `attributedTo` property.
+	acctURI, err := url.Parse(s.Account.URI)
 	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", s.Account.URI, err)
+		return nil, gtserror.Newf("error parsing account uri: %w", err)
 	}
-	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
-	attributedToProp.AppendIRI(authorAccountURI)
-	status.SetActivityStreamsAttributedTo(attributedToProp)
+	ap.AppendAttributedTo(statusable, acctURI)
 
-	// tags
+	// Start building out `tag` property.
 	tagProp := streams.NewActivityStreamsTagProperty()
 
-	// tag -- mentions
-	mentions := s.Mentions
-	if len(s.MentionIDs) != len(mentions) {
-		mentions, err = c.state.DB.GetMentions(ctx, s.MentionIDs)
-		if err != nil {
-			return nil, gtserror.Newf("error getting mentions: %w", err)
-		}
-	}
-	for _, m := range mentions {
+	// `tag`: mentions
+	for _, m := range s.Mentions {
 		asMention, err := c.MentionToAS(ctx, m)
 		if err != nil {
 			return nil, gtserror.Newf("error converting mention to AS mention: %w", err)
@@ -583,136 +561,109 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		tagProp.AppendActivityStreamsMention(asMention)
 	}
 
-	// tag -- emojis
-	emojis := s.Emojis
-	if len(s.EmojiIDs) != len(emojis) {
-		emojis, err = c.state.DB.GetEmojisByIDs(ctx, s.EmojiIDs)
-		if err != nil {
-			return nil, gtserror.Newf("error getting emojis from database: %w", err)
-		}
-	}
-	for _, emoji := range emojis {
-		asEmoji, err := c.EmojiToAS(ctx, emoji)
+	// `tag`: emojis
+	for _, e := range s.Emojis {
+		asEmoji, err := c.EmojiToAS(ctx, e)
 		if err != nil {
 			return nil, gtserror.Newf("error converting emoji to AS emoji: %w", err)
 		}
 		tagProp.AppendTootEmoji(asEmoji)
 	}
 
-	// tag -- hashtags
-	hashtags := s.Tags
-	if len(s.TagIDs) != len(hashtags) {
-		hashtags, err = c.state.DB.GetTags(ctx, s.TagIDs)
-		if err != nil {
-			return nil, gtserror.Newf("error getting tags: %w", err)
-		}
-	}
-	for _, ht := range hashtags {
-		asHashtag, err := c.TagToAS(ctx, ht)
+	// `tag`: hashtags
+	for _, t := range s.Tags {
+		asHashtag, err := c.TagToAS(ctx, t)
 		if err != nil {
 			return nil, gtserror.Newf("error converting tag to AS tag: %w", err)
 		}
 		tagProp.AppendTootHashtag(asHashtag)
 	}
-	status.SetActivityStreamsTag(tagProp)
 
-	// parse out some URIs we need here
-	authorFollowersURI, err := url.Parse(s.Account.FollowersURI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", s.Account.FollowersURI, err)
-	}
+	// Append built `tag` property.
+	statusable.SetActivityStreamsTag(tagProp)
 
-	publicURI := ap.PublicIRI()
+	// `to` and `cc` properties
+	// depend on visibility of post.
+	if s.Visibility == gtsmodel.VisibilityDirect {
+		// If DIRECT visibility, then only mentioned
+		// users should be added to TO, nothing in CC.
+		for _, m := range s.Mentions {
+			iri, err := url.Parse(m.TargetAccount.URI)
+			if err != nil {
+				return nil, gtserror.Newf("error parsing mention target: %w", err)
+			}
+			ap.AppendTo(statusable, iri)
+		}
 
-	// to and cc
-	toProp := streams.NewActivityStreamsToProperty()
-	ccProp := streams.NewActivityStreamsCcProperty()
-	switch s.Visibility {
-	case gtsmodel.VisibilityDirect:
-		// if DIRECT, then only mentioned users should be added to TO, and nothing to CC
-		for _, m := range mentions {
-			iri, err := url.Parse(m.TargetAccount.URI)
-			if err != nil {
-				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
-			}
-			toProp.AppendIRI(iri)
+	} else {
+		// For all other visibilities
+		// we need the followers URI.
+		followersURI, err := url.Parse(s.Account.FollowersURI)
+		if err != nil {
+			return nil, gtserror.Newf("error parsing followers url: %w", err)
 		}
-	case gtsmodel.VisibilityMutualsOnly:
-		// TODO
-	case gtsmodel.VisibilityFollowersOnly:
-		// if FOLLOWERS ONLY then we want to add followers to TO, and mentions to CC
-		toProp.AppendIRI(authorFollowersURI)
-		for _, m := range mentions {
-			iri, err := url.Parse(m.TargetAccount.URI)
-			if err != nil {
-				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
-			}
-			ccProp.AppendIRI(iri)
+
+		switch s.Visibility {
+		// If FOLLOWERS ONLY visibility, then
+		// we want to add followers to TO.
+		case gtsmodel.VisibilityFollowersOnly:
+			ap.AppendTo(statusable, followersURI)
+
+		// If UNLOCKED visibility, then
+		// we want to add followers to TO,
+		// with public in CC.
+		case gtsmodel.VisibilityUnlocked:
+			ap.AppendTo(statusable, followersURI)
+			ap.AppendCc(statusable, ap.PublicIRI())
+
+		// If PUBLIC visibility, then
+		// we want to add public to TO,
+		// with followers in CC.
+		case gtsmodel.VisibilityPublic:
+			ap.AppendTo(statusable, ap.PublicIRI())
+			ap.AppendCc(statusable, followersURI)
 		}
-	case gtsmodel.VisibilityUnlocked:
-		// if UNLOCKED, we want to add followers to TO, and public and mentions to CC
-		toProp.AppendIRI(authorFollowersURI)
-		ccProp.AppendIRI(publicURI)
-		for _, m := range mentions {
+
+		// In all non-direct cases,
+		// mentioned accounts go in Cc.
+		for _, m := range s.Mentions {
 			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
 				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
 			}
-			ccProp.AppendIRI(iri)
-		}
-	case gtsmodel.VisibilityPublic:
-		// if PUBLIC, we want to add public to TO, and followers and mentions to CC
-		toProp.AppendIRI(publicURI)
-		ccProp.AppendIRI(authorFollowersURI)
-		for _, m := range mentions {
-			iri, err := url.Parse(m.TargetAccount.URI)
-			if err != nil {
-				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
-			}
-			ccProp.AppendIRI(iri)
+			ap.AppendCc(statusable, iri)
 		}
 	}
-	status.SetActivityStreamsTo(toProp)
-	status.SetActivityStreamsCc(ccProp)
 
-	// conversation
-	// TODO
-
-	// content -- the actual post
-	// itself, plus the language
-	contentProp := streams.NewActivityStreamsContentProperty()
-	contentProp.AppendXMLSchemaString(s.Content)
-
+	// `content` and `contentMap` properties.
+	ap.AppendContent(statusable, s.Content)
 	if s.Language != "" {
-		contentProp.AppendRDFLangString(map[string]string{
-			s.Language: s.Content,
-		})
+		ap.AppendContentMap(
+			statusable,
+			map[string]string{
+				s.Language: s.Content,
+			},
+		)
 	}
 
-	status.SetActivityStreamsContent(contentProp)
-
-	// attachments
-	if err := c.attachAttachments(ctx, s, status); err != nil {
+	// `attachment` property.
+	if err := c.attachAttachments(ctx, s, statusable); err != nil {
 		return nil, gtserror.Newf("error attaching attachments: %w", err)
 	}
 
-	// replies
-	repliesCollection, err := c.StatusToASRepliesCollection(ctx, s, false)
+	// `replies` collection property.
+	// Todo: add `likes` and `shares` properties.
+	replies, err := c.StatusToASRepliesCollection(ctx, s, false)
 	if err != nil {
-		return nil, fmt.Errorf("error creating repliesCollection: %w", err)
+		return nil, gtserror.Newf("error creating repliesCollection: %w", err)
 	}
+	ap.SetReplies(statusable, replies)
 
-	repliesProp := streams.NewActivityStreamsRepliesProperty()
-	repliesProp.SetActivityStreamsCollection(repliesCollection)
-	status.SetActivityStreamsReplies(repliesProp)
+	// `sensitive` property.
+	ap.AppendSensitive(statusable, *s.Sensitive)
 
-	// sensitive
-	sensitiveProp := streams.NewActivityStreamsSensitiveProperty()
-	sensitiveProp.AppendXMLSchemaBoolean(*s.Sensitive)
-	status.SetActivityStreamsSensitive(sensitiveProp)
-
-	// interactionPolicy
-	if wip, ok := status.(ap.WithInteractionPolicy); ok {
+	// `interactionPolicy` property.
+	if wip, ok := statusable.(ap.WithInteractionPolicy); ok {
 		var p *gtsmodel.InteractionPolicy
 		if s.InteractionPolicy != nil {
 			// Use InteractionPolicy
@@ -725,7 +676,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		}
 		policy, err := c.InteractionPolicyToASInteractionPolicy(ctx, p, s)
 		if err != nil {
-			return nil, fmt.Errorf("error creating interactionPolicy: %w", err)
+			return nil, gtserror.Newf("error creating interactionPolicy: %w", err)
 		}
 
 		// Set interaction policy.
@@ -734,32 +685,63 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		wip.SetGoToSocialInteractionPolicy(policyProp)
 	}
 
-	// If the status is a reply that's been
-	// authorized, set the authorization URI here.
+	// If the status is a reply that's been approved,
+	// set `approvedBy` and/or `replyAuthorization` properties.
 	if s.ApprovedByURI != "" {
+		// ApprovedByURI can be either the URI of an
+		// Authorization (for requests made politely),
+		// or the URI of an Accept (for requests made
+		// impolitely). Either way, parse it once here.
 		authedByURI, err := url.Parse(s.ApprovedByURI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+			return nil, gtserror.Newf("error parsing approvedBy: %w", err)
 		}
 
-		// Dear Kim: I left a breaking bit of code here to remind me that we need
-		// to decide what to do here re: setting either the URI of the Authorization
-		// in replyAuthorization, and/or the URI of the Accept in approvedBy.
-		aaaa
+		// Check if we have an interaction request stored
+		// for this authorization URI. We will only find
+		// this if the request was made politely, as the
+		// authorization URI is only stored (and therefore
+		// searchable) for responses to polite requests.
+		intReq, err := c.state.DB.GetInteractionRequestByAuthorizationURI(
+			gtscontext.SetBarebones(ctx),
+			s.ApprovedByURI,
+		)
 
-		// Set approvedBy if possible.
-		// Deprecated: remove this in v0.21.0.
-		if wap, ok := status.(ap.WithApprovedBy); ok {
-			ap.SetApprovedBy(wap, authedByURI)
-		}
+		switch {
+		case err != nil && !errors.Is(err, db.ErrNoEntries):
+			// Proper db error.
+			return nil, gtserror.Newf("db error checking for int req: %w", err)
 
-		// Set the replyAuthorization property
-		if wra, ok := status.(ap.WithReplyAuthorization); ok {
-			ap.SetReplyAuthorization(wra, authedByURI)
+		case intReq != nil && intReq.IsPolite():
+			// We have an int req and it was made politely.
+			// Set the replyAuthorization property.
+			if wra, ok := statusable.(ap.WithReplyAuthorization); ok {
+				ap.SetReplyAuthorization(wra, authedByURI)
+			}
+
+			// Deprecated: set `approvedBy` property pointing
+			// to the Accept for back-compat with pre v0.20.0.
+			// Todo: remove this in v0.21.0.
+			if wap, ok := statusable.(ap.WithApprovedBy); ok {
+				responseURI, err := url.Parse(intReq.ResponseURI)
+				if err != nil {
+
+				}
+				ap.SetApprovedBy(wap, responseURI)
+			}
+
+		default:
+			// This was not a polite request, but it was approved.
+			// Deprecated: set `approvedBy` property pointing
+			// to the Accept for back-compat with pre v0.20.0.
+			// Todo: remove this in v0.21.0.
+			if wap, ok := statusable.(ap.WithApprovedBy); ok {
+				ap.SetApprovedBy(wap, authedByURI)
+			}
 		}
 	}
 
-	return status, nil
+	return statusable, nil
 }
 
 func (c *Converter) addPollToAS(poll *gtsmodel.Poll, dst ap.Pollable) error {
