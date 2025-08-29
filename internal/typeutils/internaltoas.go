@@ -685,59 +685,16 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		wip.SetGoToSocialInteractionPolicy(policyProp)
 	}
 
-	// If the status is a reply that's been approved,
-	// set `approvedBy` and/or `replyAuthorization` properties.
+	// `approvedBy` and/or `replyAuthorization` property.
 	if s.ApprovedByURI != "" {
-		// ApprovedByURI can be either the URI of an
-		// Authorization (for requests made politely),
-		// or the URI of an Accept (for requests made
-		// impolitely). Either way, parse it once here.
-		authedByURI, err := url.Parse(s.ApprovedByURI)
-		if err != nil {
-			return nil, gtserror.Newf("error parsing approvedBy: %w", err)
-		}
-
-		// Check if we have an interaction request stored
-		// for this authorization URI. We will only find
-		// this if the request was made politely, as the
-		// authorization URI is only stored (and therefore
-		// searchable) for responses to polite requests.
-		intReq, err := c.state.DB.GetInteractionRequestByAuthorizationURI(
-			gtscontext.SetBarebones(ctx),
+		err := c.appendASInteractionAuthorization(
+			ctx,
 			s.ApprovedByURI,
+			statusable,
 		)
 
-		switch {
-		case err != nil && !errors.Is(err, db.ErrNoEntries):
-			// Proper db error.
-			return nil, gtserror.Newf("db error checking for int req: %w", err)
-
-		case intReq != nil && intReq.IsPolite():
-			// We have an int req and it was made politely.
-			// Set the replyAuthorization property.
-			if wra, ok := statusable.(ap.WithReplyAuthorization); ok {
-				ap.SetReplyAuthorization(wra, authedByURI)
-			}
-
-			// Deprecated: set `approvedBy` property pointing
-			// to the Accept for back-compat with pre v0.20.0.
-			// Todo: remove this in v0.21.0.
-			if wap, ok := statusable.(ap.WithApprovedBy); ok {
-				responseURI, err := url.Parse(intReq.ResponseURI)
-				if err != nil {
-
-				}
-				ap.SetApprovedBy(wap, responseURI)
-			}
-
-		default:
-			// This was not a polite request, but it was approved.
-			// Deprecated: set `approvedBy` property pointing
-			// to the Accept for back-compat with pre v0.20.0.
-			// Todo: remove this in v0.21.0.
-			if wap, ok := statusable.(ap.WithApprovedBy); ok {
-				ap.SetApprovedBy(wap, authedByURI)
-			}
+		if err != nil {
+			return nil, gtserror.Newf("error setting reply authorization field(s): %w", err)
 		}
 	}
 
@@ -1216,167 +1173,132 @@ func (c *Converter) attachAttachments(
 // FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
 // We want to end up with something like this:
 //
-// {
-// "@context": "https://www.w3.org/ns/activitystreams",
-// "actor": "https://ondergrond.org/users/dumpsterqueer",
-// "id": "https://ondergrond.org/users/dumpsterqueer#likes/44584",
-// "object": "https://testingtesting123.xyz/users/gotosocial_test_account/statuses/771aea80-a33d-4d6d-8dfd-57d4d2bfcbd4",
-// "type": "Like"
-// }
+//	{
+//	  "@context": "https://www.w3.org/ns/activitystreams",
+//	  "actor": "https://ondergrond.org/users/dumpsterqueer",
+//	  "id": "https://ondergrond.org/users/dumpsterqueer#likes/44584",
+//	  "object": "https://testingtesting123.xyz/users/gotosocial_test_account/statuses/771aea80-a33d-4d6d-8dfd-57d4d2bfcbd4",
+//	  "type": "Like"
+//	}
 func (c *Converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
-	// check if targetStatus is already pinned to this fave, and fetch it if not
-	if f.Status == nil {
-		s, err := c.state.DB.GetStatusByID(ctx, f.StatusID)
-		if err != nil {
-			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
-		}
-		f.Status = s
+	// Ensure the status fave model is fully populated.
+	if err := c.state.DB.PopulateStatusFave(ctx, f); err != nil {
+		return nil, gtserror.Newf("error populating status fave: %w", err)
 	}
 
-	// check if the targetAccount is already pinned to this fave, and fetch it if not
-	if f.TargetAccount == nil {
-		a, err := c.state.DB.GetAccountByID(ctx, f.TargetAccountID)
-		if err != nil {
-			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
-		}
-		f.TargetAccount = a
-	}
-
-	// check if the faving account is already pinned to this fave, and fetch it if not
-	if f.Account == nil {
-		a, err := c.state.DB.GetAccountByID(ctx, f.AccountID)
-		if err != nil {
-			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
-		}
-		f.Account = a
-	}
-
-	// create the like
+	// Start building the Like.
 	like := streams.NewActivityStreamsLike()
 
-	// set the actor property to the fave-ing account's URI
-	actorProp := streams.NewActivityStreamsActorProperty()
+	// `id` property.
+	if err := ap.SetJSONLDIdStr(like, f.URI); err != nil {
+		return nil, gtserror.Newf("error setting id: %w", err)
+	}
+
+	// `actor` property is the faving account URI.
 	actorIRI, err := url.Parse(f.Account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.Account.URI, err)
+		return nil, gtserror.Newf("error parsing actor uri: %w", err)
 	}
-	actorProp.AppendIRI(actorIRI)
-	like.SetActivityStreamsActor(actorProp)
+	ap.AppendActorIRIs(like, actorIRI)
 
-	// set the ID property to the fave's URI
-	idProp := streams.NewJSONLDIdProperty()
-	idIRI, err := url.Parse(f.URI)
+	// `object` property is the target status URI.
+	targetStatusIRI, err := url.Parse(f.Status.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.URI, err)
+		return nil, gtserror.Newf("error parsing status uri: %w", err)
 	}
-	idProp.Set(idIRI)
-	like.SetJSONLDId(idProp)
+	ap.AppendObjectIRIs(like, targetStatusIRI)
 
-	// set the object property to the target status's URI
-	objectProp := streams.NewActivityStreamsObjectProperty()
-	statusIRI, err := url.Parse(f.Status.URI)
-	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.Status.URI, err)
-	}
-	objectProp.AppendIRI(statusIRI)
-	like.SetActivityStreamsObject(objectProp)
-
-	// set the TO property to the target account's IRI
-	toProp := streams.NewActivityStreamsToProperty()
+	// `to` is the owner of the target status.
 	toIRI, err := url.Parse(f.TargetAccount.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.TargetAccount.URI, err)
+		return nil, gtserror.Newf("error parsing account uri: %w", err)
 	}
-	toProp.AppendIRI(toIRI)
-	like.SetActivityStreamsTo(toProp)
+	ap.AppendTo(like, toIRI)
 
 	// Parse + set authorization.
 	if f.ApprovedByURI != "" {
-		approvedBy, err := url.Parse(f.ApprovedByURI)
+		err := c.appendASInteractionAuthorization(
+			ctx,
+			f.ApprovedByURI,
+			like,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+			return nil, gtserror.Newf("error setting like authorization field(s): %w", err)
 		}
-		ap.SetApprovedBy(like, approvedBy)
 	}
 
 	return like, nil
 }
 
-// BoostToAS converts a gts model boost into an activityStreams ANNOUNCE, suitable for federation
-func (c *Converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
-	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
-	if boostWrapperStatus.BoostOf == nil {
-		b, err := c.state.DB.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
-		if err != nil {
-			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
-		}
-		boostWrapperStatus.BoostOf = b
+// BoostToAS converts a *gtsmodel.Status boost wrapper into
+// an ActivityStreams Announce activity, suitable for federation.
+//
+// Result will look something like:
+//	{
+//	  "@context": "https://www.w3.org/ns/activitystreams",
+//	  "actor": "http://localhost:8080/users/the_mighty_zork",
+//	  "cc": "http://localhost:8080/users/the_mighty_zork",
+//	  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER",
+//	  "object": "http://localhost:8080/users/the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
+//	  "published": "2022-06-09T13:12:00Z",
+//	  "to": "http://localhost:8080/users/the_mighty_zork/followers",
+//	  "type": "Announce"
+//	}
+func (c *Converter) BoostToAS(ctx context.Context, bw *gtsmodel.Status) (vocab.ActivityStreamsAnnounce, error) {
+	// Ensure the status model is fully populated.
+	if err := c.state.DB.PopulateStatus(ctx, bw); err != nil {
+		return nil, gtserror.Newf("error populating boost wrapper status: %w", err)
 	}
 
-	// create the announce
+	// Start building the Announce.
 	announce := streams.NewActivityStreamsAnnounce()
 
-	// set the actor
-	boosterURI, err := url.Parse(boostingAccount.URI)
-	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostingAccount.URI, err)
+	// `id` property.
+	if err := ap.SetJSONLDIdStr(announce, bw.URI); err != nil {
+		return nil, gtserror.Newf("error setting id: %w", err)
 	}
-	actorProp := streams.NewActivityStreamsActorProperty()
-	actorProp.AppendIRI(boosterURI)
-	announce.SetActivityStreamsActor(actorProp)
 
-	// set the ID
-	boostIDURI, err := url.Parse(boostWrapperStatus.URI)
+	// `actor` property.
+	actorURI, err := url.Parse(bw.AccountURI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.URI, err)
+		return nil, fmt.Errorf("error parsing actor uri: %s", err)
 	}
-	idProp := streams.NewJSONLDIdProperty()
-	idProp.SetIRI(boostIDURI)
-	announce.SetJSONLDId(idProp)
+	ap.AppendActorIRIs(announce, actorURI)
 
-	// set the object
-	boostedStatusURI, err := url.Parse(boostWrapperStatus.BoostOf.URI)
+	// `object` property is the target status URI.
+	boostTargetURI, err := url.Parse(bw.BoostOf.URI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.BoostOf.URI, err)
+		return nil, fmt.Errorf("error parsing target status uri: %s", err)
 	}
-	objectProp := streams.NewActivityStreamsObjectProperty()
-	objectProp.AppendIRI(boostedStatusURI)
-	announce.SetActivityStreamsObject(objectProp)
+	ap.AppendObjectIRIs(announce, boostTargetURI)
 
-	// set the published time
-	publishedProp := streams.NewActivityStreamsPublishedProperty()
-	publishedProp.Set(boostWrapperStatus.CreatedAt)
-	announce.SetActivityStreamsPublished(publishedProp)
+	// `published` property is the time of the boost.
+	ap.SetPublished(announce, bw.CreatedAt)
 
-	// set the to
-	followersURI, err := url.Parse(boostingAccount.FollowersURI)
+	// `to` property.
+	followersURI, err := url.Parse(bw.Account.FollowersURI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostingAccount.FollowersURI, err)
+		return nil, fmt.Errorf("error parsing followers URI: %s", err)
 	}
-	toProp := streams.NewActivityStreamsToProperty()
-	toProp.AppendIRI(followersURI)
-	announce.SetActivityStreamsTo(toProp)
+	ap.AppendTo(announce, followersURI)
 
-	// set the cc
-	ccProp := streams.NewActivityStreamsCcProperty()
-	boostedAccountURI, err := url.Parse(boostedAccount.URI)
+	// `cc` property.
+	boostedAccountURI, err := url.Parse(bw.BoostOfAccount.URI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostedAccount.URI, err)
+		return nil, fmt.Errorf("error parsing target account URI: %s", err)
 	}
-	ccProp.AppendIRI(boostedAccountURI)
+	ap.AppendCc(announce, boostedAccountURI)
 
-	// maybe CC it to public depending on the boosted status visibility
-	switch boostWrapperStatus.BoostOf.Visibility {
+	// `cc` should include public if
+	// this is a public or unlocked boost.
+	switch bw.BoostOf.Visibility {
 	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
-		publicURI := ap.PublicIRI()
-		ccProp.AppendIRI(publicURI)
+		ap.AppendCc(announce, ap.PublicIRI())
 	}
-
-	announce.SetActivityStreamsCc(ccProp)
 
 	// Parse + set authorization.
-	if boostWrapperStatus.ApprovedByURI != "" {
-		approvedBy, err := url.Parse(boostWrapperStatus.ApprovedByURI)
+	if bw.ApprovedByURI != "" {
+		approvedBy, err := url.Parse(bw.ApprovedByURI)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
 		}
@@ -2463,4 +2385,78 @@ func (c *Converter) InteractionReqToASAuthorization(
 	ap.AppendInteractionTarget(auth, intTargetURI)
 
 	return auth, nil
+}
+
+// appendASInteractionAuthorization is a utility function
+// that appends `approvedBy` and/or `likeAuthorization`,
+// `replyAuthorization`, or `announceAuthorization` to the given type.
+func (c *Converter) appendASInteractionAuthorization(
+	ctx context.Context,
+	approvedByURI string,
+	t vocab.Type,
+) error {
+	// ApprovedByURI can be either the URI of an
+	// Authorization (for requests made politely),
+	// or the URI of an Accept (for requests made
+	// impolitely). Either way, parse it once here.
+	authedByURI, err := url.Parse(approvedByURI)
+	if err != nil {
+		return gtserror.Newf("error parsing approvedBy: %w", err)
+	}
+
+	// Check if we have an interaction request stored
+	// for this authorization URI. We will only find
+	// this if the request was made politely, as the
+	// authorization URI is only stored (and therefore
+	// searchable) for responses to polite requests.
+	intReq, err := c.state.DB.GetInteractionRequestByAuthorizationURI(
+		gtscontext.SetBarebones(ctx),
+		approvedByURI,
+	)
+
+	switch {
+	case err != nil && !errors.Is(err, db.ErrNoEntries):
+		// Proper db error.
+		return gtserror.Newf("db error checking for int req: %w", err)
+
+	case intReq != nil && intReq.IsPolite():
+		// We have an int req and it was made politely.
+		// Set the appropriate authorization property.
+		switch intReq.InteractionType {
+		case gtsmodel.InteractionLike:
+			if wla, ok := t.(ap.WithLikeAuthorization); ok {
+				ap.SetLikeAuthorization(wla, authedByURI)
+			}
+		case gtsmodel.InteractionReply:
+			if wra, ok := t.(ap.WithReplyAuthorization); ok {
+				ap.SetReplyAuthorization(wra, authedByURI)
+			}
+		case gtsmodel.InteractionAnnounce:
+			if waa, ok := t.(ap.WithAnnounceAuthorization); ok {
+				ap.SetAnnounceAuthorization(waa, authedByURI)
+			}
+		}
+
+		// Deprecated: set `approvedBy` property pointing
+		// to the Accept for back-compat with pre v0.20.0.
+		// Todo: remove this in v0.21.0.
+		if wap, ok := t.(ap.WithApprovedBy); ok {
+			responseURI, err := url.Parse(intReq.ResponseURI)
+			if err != nil {
+				return gtserror.Newf("error parsing responseURI: %w", err)
+			}
+			ap.SetApprovedBy(wap, responseURI)
+		}
+
+	default:
+		// This was not a polite request, but it was approved.
+		// Deprecated: set `approvedBy` property pointing
+		// to the Accept for back-compat with pre v0.20.0.
+		// Todo: remove this in v0.21.0.
+		if wap, ok := t.(ap.WithApprovedBy); ok {
+			ap.SetApprovedBy(wap, authedByURI)
+		}
+	}
+
+	return nil
 }

@@ -1119,7 +1119,7 @@ func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
 	boostWrapperStatus.URI = "http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER"
 	boostWrapperStatus.CreatedAt = testrig.TimeMustParse("2022-06-09T13:12:00Z")
 
-	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus, testAccount, testAccount)
+	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus)
 	suite.NoError(err)
 
 	ser, err := ap.Serialize(asBoost)

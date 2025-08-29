@@ -491,12 +491,7 @@ func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) err
 	}
 
 	// Recreate the ActivityStreams Announce.
-	asAnnounce, err := f.converter.BoostToAS(
-		ctx,
-		boost,
-		boost.Account,
-		boost.BoostOfAccount,
-	)
+	asAnnounce, err := f.converter.BoostToAS(ctx, boost)
 	if err != nil {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
@@ -767,12 +762,7 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	}
 
 	// Create the ActivityStreams Announce.
-	announce, err := f.converter.BoostToAS(
-		ctx,
-		boost,
-		boost.Account,
-		boost.BoostOfAccount,
-	)
+	announce, err := f.converter.BoostToAS(ctx, boost)
 	if err != nil {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
