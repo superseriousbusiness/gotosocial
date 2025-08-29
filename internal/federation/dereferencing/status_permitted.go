@@ -70,7 +70,7 @@ func (d *Dereferencer) isPermittedStatus(
 	switch {
 	case status.Account.IsSuspended():
 		// we shouldn't reach this point, log to poke devs to investigate.
-		log.Warnf(ctx, "status author suspended: %s", status.AccountURI)
+		log.Warnf(ctx, "should not have reached here, author suspended: %s", status.AccountURI)
 		permitted = false
 
 	case status.InReplyToURI != "":
@@ -111,7 +111,8 @@ func (d *Dereferencer) isPermittedStatus(
 	return
 }
 
-// isPermittedReply ...
+// isPermittedReply checks whether the given status
+// is a permitted reply to its referenced inReplyTo.
 func (d *Dereferencer) isPermittedReply(
 	ctx context.Context,
 	requestUser string,
@@ -119,20 +120,21 @@ func (d *Dereferencer) isPermittedReply(
 ) (bool, error) {
 
 	var (
-		replyURI      = reply.URI           // Definitely set.
-		inReplyToURI  = reply.InReplyToURI  // Definitely set.
-		inReplyTo     = reply.InReplyTo     // Might not be set.
+		replyURI = reply.URI // Definitely set.
+
+		parentURI = reply.InReplyToURI // Definitely set.
+		parent    = reply.InReplyTo    // Might not be set.
+
 		approvedByURI = reply.ApprovedByURI // Might not be set.
 	)
 
 	// Check if we have a stored interaction request for parent status.
 	parentReq, err := d.state.DB.GetInteractionRequestByInteractionURI(
 		gtscontext.SetBarebones(ctx),
-		inReplyToURI,
+		parentURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting interaction request: %w", err)
-		return false, err
+		return false, gtserror.Newf("db error getting interaction request: %w", err)
 	}
 
 	// Check if we have a stored interaction request for this reply.
@@ -141,8 +143,7 @@ func (d *Dereferencer) isPermittedReply(
 		replyURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting interaction request: %w", err)
-		return false, err
+		return false, gtserror.Newf("db error getting interaction request: %w", err)
 	}
 
 	parentRejected := (parentReq != nil && parentReq.IsRejected())
@@ -176,8 +177,7 @@ func (d *Dereferencer) isPermittedReply(
 	// it was rejected previously and now claims
 	// to be approved. Continue permission checks.
 
-	if inReplyTo == nil {
-
+	if parent == nil {
 		// If we didn't have the replied-to status
 		// in our database (yet), we can't check
 		// right now if this reply is permitted.
@@ -191,24 +191,23 @@ func (d *Dereferencer) isPermittedReply(
 	}
 
 	// We have the replied-to status; ensure it's fully populated.
-	if err := d.state.DB.PopulateStatus(ctx, inReplyTo); err != nil {
+	if err := d.state.DB.PopulateStatus(ctx, parent); err != nil {
 		return false, gtserror.Newf("error populating status %s: %w", reply.ID, err)
 	}
 
-	// Make sure replied-to status is not
-	// a boost wrapper, and make sure it's
-	// actually visible to the requester.
-	if inReplyTo.BoostOfID != "" {
-		// We do not permit replies
-		// to boost wrapper statuses.
-		log.Info(ctx, "rejecting reply to boost wrapper status")
+	// Boost wrapper statuses
+	// cannot receive replies.
+	if parent.BoostOfID != "" {
+		log.Warn(ctx, "received reply to boost wrapper status: %s", parent.URI)
 		return false, nil
 	}
 
-	if inReplyTo.IsLocal() {
+	// If parent is a local status
+	// check visibility to replyer.
+	if parent.IsLocal() {
 		visible, err := d.visFilter.StatusVisible(ctx,
 			reply.Account,
-			inReplyTo,
+			parent,
 		)
 		if err != nil {
 			err := gtserror.Newf("error checking inReplyTo visibility: %w", err)
@@ -232,7 +231,7 @@ func (d *Dereferencer) isPermittedReply(
 			gtsmodel.InteractionReply,
 			requestUser,
 			reply,
-			inReplyTo,
+			parent,
 			thisReq,
 			approvedByURI,
 		)
@@ -243,7 +242,7 @@ func (d *Dereferencer) isPermittedReply(
 	// to see what we need to do with it.
 	replyable, err := d.intFilter.StatusReplyable(ctx,
 		reply.Account,
-		inReplyTo,
+		parent,
 	)
 	if err != nil {
 		err := gtserror.Newf("error checking status replyability: %w", err)
@@ -279,7 +278,7 @@ func (d *Dereferencer) isPermittedReply(
 	// pending approval, though we know at this point
 	// that the status did not include an approvedBy URI.
 
-	if !inReplyTo.IsLocal() {
+	if !parent.IsLocal() {
 		// If the replied-to status is remote, we should just
 		// drop this reply at this point, as we can't verify
 		// that the remote replied-to account approves it, and

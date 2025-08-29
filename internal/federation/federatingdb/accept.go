@@ -445,8 +445,7 @@ func (f *DB) acceptStoredStatus(
 	// Mark the status as approved by this URI.
 	status.PendingApproval = util.Ptr(false)
 	status.ApprovedByURI = approvedByURI.String()
-	if err := f.state.DB.UpdateStatus(
-		ctx,
+	if err := f.state.DB.UpdateStatus(ctx,
 		status,
 		"pending_approval",
 		"approved_by_uri",
@@ -543,8 +542,7 @@ func (f *DB) acceptLikeIRI(
 	// Mark the fave as approved by this URI.
 	fave.PendingApproval = util.Ptr(false)
 	fave.ApprovedByURI = approvedByURI.String()
-	if err := f.state.DB.UpdateStatusFave(
-		ctx,
+	if err := f.state.DB.UpdateStatusFave(ctx,
 		fave,
 		"pending_approval",
 		"approved_by_uri",
@@ -623,11 +621,7 @@ func approvedByURI(
 
 	if resultIRI.Host != acceptID.Host {
 		// What the boobs is this?
-		err := fmt.Errorf(
-			"host of result %s differed from host of Accept %s",
-			resultIRI, accept,
-		)
-		return nil, err
+		return nil, fmt.Errorf("host of result %s differed from host of Accept %s", resultIRI, accept)
 	}
 
 	// Use the result IRI we've been
