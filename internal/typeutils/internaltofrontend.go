@@ -102,9 +102,9 @@ func (c *Converter) UserToAPIUser(ctx context.Context, u *gtsmodel.User) *apimod
 	return user
 }
 
-// AccountToAPIAccountSensitive takes a db model application as a param, and returns a populated apitype application, or an error
-// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
-// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
+// AccountToAPIAccountSensitive takes a db model account as a param, and returns a populated apitype account, or an error
+// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields
+// (such as user settings and follow requests count), so serve it only to an authorized user who should have permission to see it.
 func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// We can build this sensitive account model
 	// by first getting the public account, and
