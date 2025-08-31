@@ -146,6 +146,49 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 					return err
 				}
 
+			// Todo: ACCEPT INLINED LIKE REQUEST.
+			//
+			// Implement this when we start
+			// sending out polite LikeRequests.
+			
+			// ACCEPT INLINED REPLY REQUEST
+			case name == ap.ActivityReplyRequest:
+				replyReq, ok := asType.(vocab.GoToSocialReplyRequest)
+				if !ok {
+					const text = "malformed ReplyRequest as object of Accept"
+					return gtserror.NewErrorBadRequest(errors.New(text), text)
+				}
+
+				if err := f.acceptReplyRequest(
+					ctx,
+					acceptID,
+					accept,
+					replyReq,
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+
+			// ACCEPT INLINED ANNOUNCE REQUEST
+			case name == ap.ActivityAnnounceRequest:
+				announceReq, ok := asType.(vocab.GoToSocialAnnounceRequest)
+				if !ok {
+					const text = "malformed AnnounceRequest as object of Accept"
+					return gtserror.NewErrorBadRequest(errors.New(text), text)
+				}
+
+				if err := f.acceptAnnounceRequest(
+					ctx,
+					acceptID,
+					accept,
+					announceReq,
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+
 			// UNHANDLED
 			default:
 				log.Debugf(ctx, "unhandled object type: %s", name)
@@ -562,6 +605,90 @@ func (f *DB) acceptLikeIRI(
 	})
 
 	return nil
+}
+
+// acceptReplyRequest handles the Accept of a polite ReplyRequest,
+// ie., something that looks like this:
+//
+//	{
+//	  "@context": [
+//	    "https://www.w3.org/ns/activitystreams",
+//	    "https://gotosocial.org/ns"
+//	  ],
+//	  "type": "Accept",
+//	  "to": "https://example.com/users/bob",
+//	  "id": "https://example.com/users/alice/activities/1234",
+//	  "actor": "https://example.com/users/alice",
+//	  "object": {
+//	    "type": "ReplyRequest",
+//	    "id": "https://example.com/users/bob/interaction_requests/12345",
+//	    "actor": "https://example.com/users/bob",
+//	    "object": "https://example.com/users/alice/statuses/1",
+//	    "instrument": "https://example.org/users/bob/statuses/12345"
+//	  },
+//	  "result": "https://example.com/users/alice/authorizations/1"
+//	}
+func (f *DB) acceptReplyRequest(
+	ctx context.Context,
+	acceptID *url.URL,
+	accept vocab.ActivityStreamsAccept,
+	replyRequest vocab.GoToSocialReplyRequest,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on the interaction request URI.
+	replyRequestURI := ap.GetJSONLDId(replyRequest)
+	replyRequestURIStr := replyRequestURI.String()
+	unlock := f.state.FedLocks.Lock(replyRequestURIStr)
+	defer unlock()
+
+	// Ensure we have actor IRI on the ReplyRequest.
+	actors := ap.GetActorIRIs(replyRequest)
+	if len(actors) != 1 {
+		const text = "invalid or missing actor property on embedded ReplyRequest"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+	actor := actors[0]
+
+	// Ensure we have an object URI, which should
+	// point to the statusable being replied to.
+	objects := ap.GetObjectIRIs(replyRequest)
+	if len(objects) != 1 {
+		const text = "invalid or missing object property on embedded ReplyRequest"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+	objectURI := objects[0]
+
+	// Ensure we have instrument, which should be or
+	// point to the statusable that replies to the object.
+	instruments := ap.ExtractInstruments(replyRequest)
+	if len(instruments) != 1 {
+		const text = "invalid or missing instrument property on embedded ReplyRequest"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+	instrument := instruments[0]
+	
+	// We just need the URI for this, not the
+	// whole statusable, which we can either
+	// fetch from remote or get locally. 
+	var instrumentURI *url.URL
+	if instrument.IsIRI() {
+		instrumentURI = instrument.GetIRI()
+	} else {
+		instrumentURI = ap.GetJSONLDId(instrument.GetType())
+	}
+	instrumentURIStr := instrumentURI.String()
+
+	// Ensure we have result URI,
+	// which should point to a ReplyAuthorization.
+	results := ap.GetResultIRIs(accept)
+	if len(results) != 1 {
+		const text = "invalid or missing result property on embedded ReplyRequest"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+	resultURI := results[0]
+
+	// pick up from here, self
 }
 
 // approvedByURI extracts the appropriate *url.URL

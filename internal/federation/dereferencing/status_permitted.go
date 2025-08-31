@@ -259,7 +259,7 @@ func (d *Dereferencer) isPermittedReply(
 		return false, d.rejectedByPolicy(
 			ctx,
 			reply,
-			inReplyTo,
+			parent,
 			thisReq,
 		)
 	}

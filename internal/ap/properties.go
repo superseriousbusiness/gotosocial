@@ -238,6 +238,12 @@ func AppendInstrumentIRIs(with WithInstrument, instrument ...*url.URL) {
 	}, instrument...)
 }
 
+// GetResultIRIs returns the IRIs contained in the `result` property of 'with'.
+func GetResultIRIs(with WithResult) []*url.URL {
+	resultProp := with.GetActivityStreamsResult()
+	return extractIRIs(resultProp)
+}
+
 // AppendResultIRIs appends the given IRIs to the Result property of 'with'.
 func AppendResultIRIs(with WithResult, result ...*url.URL) {
 	appendIRIs(func() Property[vocab.ActivityStreamsResultPropertyIterator] {
