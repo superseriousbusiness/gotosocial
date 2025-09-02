@@ -151,7 +151,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 			// Implement this when we start
 			// sending out polite LikeRequests.
 			
-			// ACCEPT INLINED REPLY REQUEST
+			// ACCEPT POLITE INLINED REPLY REQUEST
 			case name == ap.ActivityReplyRequest:
 				replyReq, ok := asType.(vocab.GoToSocialReplyRequest)
 				if !ok {
@@ -170,7 +170,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 					return err
 				}
 
-			// ACCEPT INLINED ANNOUNCE REQUEST
+			// ACCEPT POLITE INLINED ANNOUNCE REQUEST
 			case name == ap.ActivityAnnounceRequest:
 				announceReq, ok := asType.(vocab.GoToSocialAnnounceRequest)
 				if !ok {
@@ -688,7 +688,7 @@ func (f *DB) acceptReplyRequest(
 	}
 	resultURI := results[0]
 
-	// pick up from here, self
+	
 }
 
 // approvedByURI extracts the appropriate *url.URL

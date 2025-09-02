@@ -158,11 +158,19 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ObjectNote:
 			return p.fediAPI.AcceptReply(ctx, fMsg)
 
+		// ACCEPT (pending) POLITE REPLY REQUEST
+		case ap.ActivityReplyRequest:
+			return p.fediAPI.AcceptPoliteReplyRequest(ctx, fMsg)
+
 		// ACCEPT (pending) ANNOUNCE
 		case ap.ActivityAnnounce:
 			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
 
-		// ACCEPT (remote) REPLY or ANNOUNCE
+		// ACCEPT (pending) POLITE ANNOUNCE REQUEST
+		case ap.ActivityAnnounceRequest:
+			return p.fediAPI.AcceptPoliteAnnounceRequest(ctx, fMsg)
+
+		// ACCEPT (remote) IMPOLITE REPLY or ANNOUNCE
 		case ap.ObjectUnknown:
 			return p.fediAPI.AcceptRemoteStatus(ctx, fMsg)
 		}
