@@ -1208,6 +1208,23 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	return nil
 }
 
+func (p *fediAPI) AcceptPoliteReplyRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	intReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	if intReq.ID == "" {
+		// This is a stub interaction request
+		// for an Accept of a remote reply.
+		//
+		// Pass to AccceptRemoteStatus function
+		// to do dereferencing + side effects. 
+		
+	}
+
+}
+
 func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	// See if we can accept a remote
 	// status we don't have stored yet.
@@ -1232,7 +1249,7 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 	// barebones status and insert it into the database,
 	// if indeed it's actually a status URI we can fetch.
 	//
-	// This will also check whether the given AcceptIRI
+	// This will also check whether the given approvedByURI
 	// actually grants permission for this status.
 	reply, _, err := p.federate.RefreshStatus(ctx,
 		fMsg.Receiving.Username,

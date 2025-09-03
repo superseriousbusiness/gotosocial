@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
@@ -159,7 +160,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 					return gtserror.NewErrorBadRequest(errors.New(text), text)
 				}
 
-				if err := f.acceptReplyRequest(
+				if err := f.acceptPoliteReplyRequest(
 					ctx,
 					acceptID,
 					accept,
@@ -178,7 +179,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 					return gtserror.NewErrorBadRequest(errors.New(text), text)
 				}
 
-				if err := f.acceptAnnounceRequest(
+				if err := f.acceptPoliteAnnounceRequest(
 					ctx,
 					acceptID,
 					accept,
@@ -607,7 +608,7 @@ func (f *DB) acceptLikeIRI(
 	return nil
 }
 
-// acceptReplyRequest handles the Accept of a polite ReplyRequest,
+// acceptPoliteReplyRequest handles the Accept of a polite ReplyRequest,
 // ie., something that looks like this:
 //
 //	{
@@ -628,7 +629,7 @@ func (f *DB) acceptLikeIRI(
 //	  },
 //	  "result": "https://example.com/users/alice/authorizations/1"
 //	}
-func (f *DB) acceptReplyRequest(
+func (f *DB) acceptPoliteReplyRequest(
 	ctx context.Context,
 	acceptID *url.URL,
 	accept vocab.ActivityStreamsAccept,
@@ -648,16 +649,17 @@ func (f *DB) acceptReplyRequest(
 		const text = "invalid or missing actor property on embedded ReplyRequest"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
-	actor := actors[0]
+	replyActor := actors[0]
 
 	// Ensure we have an object URI, which should
-	// point to the statusable being replied to.
+	// point to the statusable being replied to,
+	// ie., the parent status.
 	objects := ap.GetObjectIRIs(replyRequest)
 	if len(objects) != 1 {
 		const text = "invalid or missing object property on embedded ReplyRequest"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
-	objectURI := objects[0]
+	parentURI := objects[0]
 
 	// Ensure we have instrument, which should be or
 	// point to the statusable that replies to the object.
@@ -671,13 +673,17 @@ func (f *DB) acceptReplyRequest(
 	// We just need the URI for this, not the
 	// whole statusable, which we can either
 	// fetch from remote or get locally.
-	var instrumentURI *url.URL
+	var replyURI *url.URL
 	if instrument.IsIRI() {
-		instrumentURI = instrument.GetIRI()
+		replyURI = instrument.GetIRI()
 	} else {
-		instrumentURI = ap.GetJSONLDId(instrument.GetType())
+		t := instrument.GetType()
+		if t == nil {
+			const text = "nil instrument type on embedded ReplyRequest"
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+		replyURI = ap.GetJSONLDId(t)
 	}
-	instrumentURIStr := instrumentURI.String()
 
 	// Ensure we have result URI,
 	// which should point to a ReplyAuthorization.
@@ -686,8 +692,151 @@ func (f *DB) acceptReplyRequest(
 		const text = "invalid or missing result property on embedded ReplyRequest"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
-	resultURI := results[0]
+	authURI := results[0]
+	authURIStr := authURI.String()
 
+	// Check if we have an interaction request already for this reply.
+	intReq, err := f.state.DB.GetInteractionRequestByInteractionURI(ctx, replyURI.String())
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error getting interaction request: %w", err)
+	}
+
+	// If the interaction request, replied-to status,
+	// and replying status exist in the db, check against
+	// them to ensure this Accept is valid, and then
+	// update them to mark them as approved.
+	//
+	// If they're not present in the DB already we can
+	// fetch them async in the processor instead.
+	if intReq == nil {
+
+		// No request stored for this interaction.
+		// Means this is *probably* a remote reply
+		// to a remote status, but double check.
+		host := config.GetHost()
+		acctDomain := config.GetAccountDomain()
+		if replyURI.Host == host ||
+			replyURI.Host == acctDomain ||
+			replyRequestURI.Host == host ||
+			replyRequestURI.Host == acctDomain {
+			// Claims to be Accepting a reply of ours,
+			// but we don't have an interaction request
+			// stored. Most likely it's been deleted in
+			// the meantime, or this is a mistake. Bail.
+			return nil
+		}
+
+		// This must be an Accept of a remote ReplyRequest.
+		// Ensure relevance of this message by checking
+		// that receiver follows requester.
+		following, err := f.state.DB.IsFollowing(
+			ctx,
+			receivingAcct.ID,
+			requestingAcct.ID,
+		)
+		if err != nil {
+			err := gtserror.Newf("db error checking following: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		if !following {
+			// If we don't follow this person, and
+			// they're not Accepting something we know
+			// about, then we don't give a good goddamn.
+			return nil
+		}
+
+		// Stub out a barebones interaction request that
+		// the processor can use to do dereferencing.
+		intReq = &gtsmodel.InteractionRequest{
+			ResponseURI:      acceptID.String(),
+			AuthorizationURI: authURIStr,
+		}
+
+	} else {
+
+		// We already have a request
+		// stored for this interaction!
+
+		// If the request is already accepted,
+		// we don't need to do anything at all.
+		if intReq.IsAccepted() {
+			return nil
+		}
+
+		// Make sure the stored interaction request
+		// lines up with the Accept ReplyRequest.
+		if intReq.InteractionType != gtsmodel.InteractionReply {
+			const text = "Accept ReplyRequest targets interaction request that isn't of type Reply"
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
+		// The person doing the Accept must be the
+		// same as the target of the interaction request.
+		if intReq.TargetAccountID != requestingAcct.ID {
+			const text = "cannot Accept ReplyRequest on another actor's behalf"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// The stored interaction request and the inlined
+		// ReplyRequest must have the same target status.
+		if intReq.TargetStatus.URI != parentURI.String() {
+			const text = "Accept ReplyRequest mismatched object URI"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// The stored reply must be the same as
+		// the instrument of the ReplyRequest.
+		reply := intReq.Reply
+		if reply.URI != replyURI.String() {
+			const text = "Accept ReplyRequest mismatched instrument URI"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// The actor of the stored reply must be the
+		// same as the actor of the ReplyRequest.
+		if reply.AccountURI != replyActor.String() {
+			const text = "Accept ReplyRequest mismatched actor URI"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// This all looks good, we can update the
+		// interaction request and stored reply.
+		intReq.AcceptedAt = time.Now()
+		intReq.AuthorizationURI = authURIStr
+		intReq.ResponseURI = acceptID.String()
+		if err := f.state.DB.UpdateInteractionRequest(
+			ctx, intReq,
+			"accepted_at",
+			"authorization_uri",
+			"response_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating interaction request: %w", err)
+		}
+
+		reply.ApprovedByURI = authURIStr
+		reply.PendingApproval = util.Ptr(false)
+		if err := f.state.DB.UpdateStatus(
+			ctx, reply,
+			"approved_by_uri",
+			"pending_approval",
+		); err != nil {
+			return gtserror.Newf("db error updating status: %w", err)
+		}
+	}
+
+	// Handle any remaining side effects in the processor.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityReplyRequest,
+		APActivityType: ap.ActivityAccept,
+		APIRI:          authURI,
+		APObject:       replyURI,
+		GTSModel:       intReq, // May be stub.
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
+	return nil
 }
 
 // approvedByURI extracts the appropriate *url.URL
