@@ -173,7 +173,7 @@ func init() {
 
 				if !*oldStatus.Likeable {
 					// Only author can like.
-					policy.CanLike = gtsmodel.PolicyRules{
+					policy.CanLike = &gtsmodel.PolicyRules{
 						Always: gtsmodel.PolicyValues{
 							gtsmodel.PolicyValueAuthor,
 						},
@@ -183,7 +183,7 @@ func init() {
 
 				if !*oldStatus.Replyable {
 					// Only author + mentioned can Reply.
-					policy.CanReply = gtsmodel.PolicyRules{
+					policy.CanReply = &gtsmodel.PolicyRules{
 						Always: gtsmodel.PolicyValues{
 							gtsmodel.PolicyValueAuthor,
 							gtsmodel.PolicyValueMentioned,
@@ -194,7 +194,7 @@ func init() {
 
 				if !*oldStatus.Boostable {
 					// Only author can Announce.
-					policy.CanAnnounce = gtsmodel.PolicyRules{
+					policy.CanAnnounce = &gtsmodel.PolicyRules{
 						Always: gtsmodel.PolicyValues{
 							gtsmodel.PolicyValueAuthor,
 						},

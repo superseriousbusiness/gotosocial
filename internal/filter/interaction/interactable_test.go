@@ -18,6 +18,7 @@
 package interaction_test
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
@@ -54,7 +55,7 @@ func (suite *InteractionTestSuite) TestInteractable() {
 	// as the base post for these tests.
 	modelStatus := suite.testStatuses["local_account_1_status_1"]
 
-	ctx := suite.T().Context()
+	ctx := context.Background()
 	for i, test := range []struct {
 		policy    *gtsmodel.InteractionPolicy
 		account   *gtsmodel.Account
@@ -67,9 +68,9 @@ func (suite *InteractionTestSuite) TestInteractable() {
 			// it will fall back to the default then.
 			policy:    nil,
 			account:   suite.testAccounts["admin_account"],
-			likeable:  gtsmodel.PolicyPermissionAutomaticApproval,
-			replyable: gtsmodel.PolicyPermissionAutomaticApproval,
-			boostable: gtsmodel.PolicyPermissionAutomaticApproval,
+			likeable:  gtsmodel.PolicyPermissionPermitted,
+			replyable: gtsmodel.PolicyPermissionPermitted,
+			boostable: gtsmodel.PolicyPermissionPermitted,
 		},
 		{
 			// Nil canLike, everything else
@@ -78,18 +79,18 @@ func (suite *InteractionTestSuite) TestInteractable() {
 			policy: &gtsmodel.InteractionPolicy{
 				CanLike: nil,
 				CanReply: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
 				},
 				CanAnnounce: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
 				},
 			},
 			account:   suite.testAccounts["admin_account"],
-			likeable:  gtsmodel.PolicyPermissionAutomaticApproval,
+			likeable:  gtsmodel.PolicyPermissionPermitted,
 			replyable: gtsmodel.PolicyPermissionForbidden,
 			boostable: gtsmodel.PolicyPermissionForbidden,
 		},
@@ -98,60 +99,60 @@ func (suite *InteractionTestSuite) TestInteractable() {
 			// account checking, so all should be fine.
 			policy: &gtsmodel.InteractionPolicy{
 				CanLike: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
 				},
 				CanReply: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
 				},
 				CanAnnounce: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
 				},
 			},
 			account:   suite.testAccounts["local_account_1"],
-			likeable:  gtsmodel.PolicyPermissionAutomaticApproval,
-			replyable: gtsmodel.PolicyPermissionAutomaticApproval,
-			boostable: gtsmodel.PolicyPermissionAutomaticApproval,
+			likeable:  gtsmodel.PolicyPermissionPermitted,
+			replyable: gtsmodel.PolicyPermissionPermitted,
+			boostable: gtsmodel.PolicyPermissionPermitted,
 		},
 		{
 			// Followers can like automatically,
 			// everything else requires manual approval.
 			policy: &gtsmodel.InteractionPolicy{
 				CanLike: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 						gtsmodel.PolicyValueFollowers,
 					},
-					ManualApproval: gtsmodel.PolicyValues{
+					WithApproval: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValuePublic,
 					},
 				},
 				CanReply: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
-					ManualApproval: gtsmodel.PolicyValues{
+					WithApproval: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValuePublic,
 					},
 				},
 				CanAnnounce: &gtsmodel.PolicyRules{
-					AutomaticApproval: gtsmodel.PolicyValues{
+					Always: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValueAuthor,
 					},
-					ManualApproval: gtsmodel.PolicyValues{
+					WithApproval: gtsmodel.PolicyValues{
 						gtsmodel.PolicyValuePublic,
 					},
 				},
 			},
 			account:   suite.testAccounts["admin_account"],
-			likeable:  gtsmodel.PolicyPermissionAutomaticApproval,
-			replyable: gtsmodel.PolicyPermissionManualApproval,
-			boostable: gtsmodel.PolicyPermissionManualApproval,
+			likeable:  gtsmodel.PolicyPermissionPermitted,
+			replyable: gtsmodel.PolicyPermissionWithApproval,
+			boostable: gtsmodel.PolicyPermissionWithApproval,
 		},
 	} {
 		// Copy model status.
