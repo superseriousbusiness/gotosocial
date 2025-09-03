@@ -63,9 +63,9 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 		return nil
 	}
 
+	// Ensure an activity ID is given.
 	acceptID := ap.GetJSONLDId(accept)
 	if acceptID == nil {
-		// We need an ID.
 		const text = "Accept had no id property"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -109,7 +109,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 			case name == ap.ActivityLike:
 				objIRI := ap.GetJSONLDId(asType)
 				if objIRI == nil {
-					log.Debugf(ctx, "could not retrieve id of inlined Accept object %s", name)
+					log.Warnf(ctx, "missing id for inlined object %s: %s", name, acceptID)
 					continue
 				}
 
@@ -131,7 +131,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 			case name == ap.ActivityAnnounce || ap.IsStatusable(name):
 				objIRI := ap.GetJSONLDId(asType)
 				if objIRI == nil {
-					log.Debugf(ctx, "could not retrieve id of inlined Accept object %s", name)
+					log.Warnf(ctx, "missing id for inlined object %s: %s", name, acceptID)
 					continue
 				}
 
@@ -150,7 +150,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 			//
 			// Implement this when we start
 			// sending out polite LikeRequests.
-			
+
 			// ACCEPT POLITE INLINED REPLY REQUEST
 			case name == ap.ActivityReplyRequest:
 				replyReq, ok := asType.(vocab.GoToSocialReplyRequest)
@@ -191,7 +191,7 @@ func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) err
 
 			// UNHANDLED
 			default:
-				log.Debugf(ctx, "unhandled object type: %s", name)
+				log.Debugf(ctx, "unhandled object type %s: %s", name, acceptID)
 			}
 
 		} else if object.IsIRI() {
@@ -667,10 +667,10 @@ func (f *DB) acceptReplyRequest(
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 	instrument := instruments[0]
-	
+
 	// We just need the URI for this, not the
 	// whole statusable, which we can either
-	// fetch from remote or get locally. 
+	// fetch from remote or get locally.
 	var instrumentURI *url.URL
 	if instrument.IsIRI() {
 		instrumentURI = instrument.GetIRI()
@@ -688,7 +688,6 @@ func (f *DB) acceptReplyRequest(
 	}
 	resultURI := results[0]
 
-	
 }
 
 // approvedByURI extracts the appropriate *url.URL
