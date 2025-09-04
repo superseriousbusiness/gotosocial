@@ -53,7 +53,10 @@ func HeaderFilter(state *state.State) gin.HandlerFunc {
 }
 
 func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
-	_ = *state //nolint
+	if state == nil {
+		panic(gtserror.New("nil check elimination"))
+	}
+
 	// Allowlist mode: explicit block takes
 	// precedence over explicit allow.
 	//
@@ -93,7 +96,10 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 }
 
 func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
-	_ = *state //nolint
+	if state == nil {
+		panic(gtserror.New("nil check elimination"))
+	}
+
 	// Blocklist/default mode: explicit allow
 	// takes precedence over explicit block.
 	//
