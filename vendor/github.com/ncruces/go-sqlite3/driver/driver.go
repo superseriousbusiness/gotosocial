@@ -604,15 +604,6 @@ func (r resultRowsAffected) RowsAffected() (int64, error) {
 	return int64(r), nil
 }
 
-type rows struct {
-	ctx context.Context
-	*stmt
-	names []string
-	types []string
-	nulls []bool
-	scans []scantype
-}
-
 type scantype byte
 
 const (
@@ -648,10 +639,20 @@ func scanFromDecl(decl string) scantype {
 	return _ANY
 }
 
+type rows struct {
+	ctx context.Context
+	*stmt
+	names []string
+	types []string
+	nulls []bool
+	scans []scantype
+}
+
 var (
 	// Ensure these interfaces are implemented:
 	_ driver.RowsColumnTypeDatabaseTypeName = &rows{}
 	_ driver.RowsColumnTypeNullable         = &rows{}
+	// _ driver.RowsColumnScanner           = &rows{}
 )
 
 func (r *rows) Close() error {
@@ -740,7 +741,7 @@ func (r *rows) ColumnTypeScanType(index int) (typ reflect.Type) {
 		switch {
 		case scan == _TIME && val != _BLOB && val != _NULL:
 			t := r.Stmt.ColumnTime(index, r.tmRead)
-			useValType = t == time.Time{}
+			useValType = t.IsZero()
 		case scan == _BOOL && val == _INT:
 			i := r.Stmt.ColumnInt64(index)
 			useValType = i != 0 && i != 1
@@ -829,4 +830,24 @@ func (r *rows) Next(dest []driver.Value) error {
 		}
 	}
 	return nil
+}
+
+func (r *rows) ScanColumn(dest any, index int) error {
+	// notest // Go 1.26
+	var ptr *time.Time
+	switch d := dest.(type) {
+	case *time.Time:
+		ptr = d
+	case *sql.NullTime:
+		ptr = &d.Time
+	case *sql.Null[time.Time]:
+		ptr = &d.V
+	default:
+		return driver.ErrSkip
+	}
+	if t := r.Stmt.ColumnTime(index, r.tmRead); !t.IsZero() {
+		*ptr = t
+		return nil
+	}
+	return driver.ErrSkip
 }

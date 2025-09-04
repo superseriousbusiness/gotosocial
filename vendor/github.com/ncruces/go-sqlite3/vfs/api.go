@@ -36,9 +36,9 @@ type VFSFilename interface {
 //
 // https://sqlite.org/c3ref/io_methods.html
 type File interface {
-	Close() error
-	ReadAt(p []byte, off int64) (n int, err error)
-	WriteAt(p []byte, off int64) (n int, err error)
+	io.Closer
+	io.ReaderAt
+	io.WriterAt
 	Truncate(size int64) error
 	Sync(flags SyncFlag) error
 	Size() (int64, error)

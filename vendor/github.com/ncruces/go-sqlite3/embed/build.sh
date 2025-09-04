@@ -17,7 +17,8 @@ trap 'rm -f sqlite3.tmp' EXIT
 	-mmutable-globals -mnontrapping-fptoint \
 	-msimd128 -mbulk-memory -msign-ext \
 	-mreference-types -mmultivalue \
-	-fno-stack-protector -fno-stack-clash-protection \
+	-mno-extended-const \
+	-fno-stack-protector \
 	-Wl,--stack-first \
 	-Wl,--import-undefined \
 	-Wl,--initial-memory=327680 \

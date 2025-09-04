@@ -56,7 +56,7 @@ func (n *Filename) Journal() string {
 	return n.path("sqlite3_filename_journal")
 }
 
-// Journal returns the name of the corresponding WAL file.
+// WAL returns the name of the corresponding WAL file.
 //
 // https://sqlite.org/c3ref/filename_database.html
 func (n *Filename) WAL() string {
