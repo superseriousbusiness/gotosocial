@@ -479,9 +479,6 @@ func loadStatusTimeline(
 		// limit of total we're expected to return.
 		nextPg.Limit = returnLimit - len(apiStatuses)
 		if nextPg.Limit <= 0 {
-
-			// We reached the end! Set lo paging value.
-			lo = apiStatuses[len(apiStatuses)-1].ID
 			break
 		}
 
@@ -531,6 +528,12 @@ func loadStatusTimeline(
 			apiStatuses,
 			returnLimit,
 		)
+	}
+
+	if len(apiStatuses) > 0 {
+		// We finished loading statuses with
+		// values to return, set lo paging value.
+		lo = apiStatuses[len(apiStatuses)-1].ID
 	}
 
 	return apiStatuses, lo, hi, nil
