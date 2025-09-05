@@ -5,7 +5,6 @@ package parse
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"runtime"
 	"syscall"
@@ -13,6 +12,7 @@ import (
 
 type binaryReaderMmap struct {
 	data []byte
+	size int64
 }
 
 func newBinaryReaderMmap(filename string) (*binaryReaderMmap, error) {
@@ -47,7 +47,7 @@ func newBinaryReaderMmap(filename string) (*binaryReaderMmap, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &binaryReaderMmap{data}
+	r := &binaryReaderMmap{data, size}
 	runtime.SetFinalizer(r, (*binaryReaderMmap).Close)
 	return r, nil
 }
@@ -67,25 +67,29 @@ func (r *binaryReaderMmap) Close() error {
 }
 
 // Len returns the length of the underlying memory-mapped file.
-func (r *binaryReaderMmap) Len() int {
-	return len(r.data)
+func (r *binaryReaderMmap) Len() int64 {
+	return r.size
 }
 
-func (r *binaryReaderMmap) Bytes(n int, off int64) ([]byte, error) {
+func (r *binaryReaderMmap) Bytes(b []byte, n, off int64) ([]byte, error) {
 	if r.data == nil {
 		return nil, errors.New("mmap: closed")
-	} else if off < 0 || int64(len(r.data)) < off {
-		return nil, fmt.Errorf("mmap: invalid offset %d", off)
-	} else if int64(len(r.data)-n) < off {
-		return r.data[off:len(r.data):len(r.data)], io.EOF
+	} else if off < 0 || n < 0 || int64(len(r.data)) < off || int64(len(r.data))-off < n {
+		return nil, fmt.Errorf("mmap: invalid range %d--%d", off, off+n)
 	}
-	return r.data[off : off+int64(n) : off+int64(n)], nil
+
+	data := r.data[off : off+n : off+n]
+	if b == nil {
+		return data, nil
+	}
+	copy(b, data)
+	return b, nil
 }
 
-func NewBinaryReader2Mmap(filename string) (*BinaryReader2, error) {
+func NewBinaryReaderMmap(filename string) (*BinaryReader, error) {
 	f, err := newBinaryReaderMmap(filename)
 	if err != nil {
 		return nil, err
 	}
-	return NewBinaryReader2(f), nil
+	return NewBinaryReader(f), nil
 }

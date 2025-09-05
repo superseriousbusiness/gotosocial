@@ -31,9 +31,9 @@ func (v Value) Dup() *Value {
 // Close frees an SQL value previously obtained by [Value.Dup].
 //
 // https://sqlite.org/c3ref/value_dup.html
-func (dup *Value) Close() error {
-	dup.c.call("sqlite3_value_free", stk_t(dup.handle))
-	dup.handle = 0
+func (v *Value) Close() error {
+	v.c.call("sqlite3_value_free", stk_t(v.handle))
+	v.handle = 0
 	return nil
 }
 

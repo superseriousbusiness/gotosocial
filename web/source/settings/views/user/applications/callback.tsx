@@ -92,7 +92,7 @@ function AccessForAppForm({ data: app, code }: { data: App, code: string }) {
 			<div className="form-section-docs">
 				<h2>Receive Access Token</h2>
 				<p>
-					To receive your user-level access token for application<b>{app.name}</b>, click on the button below.
+					To receive your user-level access token for application <b>{app.name}</b>, click on the button below.
 					<br/>Your access token will be shown once and only once.
 					<br/><strong>Your access token provides access to your account; store it as carefully as you would store a password!</strong>
 				</p>

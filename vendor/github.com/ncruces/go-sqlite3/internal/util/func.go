@@ -20,20 +20,6 @@ func ExportFuncVI[T0 i32](mod wazero.HostModuleBuilder, name string, fn func(con
 		Export(name)
 }
 
-type funcVII[T0, T1 i32] func(context.Context, api.Module, T0, T1)
-
-func (fn funcVII[T0, T1]) Call(ctx context.Context, mod api.Module, stack []uint64) {
-	_ = stack[1] // prevent bounds check on every slice access
-	fn(ctx, mod, T0(stack[0]), T1(stack[1]))
-}
-
-func ExportFuncVII[T0, T1 i32](mod wazero.HostModuleBuilder, name string, fn func(context.Context, api.Module, T0, T1)) {
-	mod.NewFunctionBuilder().
-		WithGoModuleFunction(funcVII[T0, T1](fn),
-			[]api.ValueType{api.ValueTypeI32, api.ValueTypeI32}, nil).
-		Export(name)
-}
-
 type funcVIII[T0, T1, T2 i32] func(context.Context, api.Module, T0, T1, T2)
 
 func (fn funcVIII[T0, T1, T2]) Call(ctx context.Context, mod api.Module, stack []uint64) {

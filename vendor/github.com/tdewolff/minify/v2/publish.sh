@@ -10,7 +10,8 @@ SHA256=`sha256sum v$VERSION.tar.gz`
 SHA256=( $SHA256 )
 
 GOMODCACHE="$PWD"/go-mod go mod download -modcacherw -x
-tar -caf minify-v$VERSION-deps.tar.xz go-mod
+tar -caf minify-deps.tar.xz go-mod
+rm -rf go-mod
 
 echo ""
 echo "Releasing for AUR..."

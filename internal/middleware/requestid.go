@@ -18,12 +18,9 @@
 package middleware
 
 import (
-	"bufio"
-	"crypto/rand"
 	"encoding/base32"
 	"encoding/binary"
-	"io"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -31,43 +28,37 @@ import (
 )
 
 var (
-	// crand provides buffered reads of random input.
-	crand = bufio.NewReader(rand.Reader)
-	mrand sync.Mutex
+	// request counter.
+	count atomic.Uint32
 
-	// base32enc is a base 32 encoding based on a human-readable character set (no padding).
-	base32enc = base32.NewEncoding("0123456789abcdefghjkmnpqrstvwxyz").WithPadding(-1)
+	// server start time in milliseconds.
+	start = uint64(time.Now().UnixMilli())
+
+	// shorthand to binary.
+	be = binary.BigEndian
+
+	// b32 is a base 32 encoding based on a human-readable character set (no padding).
+	b32 = base32.NewEncoding("0123456789abcdefghjkmnpqrstvwxyz").WithPadding(-1)
 )
 
 // NewRequestID generates a new request ID string.
 func NewRequestID() string {
-	// 0:8  = timestamp
-	// 8:12 = entropy
-	//
-	// inspired by ULID.
-	b := make([]byte, 12)
+	var buf [12]byte
 
-	// Get current time in milliseconds.
-	ms := uint64(time.Now().UnixMilli()) // #nosec G115 -- Pre-1970 clock?
-
-	// Store binary time data in byte buffer.
-	binary.LittleEndian.PutUint64(b[0:8], ms)
-
-	mrand.Lock()
-	// Read random bits into buffer end.
-	_, _ = io.ReadFull(crand, b[8:12])
-	mrand.Unlock()
-
-	// Encode the binary time+entropy ID.
-	return base32enc.EncodeToString(b)
+	// Generate unique request
+	// ID from request count and
+	// time of server initialization.
+	be.PutUint64(buf[0:], start)
+	be.PutUint32(buf[8:], count.Add(1))
+	return b32.EncodeToString(buf[:])
 }
 
 // AddRequestID returns a gin middleware which adds a unique ID to each request (both response header and context).
 func AddRequestID(header string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.GetHeader(header)
-		// Have we found anything?
 		if id == "" {
+
 			// Generate new ID.
 			id = NewRequestID()
 

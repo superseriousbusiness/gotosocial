@@ -59,7 +59,7 @@ func (c *Conn) CreateCollation(name string, fn CollatingFunction) error {
 	return c.error(rc)
 }
 
-// Collating function is the type of a collation callback.
+// CollatingFunction is the type of a collation callback.
 // Implementations must not retain a or b.
 type CollatingFunction func(a, b []byte) int
 
@@ -132,7 +132,7 @@ func (c *Conn) CreateWindowFunction(name string, nArg int, flag FunctionFlag, fn
 			if win, ok := agg.(WindowFunction); ok {
 				return win
 			}
-			return windowFunc{agg, name}
+			return agg
 		}))
 	}
 	rc := res_t(c.call("sqlite3_create_window_function_go",
@@ -306,14 +306,4 @@ func (a *aggregateFunc) Value(ctx Context) {
 func (a *aggregateFunc) Close() error {
 	a.stop()
 	return nil
-}
-
-type windowFunc struct {
-	AggregateFunction
-	name string
-}
-
-func (w windowFunc) Inverse(ctx Context, arg ...Value) {
-	// Implementing inverse allows certain queries that don't really need it to succeed.
-	ctx.ResultError(util.ErrorString(w.name + ": may not be used as a window function"))
 }

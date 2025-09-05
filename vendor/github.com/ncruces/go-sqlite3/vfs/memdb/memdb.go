@@ -2,40 +2,39 @@ package memdb
 
 import (
 	"io"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ncruces/go-sqlite3"
+	"github.com/ncruces/go-sqlite3/util/vfsutil"
 	"github.com/ncruces/go-sqlite3/vfs"
 )
 
 const sectorSize = 65536
-
-// Ensure sectorSize is a multiple of 64K (the largest page size).
-var _ [0]struct{} = [sectorSize & 65535]struct{}{}
 
 type memVFS struct{}
 
 func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, error) {
 	// For simplicity, we do not support reading or writing data
 	// across "sector" boundaries.
-	//
-	// This is not a problem for most SQLite file types:
-	// - databases, which only do page aligned reads/writes;
-	// - temp journals, as used by the sorter, which does the same:
-	//   https://github.com/sqlite/sqlite/blob/b74eb0/src/vdbesort.c#L409-L412
-	//
-	// We refuse to open all other file types,
-	// but returning OPEN_MEMORY means SQLite won't ask us to.
-	const types = vfs.OPEN_MAIN_DB | vfs.OPEN_TEMP_DB |
-		vfs.OPEN_TRANSIENT_DB | vfs.OPEN_TEMP_JOURNAL
-	if flags&types == 0 {
+	// This is not a problem for SQLite database files.
+	const databases = vfs.OPEN_MAIN_DB | vfs.OPEN_TEMP_DB | vfs.OPEN_TRANSIENT_DB
+
+	// Temp journals, as used by the sorter, use SliceFile.
+	if flags&vfs.OPEN_TEMP_JOURNAL != 0 {
+		return &vfsutil.SliceFile{}, flags | vfs.OPEN_MEMORY, nil
+	}
+
+	// Refuse to open all other file types.
+	// Returning OPEN_MEMORY means SQLite won't ask us to.
+	if flags&databases == 0 {
 		// notest // OPEN_MEMORY
 		return nil, flags, sqlite3.CANTOPEN
 	}
 
 	// A shared database has a name that begins with "/".
-	shared := len(name) > 1 && name[0] == '/'
+	shared := strings.HasPrefix(name, "/")
 
 	var db *memDB
 	if shared {
@@ -76,18 +75,16 @@ func (memVFS) FullPathname(name string) (string, error) {
 type memDB struct {
 	name string
 
+	// +checklocks:lockMtx
+	waiter *sync.Cond
 	// +checklocks:dataMtx
 	data []*[sectorSize]byte
-	// +checklocks:dataMtx
-	size int64
 
-	// +checklocks:memoryMtx
-	refs int32
-
-	shared   int32      // +checklocks:lockMtx
-	pending  bool       // +checklocks:lockMtx
-	reserved bool       // +checklocks:lockMtx
-	waiter   *sync.Cond // +checklocks:lockMtx
+	size     int64 // +checklocks:dataMtx
+	refs     int32 // +checklocks:memoryMtx
+	shared   int32 // +checklocks:lockMtx
+	pending  bool  // +checklocks:lockMtx
+	reserved bool  // +checklocks:lockMtx
 
 	lockMtx sync.Mutex
 	dataMtx sync.RWMutex
@@ -129,7 +126,7 @@ func (m *memFile) ReadAt(b []byte, off int64) (n int, err error) {
 	base := off / sectorSize
 	rest := off % sectorSize
 	have := int64(sectorSize)
-	if base == int64(len(m.data))-1 {
+	if m.size < off+int64(len(b)) {
 		have = modRoundUp(m.size, sectorSize)
 	}
 	n = copy(b, (*m.data[base])[rest:have])
@@ -150,20 +147,35 @@ func (m *memFile) WriteAt(b []byte, off int64) (n int, err error) {
 		m.data = append(m.data, new([sectorSize]byte))
 	}
 	n = copy((*m.data[base])[rest:], b)
+	if size := off + int64(n); size > m.size {
+		m.size = size
+	}
 	if n < len(b) {
 		// notest // assume writes are page aligned
 		return n, io.ErrShortWrite
 	}
-	if size := off + int64(len(b)); size > m.size {
-		m.size = size
-	}
 	return n, nil
+}
+
+func (m *memFile) Size() (int64, error) {
+	m.dataMtx.RLock()
+	defer m.dataMtx.RUnlock()
+	return m.size, nil
 }
 
 func (m *memFile) Truncate(size int64) error {
 	m.dataMtx.Lock()
 	defer m.dataMtx.Unlock()
 	return m.truncate(size)
+}
+
+func (m *memFile) SizeHint(size int64) error {
+	m.dataMtx.Lock()
+	defer m.dataMtx.Unlock()
+	if size > m.size {
+		return m.truncate(size)
+	}
+	return nil
 }
 
 // +checklocks:m.dataMtx
@@ -183,16 +195,6 @@ func (m *memFile) truncate(size int64) error {
 	m.data = m.data[:sectors]
 	m.size = size
 	return nil
-}
-
-func (m *memFile) Sync(flag vfs.SyncFlag) error {
-	return nil
-}
-
-func (m *memFile) Size() (int64, error) {
-	m.dataMtx.RLock()
-	defer m.dataMtx.RUnlock()
-	return m.size, nil
 }
 
 func (m *memFile) Lock(lock vfs.LockLevel) error {
@@ -278,29 +280,22 @@ func (m *memFile) CheckReservedLock() (bool, error) {
 	return m.reserved, nil
 }
 
-func (m *memFile) SectorSize() int {
+func (m *memFile) LockState() vfs.LockLevel {
+	return m.lock
+}
+
+func (*memFile) Sync(flag vfs.SyncFlag) error { return nil }
+
+func (*memFile) SectorSize() int {
 	// notest // IOCAP_POWERSAFE_OVERWRITE
 	return sectorSize
 }
 
-func (m *memFile) DeviceCharacteristics() vfs.DeviceCharacteristic {
+func (*memFile) DeviceCharacteristics() vfs.DeviceCharacteristic {
 	return vfs.IOCAP_ATOMIC |
 		vfs.IOCAP_SEQUENTIAL |
 		vfs.IOCAP_SAFE_APPEND |
 		vfs.IOCAP_POWERSAFE_OVERWRITE
-}
-
-func (m *memFile) SizeHint(size int64) error {
-	m.dataMtx.Lock()
-	defer m.dataMtx.Unlock()
-	if size > m.size {
-		return m.truncate(size)
-	}
-	return nil
-}
-
-func (m *memFile) LockState() vfs.LockLevel {
-	return m.lock
 }
 
 func divRoundUp(a, b int64) int64 {
