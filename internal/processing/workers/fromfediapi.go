@@ -166,10 +166,6 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ActivityAnnounce:
 			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
 
-		// ACCEPT (pending) POLITE ANNOUNCE REQUEST
-		case ap.ActivityAnnounceRequest:
-			return p.fediAPI.AcceptPoliteAnnounceRequest(ctx, fMsg)
-
 		// ACCEPT (remote) IMPOLITE REPLY or ANNOUNCE
 		case ap.ObjectUnknown:
 			return p.fediAPI.AcceptRemoteStatus(ctx, fMsg)
@@ -1208,23 +1204,6 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	return nil
 }
 
-func (p *fediAPI) AcceptPoliteReplyRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
-	intReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
-	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
-	}
-
-	if intReq.ID == "" {
-		// This is a stub interaction request
-		// for an Accept of a remote reply.
-		//
-		// Pass to AccceptRemoteStatus function
-		// to do dereferencing + side effects. 
-		
-	}
-
-}
-
 func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	// See if we can accept a remote
 	// status we don't have stored yet.
@@ -1275,6 +1254,56 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 	if reply.BoostOfID != "" {
 		p.surface.invalidateStatusFromTimelines(reply.BoostOfID)
 	}
+
+	return nil
+}
+
+func (p *fediAPI) AcceptPoliteReplyRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	if util.IsNil(fMsg.GTSModel) {
+		// If the interaction request is nil, this
+		// must be an accept of a remote ReplyRequest
+		// not targeting one of our statuses.
+		//
+		// Just pass it to the AcceptRemoteStatus
+		// func to do dereferencing + side effects.
+		log.Debug(ctx, "accepting remote ReplyRequest for remote reply")
+		return p.AcceptRemoteStatus(ctx, fMsg)
+	}
+
+	// If the interaction request is not nil, this will
+	// be an accept of one of our replies to a remote.
+	//
+	// Since the int req + reply have already been updated
+	// in the federatingDB, we just need to do side effects.
+	intReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// Ensure reply populated.
+	reply := intReq.Reply
+	if err := p.state.DB.PopulateStatus(ctx, reply); err != nil {
+		return gtserror.Newf("error populating status: %w", err)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utils.incrementStatusesCount(ctx, reply.Account, reply); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline and notify the status.
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Send out the reply with approval attached.
+	if err := p.federate.CreateStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error federating announce: %v", err)
+	}
+
+	// Interaction counts changed on the replied-to status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
