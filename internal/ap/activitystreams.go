@@ -115,12 +115,6 @@ const (
 	/* Funkwhale stuff */
 
 	ObjectAlbum = "Album"
-
-	/* Deprecated interaction policy types */
-
-	ObjectLikeApproval     = "LikeApproval"
-	ObjectReplyApproval    = "ReplyApproval"
-	ObjectAnnounceApproval = "AnnounceApproval"
 )
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).

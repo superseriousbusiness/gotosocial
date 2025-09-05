@@ -143,13 +143,13 @@ func ToAcceptable(t vocab.Type) (Acceptable, bool) {
 	return acceptable, true
 }
 
-// IsApprovable returns whether AS vocab type name
-// is something that can be cast to Approvable.
-func IsApprovable(typeName string) bool {
+// IsAuthorizationable returns whether AS vocab type name
+// is something that can be cast to Authorizationable.
+func IsAuthorizationable(typeName string) bool {
 	switch typeName {
-	case ObjectLikeApproval,
-		ObjectReplyApproval,
-		ObjectAnnounceApproval:
+	case ObjectLikeAuthorization,
+		ObjectReplyAuthorization,
+		ObjectAnnounceAuthorization:
 		return true
 	default:
 		return false
@@ -157,12 +157,12 @@ func IsApprovable(typeName string) bool {
 }
 
 // ToAcceptable safely tries to cast vocab.Type as Approvable.
-func ToApprovable(t vocab.Type) (Approvable, bool) {
-	approvable, ok := t.(Approvable)
-	if !ok || !IsApprovable(t.GetTypeName()) {
+func ToAuthorizationable(t vocab.Type) (Authorizationable, bool) {
+	authable, ok := t.(Authorizationable)
+	if !ok || !IsAuthorizationable(t.GetTypeName()) {
 		return nil, false
 	}
-	return approvable, true
+	return authable, true
 }
 
 // IsAttachmentable returns whether AS vocab type name
@@ -322,17 +322,6 @@ type Acceptable interface {
 
 	WithTarget
 	WithResult
-}
-
-// Deprecated: replaced by Authorizable.
-// Approvable represents the minimum activitypub
-// interface for a LikeApproval, ReplyApproval, or AnnounceApproval.
-type Approvable interface {
-	vocab.Type
-
-	WithAttributedTo
-	WithObject
-	WithTarget
 }
 
 // Authorizationable represents the minimum interface for a
