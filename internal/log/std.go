@@ -20,6 +20,7 @@ package log
 import (
 	"log"
 
+	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-kv/v2"
 )
 
@@ -36,7 +37,7 @@ func (w stdLogWriter) Write(b []byte) (int, error) {
 	if w.lvl <= loglvl {
 		logf(nil, w.lvl, kv.Fields{
 			{K: "caller", V: Caller(5)},
-			{K: "msg", V: b},
+			{K: "msg", V: byteutil.B2S(b)},
 		}, "")
 	}
 	return len(b), nil
