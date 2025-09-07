@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -93,9 +94,10 @@ func New(ctx context.Context) (*Router, error) {
 	// `server start` command anyway.
 	baseCtx := func(_ net.Listener) context.Context { return ctx }
 
-	addr := fmt.Sprintf("%s:%d",
+	// Create joined listen addr.
+	addr := net.JoinHostPort(
 		config.GetBindAddress(),
-		config.GetPort(),
+		strconv.Itoa(config.GetPort()),
 	)
 
 	// Wrap the gin engine handler in our
@@ -111,6 +113,7 @@ func New(ctx context.Context) (*Router, error) {
 		WriteTimeout:      writeTimeout,
 		IdleTimeout:       idleTimeout,
 		BaseContext:       baseCtx,
+		ErrorLog:          log.NewStdLogger(log.ERROR),
 	}
 
 	return &Router{
