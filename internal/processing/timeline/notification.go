@@ -166,6 +166,14 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	if notif == nil {
+		const text = "notification not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
+	}
+
 	if notif.TargetAccountID != account.ID {
 		err := gtserror.New("requester does not match notification target")
 		return nil, gtserror.NewErrorNotFound(err)
