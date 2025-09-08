@@ -804,7 +804,6 @@ func (f *DB) acceptPoliteReplyRequest(
 	}
 
 	if partial.intReq == nil {
-
 		// This is a remote accept of a remote reply.
 		//
 		// Process dereferencing etc asynchronously, leaving
@@ -824,7 +823,7 @@ func (f *DB) acceptPoliteReplyRequest(
 	}
 
 	// We already have a request
-	// stored for this interaction!
+	// stored for this interaction.
 
 	// Make sure the stored interaction request
 	// lines up with the Accept ReplyRequest.

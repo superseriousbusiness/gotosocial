@@ -25,6 +25,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
@@ -944,6 +945,130 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "http://localhost:8080/@admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestStatusToASApprovedBy() {
+	ctx := suite.T().Context()
+
+	// Take a status from admin that replies to turtle.
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_5"]
+
+	// Take corresponding interaction request.
+	intReq := new(gtsmodel.InteractionRequest)
+	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
+
+	// Mark the status as approved by updating the
+	// status + corresponding interaction request.
+	username := suite.testAccounts["local_account_2"].Username
+	intReq.ResponseURI = uris.GenerateURIForAccept(
+		username,
+		intReq.ID,
+	)
+	intReq.AuthorizationURI = uris.GenerateURIForAuthorization(
+		username,
+		intReq.ID,
+	)
+	if err := suite.state.DB.UpdateInteractionRequest(
+		ctx,
+		intReq,
+		"response_uri",
+		"authorization_uri",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testStatus.ApprovedByURI = intReq.AuthorizationURI
+	if err := suite.state.DB.UpdateStatus(
+		ctx,
+		testStatus,
+		"approved_by_uri",
+	); err != nil {
+    suite.FailNow(err.Error())
+  }
+
+	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(asStatus)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
+  "approvedBy": "http://localhost:8080/users/1happyturtle/accepts/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "attachment": [],
+  "attributedTo": "http://localhost:8080/users/admin",
+  "cc": [
+    "http://localhost:8080/users/admin/followers",
+    "http://localhost:8080/users/1happyturtle"
+  ],
+  "content": "\u003cp\u003eHi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003e1happyturtle\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e, can I reply?\u003c/p\u003e",
+  "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "inReplyTo": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    }
+  },
+  "published": "2024-02-20T12:41:37+02:00",
+  "replies": {
+    "first": {
+      "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true",
+      "next": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true\u0026only_other_accounts=false",
+      "partOf": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+      "type": "CollectionPage"
+    },
+    "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+    "type": "Collection"
+  },
+  "replyAuthorization": "http://localhost:8080/users/1happyturtle/authorizations/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "sensitive": false,
+  "summary": "",
+  "tag": {
+    "href": "http://localhost:8080/users/1happyturtle",
+    "name": "@1happyturtle@localhost:8080",
+    "type": "Mention"
+  },
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ"
 }`, string(bytes))
 }
 
