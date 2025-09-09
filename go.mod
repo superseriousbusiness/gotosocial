@@ -22,7 +22,7 @@ require (
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0
-	codeberg.org/gruf/go-ffmpreg v0.6.10
+	codeberg.org/gruf/go-ffmpreg v0.6.11
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
@@ -58,10 +58,10 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rivo/uniseg v0.4.7
-	github.com/spf13/cast v1.9.2
+	github.com/spf13/cast v1.10.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
-	github.com/spf13/viper v1.20.1
+	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.3
 	github.com/technologize/otel-go-contrib v1.1.1
@@ -83,8 +83,8 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/crypto v0.41.0
-	golang.org/x/image v0.30.0
+	golang.org/x/crypto v0.42.0
+	golang.org/x/image v0.31.0
 	golang.org/x/net v0.43.0
 	golang.org/x/oauth2 v0.31.0
 	golang.org/x/sys v0.36.0
@@ -122,7 +122,7 @@ require (
 	github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-errors/errors v1.1.1 // indirect
@@ -144,7 +144,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
@@ -197,10 +197,10 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a // indirect
 	github.com/rs/xid v1.6.0 // indirect
-	github.com/sagikazarmark/locafero v0.7.0 // indirect
+	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/spf13/afero v1.12.0 // indirect
+	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
@@ -228,7 +228,7 @@ require (
 	go.opentelemetry.io/otel/log v0.14.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/mod v0.27.0 // indirect
