@@ -462,13 +462,12 @@ func (p *fediAPI) CreateReplyRequest(ctx context.Context, fMsg *messages.FromFed
 	}
 
 	// Mark the request as accepted.
-	authID := id.NewULID()
 	req.AcceptedAt = time.Now()
 	req.ResponseURI = uris.GenerateURIForAccept(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 	req.AuthorizationURI = uris.GenerateURIForAuthorization(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 
 	// Update in the db.
@@ -769,13 +768,12 @@ func (p *fediAPI) CreateLikeRequest(ctx context.Context, fMsg *messages.FromFedi
 	// we can handle everything immediately.
 
 	// Mark the request as accepted.
-	authID := id.NewULID()
 	req.AcceptedAt = time.Now()
 	req.ResponseURI = uris.GenerateURIForAccept(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 	req.AuthorizationURI = uris.GenerateURIForAuthorization(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 
 	// Update in the db.
@@ -1002,12 +1000,11 @@ func (p *fediAPI) CreateAnnounceRequest(ctx context.Context, fMsg *messages.From
 	// The announce is automatically approved,
 	// mark the request as accepted.
 	req.AcceptedAt = time.Now()
-	authID := id.NewULID()
 	req.ResponseURI = uris.GenerateURIForAccept(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 	req.AuthorizationURI = uris.GenerateURIForAuthorization(
-		req.TargetAccount.Username, authID,
+		req.TargetAccount.Username, req.ID,
 	)
 
 	// Update in the db.
