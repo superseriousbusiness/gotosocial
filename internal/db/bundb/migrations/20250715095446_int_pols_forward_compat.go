@@ -19,11 +19,11 @@ package migrations
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"fmt"
-	"strings"
 
-	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -33,154 +33,153 @@ import (
 )
 
 func init() {
-	up := func(ctx context.Context, bdb *bun.DB) error {
+	up := func(ctx context.Context, db *bun.DB) error {
+		const tmpTableName = "new_interaction_requests"
+		const tableName = "interaction_requests"
+
 		// Count number of interaction
 		// requests we need to update.
-		total, err := bdb.
-			NewSelect().
-			Table("interaction_requests").
+		total, err := db.NewSelect().
+			Table(tableName).
 			Count(ctx)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		if err != nil {
+			return gtserror.Newf("error geting interaction requests table count: %w", err)
+		}
+
+		// Create new interaction_requests table and convert all existing into it.
+		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+
+			log.Info(ctx, "creating new interaction_requests table")
+			if _, err := tx.NewCreateTable().
+				ModelTableExpr(tmpTableName).
+				Model((*new_gtsmodel.InteractionRequest)(nil)).
+				Exec(ctx); err != nil {
+				return gtserror.Newf("error creating new interaction requests table: %w", err)
+			}
+
+			// Conversion batch size.
+			const batchsz = 1000
+
+			var maxID string
+			var count int
+
+			// Start at largest
+			// possible ULID value.
+			maxID = id.Highest
+
+			// Preallocate interaction request slices to maximum possible size.
+			oldRequests := make([]*old_gtsmodel.InteractionRequest, 0, batchsz)
+			newRequests := make([]*new_gtsmodel.InteractionRequest, 0, batchsz)
+
+			for {
+				// Reset slices *without*
+				// clearing element memory,
+				// so we can reuse already
+				// allocated request models.
+				oldRequests = oldRequests[:0]
+				newRequests = newRequests[:0]
+
+				// Select next batch of
+				// interaction requests.
+				if err := tx.NewSelect().
+					Model(&oldRequests).
+					Where("? < ?", bun.Ident("id"), maxID).
+					OrderExpr("? DESC", bun.Ident("id")).
+					Limit(batchsz).
+					Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
+					return gtserror.Newf("error selecting interaction requests: %w", err)
+				}
+
+				// Reached end of requests.
+				if len(oldRequests) == 0 {
+					break
+				}
+
+				// Set next maxID value from old requests.
+				maxID = oldRequests[len(oldRequests)-1].ID
+
+				// Reslice new to equal that of old requests.
+				newRequests = newRequests[:len(oldRequests)]
+				if len(newRequests) != len(oldRequests) {
+					panic(gtserror.New("BCD"))
+				}
+
+				// Convert old request models to new.
+				for i, oldRequest := range oldRequests {
+					if newRequests[i] == nil {
+						newRequests[i] = new(new_gtsmodel.InteractionRequest)
+					}
+					newRequests[i].ID = oldRequest.ID
+					newRequests[i].TargetStatusID = oldRequest.StatusID
+					newRequests[i].TargetAccountID = oldRequest.TargetAccountID
+					newRequests[i].InteractingAccountID = oldRequest.InteractingAccountID
+					newRequests[i].InteractionRequestURI = "" // this wasn't supported yet on old models
+					newRequests[i].InteractionURI = oldRequest.InteractionURI
+					newRequests[i].InteractionType = int16(oldRequest.InteractionType) // #nosec G115
+					newRequests[i].AcceptedAt = oldRequest.AcceptedAt
+					newRequests[i].RejectedAt = oldRequest.RejectedAt
+					newRequests[i].ResponseURI = oldRequest.URI
+				}
+
+				// Insert the converted interaction
+				// request models to new table.
+				if _, err := tx.NewInsert().
+					Table(tmpTableName).
+					Model(&newRequests).
+					Exec(ctx); err != nil {
+					return gtserror.Newf("error inserting interaction requests: %w", err)
+				}
+
+				// Increment insert count.
+				count += len(newRequests)
+
+				log.Infof(ctx, "[%d of %d] converting interaction requests", count, total)
+			}
+
+			return nil
+		}); err != nil {
 			return err
 		}
 
-		log.Infof(ctx, "converting %d interaction requests to new model...", total)
+		// Ensure that the above transaction
+		// has gone ahead without issues.
+		//
+		// Also placing this here might make
+		// breaking this into piecemeal steps
+		// easier if turns out necessary.
+		newTotal, err := db.NewSelect().
+			Table(tmpTableName).
+			Count(ctx)
+		if err != nil {
+			return gtserror.Newf("error geting new interaction requests table count: %w", err)
+		} else if total != newTotal {
+			return gtserror.Newf("new interaction requests table contains unexpected count %d, want %d", newTotal, total)
+		}
 
-		return bdb.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Attempt to merge any sqlite write-ahead-log.
+		if err := doWALCheckpoint(ctx, db); err != nil {
+			return err
+		}
 
-			var (
-				// ID for paging.
-				maxID string
+		// Drop the old interaction requests table and rename new one to replace it.
+		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-				// Batch size for
-				// selecting + updating.
-				batchsz = 100
-
-				// Number of int reqs
-				// updated so far.
-				updated int
-			)
-
-			// Create the new table.
-			if _, err := tx.
-				NewCreateTable().
-				ModelTableExpr("new_interaction_requests").
-				Model((*new_gtsmodel.InteractionRequest)(nil)).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			for {
-				// Batch of old model int reqs to select.
-				oldIntReqs := make([]*old_gtsmodel.InteractionRequest, 0, batchsz)
-
-				// Start building scan query.
-				scanQ := tx.
-					NewSelect().
-					Model(&oldIntReqs).
-					OrderExpr("? DESC", bun.Ident("id")).
-					Limit(batchsz)
-
-				// Return only int reqs with ID
-				// lower than the maxID (paging
-				// down from newest to oldest).
-				if maxID != "" {
-					scanQ = scanQ.Where("? < ?", bun.Ident("id"), maxID)
-				}
-
-				// Select this batch
-				err := scanQ.Scan(ctx)
-				if err != nil && !errors.Is(err, db.ErrNoEntries) {
-					return err
-				}
-
-				l := len(oldIntReqs)
-				if len(oldIntReqs) == 0 {
-					// Nothing left
-					// to update.
-					break
-				}
-
-				// Convert old int reqs into new ones.
-				newIntReqs := make([]*new_gtsmodel.InteractionRequest, 0, l)
-				for _, oldIntReq := range oldIntReqs {
-
-					newIntReqs = append(newIntReqs, &new_gtsmodel.InteractionRequest{
-						ID:                    oldIntReq.ID,
-						TargetStatusID:        oldIntReq.StatusID,
-						TargetAccountID:       oldIntReq.TargetAccountID,
-						InteractingAccountID:  oldIntReq.InteractingAccountID,
-						InteractionRequestURI: "", // This wasn't supported yet by old int reqs.
-						InteractionURI:        oldIntReq.InteractionURI,
-						InteractionType:       int16(oldIntReq.InteractionType), // #nosec G115
-						AcceptedAt:            oldIntReq.AcceptedAt,
-						RejectedAt:            oldIntReq.RejectedAt,
-						ResponseURI:           oldIntReq.URI,
-					})
-				}
-
-				// Insert this batch.
-				res, err := tx.
-					NewInsert().
-					Model(&newIntReqs).
-					Returning("").
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-
-				rowsAffected, err := res.RowsAffected()
-				if err != nil {
-					return err
-				}
-
-				// Add to updated count.
-				updated += int(rowsAffected)
-				if updated == total {
-					// Done.
-					break
-				}
-
-				// Set next page.
-				maxID = oldIntReqs[l-1].ID
-
-				// Log helpful message to admin.
-				log.Infof(ctx,
-					"migrated %d of %d interaction requests",
-					updated, total,
-				)
-			}
-
-			if total != int(updated) {
-				// Return error here in order to rollback the whole transaction.
-				return fmt.Errorf("total=%d does not match updated=%d", total, updated)
-			}
-
-			log.Infof(ctx, "finished migrating %d interaction requests", total)
-
-			// Drop the old table.
 			log.Info(ctx, "dropping old interaction_requests table")
-			if _, err := tx.
-				NewDropTable().
-				Table("interaction_requests").
+			if _, err := tx.NewDropTable().
+				Table(tableName).
 				Exec(ctx); err != nil {
-				return err
+				return gtserror.Newf("error dropping old interaction requests table: %w", err)
 			}
 
-			// Rename new table to old table.
-			log.Info(ctx, "renaming new interaction requests table")
-			if _, err := tx.
-				ExecContext(
-					ctx,
-					"ALTER TABLE ? RENAME TO ?",
-					bun.Ident("new_interaction_requests"),
-					bun.Ident("interaction_requests"),
-				); err != nil {
-				return err
+			log.Info(ctx, "renaming new interaction_requests table to old")
+			if _, err := tx.NewRaw("ALTER TABLE ? RENAME TO ?",
+				bun.Ident(tmpTableName),
+				bun.Ident(tableName),
+			).Exec(ctx); err != nil {
+				return gtserror.Newf("error renaming interaction requests table: %w", err)
 			}
 
-			// Add all indexes to the new table.
-			log.Info(ctx, "recreating indexes on new interaction requests table")
+			// Create necessary indices on the new table.
 			for index, columns := range map[string][]string{
 				"interaction_requests_target_status_id_idx":       {"target_status_id"},
 				"interaction_requests_interacting_account_id_idx": {"interacting_account_id"},
@@ -188,9 +187,9 @@ func init() {
 				"interaction_requests_accepted_at_idx":            {"accepted_at"},
 				"interaction_requests_rejected_at_idx":            {"rejected_at"},
 			} {
-				if _, err := tx.
-					NewCreateIndex().
-					Table("interaction_requests").
+				log.Infof(ctx, "recreating %s index", index)
+				if _, err := tx.NewCreateIndex().
+					Table(tableName).
 					Index(index).
 					Column(columns...).
 					Exec(ctx); err != nil {
@@ -199,61 +198,47 @@ func init() {
 			}
 
 			if tx.Dialect().Name() == dialect.PG {
-				log.Info(ctx, "moving postgres constraints from old table to new table")
-
-				type spec struct {
-					old     string
-					new     string
-					columns []string
-				}
-
-				// Rename uniqueness constraints from
-				// "new_interaction_requests_*" to "interaction_requests_*".
-				for _, spec := range []spec{
+				// Rename postgres uniqueness constraints:
+				// "new_interaction_requests_*" -> "interaction_requests_*"
+				log.Info(ctx, "renaming interaction_requests constraints on new table")
+				for _, spec := range []struct {
+					old string
+					new string
+				}{
 					{
-						old:     "new_interaction_requests_pkey",
-						new:     "interaction_requests_pkey",
-						columns: []string{"id"},
+						old: "new_interaction_requests_pkey",
+						new: "interaction_requests_pkey",
 					},
 					{
-						old:     "new_interaction_requests_interaction_request_uri_key",
-						new:     "interaction_requests_interaction_request_uri_key",
-						columns: []string{"interaction_request_uri"},
+						old: "new_interaction_requests_interaction_request_uri_key",
+						new: "interaction_requests_interaction_request_uri_key",
 					},
 					{
-						old:     "new_interaction_requests_interaction_uri_key",
-						new:     "interaction_requests_interaction_uri_key",
-						columns: []string{"interaction_uri"},
+						old: "new_interaction_requests_interaction_uri_key",
+						new: "interaction_requests_interaction_uri_key",
 					},
 					{
-						old:     "new_interaction_requests_response_uri_key",
-						new:     "interaction_requests_response_uri_key",
-						columns: []string{"response_uri"},
+						old: "new_interaction_requests_response_uri_key",
+						new: "interaction_requests_response_uri_key",
 					},
 				} {
-					if _, err := tx.ExecContext(
-						ctx,
-						"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
-						bun.Ident("interaction_requests"),
+					if _, err := tx.NewRaw("ALTER TABLE ? RENAME CONSTRAINT ? TO ?",
+						bun.Ident(tableName),
 						bun.Safe(spec.old),
-					); err != nil {
-						return err
-					}
-
-					if _, err := tx.ExecContext(
-						ctx,
-						"ALTER TABLE ? ADD CONSTRAINT ? UNIQUE(?)",
-						bun.Ident("interaction_requests"),
 						bun.Safe(spec.new),
-						bun.Safe(strings.Join(spec.columns, ",")),
-					); err != nil {
-						return err
+					).Exec(ctx); err != nil {
+						return gtserror.Newf("error renaming postgres interaction requests constraint %s: %w", spec.new, err)
 					}
 				}
 			}
 
 			return nil
-		})
+		}); err != nil {
+			return err
+		}
+
+		// Final sqlite write-ahead-log merge.
+		return doWALCheckpoint(ctx, db)
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
