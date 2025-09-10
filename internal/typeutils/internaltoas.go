@@ -1234,6 +1234,7 @@ func (c *Converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 // an ActivityStreams Announce activity, suitable for federation.
 //
 // Result will look something like:
+//
 //	{
 //	  "@context": "https://www.w3.org/ns/activitystreams",
 //	  "actor": "http://localhost:8080/users/the_mighty_zork",

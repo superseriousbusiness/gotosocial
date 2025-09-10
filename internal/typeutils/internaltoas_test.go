@@ -960,7 +960,7 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
 	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
 
 	// Mark the status as politely approved by updating
-  // the status + corresponding interaction request.
+	// the status + corresponding interaction request.
 	username := suite.testAccounts["local_account_2"].Username
 	intReq.ResponseURI = uris.GenerateURIForAccept(
 		username,
@@ -985,8 +985,8 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
 		testStatus,
 		"approved_by_uri",
 	); err != nil {
-    suite.FailNow(err.Error())
-  }
+		suite.FailNow(err.Error())
+	}
 
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
@@ -1084,7 +1084,7 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
 	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
 
 	// Mark the status as impolitely approved by updating
-  // the status + corresponding interaction request.
+	// the status + corresponding interaction request.
 	username := suite.testAccounts["local_account_2"].Username
 	intReq.ResponseURI = uris.GenerateURIForAccept(
 		username,
@@ -1106,8 +1106,8 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
 		testStatus,
 		"approved_by_uri",
 	); err != nil {
-    suite.FailNow(err.Error())
-  }
+		suite.FailNow(err.Error())
+	}
 
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
