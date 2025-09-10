@@ -67,10 +67,7 @@ func (suite *InteractionRequestTestSuite) TestReplyRequest() {
 		jsonStr    = `{
   "@context": [
     "https://www.w3.org/ns/activitystreams",
-    "https://gotosocial.org/ns",
-    {
-      "sensitive": "as:sensitive"
-    }
+    "https://gotosocial.org/ns"
   ],
   "type": "ReplyRequest",
   "id": "` + intReqURI + `",

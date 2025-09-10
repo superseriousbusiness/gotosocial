@@ -607,8 +607,8 @@ type partialAcceptInteractionRequest struct {
 }
 
 // parseAcceptInteractionRequestable does some initial parsing
-// and validation of the given Accept with inlined interaction
-// request (LikeRequest, ReplyRequest, AnnounceRequest).
+// and validation of the given Accept with inlined polite
+// interaction request (LikeRequest, ReplyRequest, AnnounceRequest).
 //
 // Will return nil, nil if there's no need for further processing.
 func (f *DB) parseAcceptInteractionRequestable(
@@ -619,6 +619,10 @@ func (f *DB) parseAcceptInteractionRequestable(
 	requestingAcct *gtsmodel.Account,
 ) (*partialAcceptInteractionRequest, error) {
 	intReqURI := ap.GetJSONLDId(intRequestable)
+	if intReqURI == nil {
+		const text = "no id set on embedded interaction request"
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
 
 	// Ensure we have actor IRI on
 	// the interaction requestable.
@@ -721,8 +725,10 @@ func (f *DB) parseAcceptInteractionRequestable(
 
 	} else {
 
-		// Request stored for this interaction.
-		// Do some additional validation.
+		// Request stored for this interaction URI.
+		//
+		// Note: this path is not actually possible until v0.21.0,
+		// because we don't send out polite requests yet in v0.20.0.
 
 		// If the request is already accepted,
 		// we don't need to do anything at all.
@@ -741,6 +747,13 @@ func (f *DB) parseAcceptInteractionRequestable(
 		// interaction request must have the same target status.
 		if intReq.TargetStatus.URI != parentURI.String() {
 			const text = "Accept interaction request mismatched object URI"
+			return nil, gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// The stored interaction request and the inlined
+		// interaction request must have the same URI.
+		if intReq.InteractionRequestURI != intReqURI.String() {
+			const text = "Accept interaction request mismatched id"
 			return nil, gtserror.NewErrorForbidden(errors.New(text), text)
 		}
 	}
@@ -822,8 +835,10 @@ func (f *DB) acceptPoliteReplyRequest(
 		return nil
 	}
 
-	// We already have a request
-	// stored for this interaction.
+	// We already have a request stored for this interaction.
+	//
+	// Note: this path is not actually possible until v0.21.0,
+	// because we don't send out polite requests yet in v0.20.0.
 
 	// Make sure the stored interaction request
 	// lines up with the Accept ReplyRequest.
@@ -900,11 +915,8 @@ func (f *DB) acceptPoliteReplyRequest(
 // Error is only returned if the result URI is set
 // but the host differs from the Accept ID host.
 //
-// TODO: This function should be updated at some point
-// to check for inlined result type, and see if type is
-// a LikeApproval, ReplyApproval, or AnnounceApproval,
-// and check the attributedTo, object, and target of
-// the approval as well. But this'll do for now.
+// TODO: This function could be updated at some
+// point to check for inlined result type.
 func approvedByURI(
 	acceptID *url.URL,
 	accept vocab.ActivityStreamsAccept,

@@ -82,10 +82,10 @@ type InteractionRequest struct {
 	InteractingAccount *Account `bun:"-"`
 
 	// URI of the Request, if this InteractionRequest originated from
-	// a Request type (LikeRequest, ReplyRequest, AnnounceRequest, etc.).
+	// a polite Request type (LikeRequest, ReplyRequest, AnnounceRequest, etc.).
 	//
 	// Not set if interaction request results from an interaction
-	// (Like, Create (status), Announce, etc.) transmitted directly.
+	// (Like, Create (status), Announce, etc.) transmitted impolitely.
 	InteractionRequestURI string `bun:",nullzero,unique"`
 
 	// URI of the interaction itself.
