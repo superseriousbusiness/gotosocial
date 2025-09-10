@@ -255,8 +255,8 @@ There are a couple of comparison tables online, such as [CSS Minifier Comparison
 
 Options:
 
-- `KeepCSS2` prohibits using CSS3 syntax (such as exponents in numbers, or `rgba(` &#8594; `rgb(`), might be incomplete
 - `Precision` number of significant digits to preserve for numbers, `0` means no trimming
+- `Version` CSS version to use for output, `0` is the latest
 
 ## JS
 

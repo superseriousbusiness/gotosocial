@@ -49,51 +49,81 @@ func (e Entry) WithFields(kvs ...kv.Field) Entry {
 
 // Trace will log formatted args as 'msg' field to the log at TRACE level.
 func (e Entry) Trace(a ...interface{}) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(e.ctx, TRACE, e.kvs, "", a...)
 }
 
 // Tracef will log format string as 'msg' field to the log at TRACE level.
 func (e Entry) Tracef(s string, a ...interface{}) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(e.ctx, TRACE, e.kvs, s, a...)
 }
 
 // Debug will log formatted args as 'msg' field to the log at DEBUG level.
 func (e Entry) Debug(a ...interface{}) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(e.ctx, DEBUG, e.kvs, "", a...)
 }
 
 // Debugf will log format string as 'msg' field to the log at DEBUG level.
 func (e Entry) Debugf(s string, a ...interface{}) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(e.ctx, DEBUG, e.kvs, s, a...)
 }
 
 // Info will log formatted args as 'msg' field to the log at INFO level.
 func (e Entry) Info(a ...interface{}) {
+	if INFO > loglvl {
+		return
+	}
 	logf(e.ctx, INFO, e.kvs, "", a...)
 }
 
 // Infof will log format string as 'msg' field to the log at INFO level.
 func (e Entry) Infof(s string, a ...interface{}) {
+	if INFO > loglvl {
+		return
+	}
 	logf(e.ctx, INFO, e.kvs, s, a...)
 }
 
 // Warn will log formatted args as 'msg' field to the log at WARN level.
 func (e Entry) Warn(a ...interface{}) {
+	if WARN > loglvl {
+		return
+	}
 	logf(e.ctx, WARN, e.kvs, "", a...)
 }
 
 // Warnf will log format string as 'msg' field to the log at WARN level.
 func (e Entry) Warnf(s string, a ...interface{}) {
+	if WARN > loglvl {
+		return
+	}
 	logf(e.ctx, WARN, e.kvs, s, a...)
 }
 
 // Error will log formatted args as 'msg' field to the log at ERROR level.
 func (e Entry) Error(a ...interface{}) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(e.ctx, ERROR, e.kvs, "", a...)
 }
 
 // Errorf will log format string as 'msg' field to the log at ERROR level.
 func (e Entry) Errorf(s string, a ...interface{}) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(e.ctx, ERROR, e.kvs, s, a...)
 }
 
@@ -101,6 +131,9 @@ func (e Entry) Errorf(s string, a ...interface{}) {
 // This will then call panic causing the application to crash.
 func (e Entry) Panic(a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
+	if PANIC > loglvl {
+		return
+	}
 	logf(e.ctx, PANIC, e.kvs, "", a...)
 }
 
@@ -108,16 +141,25 @@ func (e Entry) Panic(a ...interface{}) {
 // This will then call panic causing the application to crash.
 func (e Entry) Panicf(s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
+	if PANIC > loglvl {
+		return
+	}
 	logf(e.ctx, PANIC, e.kvs, s, a...)
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
 func (e Entry) Log(lvl LEVEL, a ...interface{}) {
+	if lvl > loglvl {
+		return
+	}
 	logf(e.ctx, lvl, e.kvs, "", a...)
 }
 
 // Logf will log format string as 'msg' field to the log at given level.
 func (e Entry) Logf(lvl LEVEL, s string, a ...interface{}) {
+	if lvl > loglvl {
+		return
+	}
 	logf(e.ctx, lvl, e.kvs, s, a...)
 }
 

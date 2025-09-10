@@ -112,101 +112,161 @@ func WithFields(fields ...kv.Field) Entry {
 
 // Trace will log formatted args as 'msg' field to the log at TRACE level.
 func Trace(ctx context.Context, a ...interface{}) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(ctx, TRACE, nil, "", a...)
 }
 
 // Tracef will log format string as 'msg' field to the log at TRACE level.
 func Tracef(ctx context.Context, s string, a ...interface{}) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(ctx, TRACE, nil, s, a...)
 }
 
 // TraceKV will log the one key-value field to the log at TRACE level.
 func TraceKV(ctx context.Context, key string, value interface{}) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(ctx, TRACE, []kv.Field{{K: key, V: value}}, "")
 }
 
 // TraceKVs will log key-value fields to the log at TRACE level.
 func TraceKVs(ctx context.Context, kvs ...kv.Field) {
+	if TRACE > loglvl {
+		return
+	}
 	logf(ctx, TRACE, kvs, "")
 }
 
 // Debug will log formatted args as 'msg' field to the log at DEBUG level.
 func Debug(ctx context.Context, a ...interface{}) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(ctx, DEBUG, nil, "", a...)
 }
 
 // Debugf will log format string as 'msg' field to the log at DEBUG level.
 func Debugf(ctx context.Context, s string, a ...interface{}) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(ctx, DEBUG, nil, s, a...)
 }
 
 // DebugKV will log the one key-value field to the log at DEBUG level.
 func DebugKV(ctx context.Context, key string, value interface{}) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(ctx, DEBUG, []kv.Field{{K: key, V: value}}, "")
 }
 
 // DebugKVs will log key-value fields to the log at DEBUG level.
 func DebugKVs(ctx context.Context, kvs ...kv.Field) {
+	if DEBUG > loglvl {
+		return
+	}
 	logf(ctx, DEBUG, kvs, "")
 }
 
 // Info will log formatted args as 'msg' field to the log at INFO level.
 func Info(ctx context.Context, a ...interface{}) {
+	if INFO > loglvl {
+		return
+	}
 	logf(ctx, INFO, nil, "", a...)
 }
 
 // Infof will log format string as 'msg' field to the log at INFO level.
 func Infof(ctx context.Context, s string, a ...interface{}) {
+	if INFO > loglvl {
+		return
+	}
 	logf(ctx, INFO, nil, s, a...)
 }
 
 // InfoKV will log the one key-value field to the log at INFO level.
 func InfoKV(ctx context.Context, key string, value interface{}) {
+	if INFO > loglvl {
+		return
+	}
 	logf(ctx, INFO, []kv.Field{{K: key, V: value}}, "")
 }
 
 // InfoKVs will log key-value fields to the log at INFO level.
 func InfoKVs(ctx context.Context, kvs ...kv.Field) {
+	if INFO > loglvl {
+		return
+	}
 	logf(ctx, INFO, kvs, "")
 }
 
 // Warn will log formatted args as 'msg' field to the log at WARN level.
 func Warn(ctx context.Context, a ...interface{}) {
+	if WARN > loglvl {
+		return
+	}
 	logf(ctx, WARN, nil, "", a...)
 }
 
 // Warnf will log format string as 'msg' field to the log at WARN level.
 func Warnf(ctx context.Context, s string, a ...interface{}) {
+	if WARN > loglvl {
+		return
+	}
 	logf(ctx, WARN, nil, s, a...)
 }
 
 // WarnKV will log the one key-value field to the log at WARN level.
 func WarnKV(ctx context.Context, key string, value interface{}) {
+	if WARN > loglvl {
+		return
+	}
 	logf(ctx, WARN, []kv.Field{{K: key, V: value}}, "")
 }
 
 // WarnKVs will log key-value fields to the log at WARN level.
 func WarnKVs(ctx context.Context, kvs ...kv.Field) {
+	if WARN > loglvl {
+		return
+	}
 	logf(ctx, WARN, kvs, "")
 }
 
 // Error will log formatted args as 'msg' field to the log at ERROR level.
 func Error(ctx context.Context, a ...interface{}) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(ctx, ERROR, nil, "", a...)
 }
 
 // Errorf will log format string as 'msg' field to the log at ERROR level.
 func Errorf(ctx context.Context, s string, a ...interface{}) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(ctx, ERROR, nil, s, a...)
 }
 
 // ErrorKV will log the one key-value field to the log at ERROR level.
 func ErrorKV(ctx context.Context, key string, value interface{}) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(ctx, ERROR, []kv.Field{{K: key, V: value}}, "")
 }
 
 // ErrorKVs will log key-value fields to the log at ERROR level.
 func ErrorKVs(ctx context.Context, kvs ...kv.Field) {
+	if ERROR > loglvl {
+		return
+	}
 	logf(ctx, ERROR, kvs, "")
 }
 
@@ -214,6 +274,9 @@ func ErrorKVs(ctx context.Context, kvs ...kv.Field) {
 // This will then call panic causing the application to crash.
 func Panic(ctx context.Context, a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
+	if PANIC > loglvl {
+		return
+	}
 	logf(ctx, PANIC, nil, "", a...)
 }
 
@@ -221,6 +284,9 @@ func Panic(ctx context.Context, a ...interface{}) {
 // This will then call panic causing the application to crash.
 func Panicf(ctx context.Context, s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
+	if PANIC > loglvl {
+		return
+	}
 	logf(ctx, PANIC, nil, s, a...)
 }
 
@@ -228,6 +294,9 @@ func Panicf(ctx context.Context, s string, a ...interface{}) {
 // This will then call panic causing the application to crash.
 func PanicKV(ctx context.Context, key string, value interface{}) {
 	defer panic(kv.Field{K: key, V: value}.String())
+	if PANIC > loglvl {
+		return
+	}
 	logf(ctx, PANIC, []kv.Field{{K: key, V: value}}, "")
 }
 
@@ -235,26 +304,41 @@ func PanicKV(ctx context.Context, key string, value interface{}) {
 // This will then call panic causing the application to crash.
 func PanicKVs(ctx context.Context, kvs ...kv.Field) {
 	defer panic(kv.Fields(kvs).String())
+	if PANIC > loglvl {
+		return
+	}
 	logf(ctx, PANIC, kvs, "")
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
 func Log(ctx context.Context, lvl LEVEL, a ...interface{}) { //nolint:revive
+	if lvl > loglvl {
+		return
+	}
 	logf(ctx, lvl, nil, "", a...)
 }
 
 // Logf will log format string as 'msg' field to the log at given level.
 func Logf(ctx context.Context, lvl LEVEL, s string, a ...interface{}) { //nolint:revive
+	if lvl > loglvl {
+		return
+	}
 	logf(ctx, lvl, nil, s, a...)
 }
 
 // LogKV will log the one key-value field to the log at given level.
 func LogKV(ctx context.Context, lvl LEVEL, key string, value interface{}) { //nolint:revive
+	if lvl > loglvl {
+		return
+	}
 	logf(ctx, lvl, []kv.Field{{K: key, V: value}}, "")
 }
 
 // LogKVs will log key-value fields to the log at given level.
 func LogKVs(ctx context.Context, lvl LEVEL, kvs ...kv.Field) { //nolint:revive
+	if lvl > loglvl {
+		return
+	}
 	logf(ctx, lvl, kvs, "")
 }
 
@@ -271,11 +355,6 @@ func Printf(s string, a ...interface{}) {
 //go:noinline
 func logf(ctx context.Context, lvl LEVEL, fields []kv.Field, msg string, args ...interface{}) {
 	var out *os.File
-
-	// Check if enabled.
-	if lvl > loglvl {
-		return
-	}
 
 	// Split errors to stderr,
 	// all else goes to stdout.

@@ -23,9 +23,11 @@ import (
 	"github.com/jackc/pgx/v5/pgproto3"
 )
 
-type AfterConnectFunc func(ctx context.Context, pgconn *PgConn) error
-type ValidateConnectFunc func(ctx context.Context, pgconn *PgConn) error
-type GetSSLPasswordFunc func(ctx context.Context) string
+type (
+	AfterConnectFunc    func(ctx context.Context, pgconn *PgConn) error
+	ValidateConnectFunc func(ctx context.Context, pgconn *PgConn) error
+	GetSSLPasswordFunc  func(ctx context.Context) string
+)
 
 // Config is the settings used to establish a connection to a PostgreSQL server. It must be created by [ParseConfig]. A
 // manually initialized Config will cause ConnectConfig to panic.
@@ -179,7 +181,7 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 //
 // ParseConfig supports specifying multiple hosts in similar manner to libpq. Host and port may include comma separated
 // values that will be tried in order. This can be used as part of a high availability system. See
-// https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS for more information.
+// https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS for more information.
 //
 //	# Example URL
 //	postgres://jack:secret@foo.example.com:5432,bar.example.com:5432/mydb
@@ -206,9 +208,9 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 //	PGTARGETSESSIONATTRS
 //	PGTZ
 //
-// See http://www.postgresql.org/docs/11/static/libpq-envars.html for details on the meaning of environment variables.
+// See http://www.postgresql.org/docs/current/static/libpq-envars.html for details on the meaning of environment variables.
 //
-// See https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-PARAMKEYWORDS for parameter key word names. They are
+// See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-PARAMKEYWORDS for parameter key word names. They are
 // usually but not always the environment variable name downcased and without the "PG" prefix.
 //
 // Important Security Notes:
@@ -216,7 +218,7 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 // ParseConfig tries to match libpq behavior with regard to PGSSLMODE. This includes defaulting to "prefer" behavior if
 // not set.
 //
-// See http://www.postgresql.org/docs/11/static/libpq-ssl.html#LIBPQ-SSL-PROTECTION for details on what level of
+// See http://www.postgresql.org/docs/current/static/libpq-ssl.html#LIBPQ-SSL-PROTECTION for details on what level of
 // security each sslmode provides.
 //
 // The sslmode "prefer" (the default), sslmode "allow", and multiple hosts are implemented via the Fallbacks field of
@@ -713,7 +715,7 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 		// According to PostgreSQL documentation, if a root CA file exists,
 		// the behavior of sslmode=require should be the same as that of verify-ca
 		//
-		// See https://www.postgresql.org/docs/12/libpq-ssl.html
+		// See https://www.postgresql.org/docs/current/libpq-ssl.html
 		if sslrootcert != "" {
 			goto nextCase
 		}
@@ -784,8 +786,8 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 			if sslpassword != "" {
 				decryptedKey, decryptedError = x509.DecryptPEMBlock(block, []byte(sslpassword))
 			}
-			//if sslpassword not provided or has decryption error when use it
-			//try to find sslpassword with callback function
+			// if sslpassword not provided or has decryption error when use it
+			// try to find sslpassword with callback function
 			if sslpassword == "" || decryptedError != nil {
 				if parseConfigOptions.GetSSLPassword != nil {
 					sslpassword = parseConfigOptions.GetSSLPassword(context.Background())
