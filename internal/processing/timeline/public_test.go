@@ -91,9 +91,9 @@ func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 	// some other statuses were filtered out.
 	suite.NoError(errWithCode)
 	suite.Len(resp.Items, 1)
-	suite.Equal(`<http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV>; rel="next", <http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01FF25D5Q0DH7CHD57CTRS6WK0>; rel="prev"`, resp.LinkHeader)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV`, resp.NextLink)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01FF25D5Q0DH7CHD57CTRS6WK0`, resp.PrevLink)
+	suite.Equal("<http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV>; rel=\"next\", <http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01F8MHCP5P2NWYQ416SBA0XSEV>; rel=\"prev\"", resp.LinkHeader)
+	suite.Equal("http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV", resp.NextLink)
+	suite.Equal("http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01F8MHCP5P2NWYQ416SBA0XSEV", resp.PrevLink)
 }
 
 // A timeline containing a status hidden due to filtering should return other statuses with no error.

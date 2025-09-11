@@ -387,10 +387,6 @@ func (t *StatusTimeline) Load(
 				return nil, "", "", gtserror.Newf("error loading statuses: %w", err)
 			}
 
-			// Set returned lo, hi values.
-			lo = metas[len(metas)-1].ID
-			hi = metas[0].ID
-
 			// Prepare frontend API models for
 			// the cached statuses. For now this
 			// also does its own extra filtering.
@@ -408,8 +404,8 @@ func (t *StatusTimeline) Load(
 	// we need to call to database.
 	if len(apiStatuses) < limit {
 
-		// Pass through to main timeline db load function.
-		apiStatuses, lo, hi, err = loadStatusTimeline(ctx,
+		// Pass to main timeline db load function.
+		apiStatuses, err = loadStatusTimeline(ctx,
 			nextPg,
 			metas,
 			apiStatuses,
@@ -420,6 +416,15 @@ func (t *StatusTimeline) Load(
 		if err != nil {
 			return nil, "", "", err
 		}
+	}
+
+	// Reset values.
+	lo, hi = "", ""
+
+	if len(apiStatuses) > 0 {
+		// Set returned lo, hi paging values.
+		lo = apiStatuses[len(apiStatuses)-1].ID
+		hi = apiStatuses[0].ID
 	}
 
 	if order.Ascending() {
@@ -452,17 +457,11 @@ func loadStatusTimeline(
 	prepareAPI func(status *gtsmodel.Status) (apiStatus *apimodel.Status, err error),
 ) (
 	[]*apimodel.Status,
-	string, // lo
-	string, // hi
 	error,
 ) {
 	if loadPage == nil {
 		panic("nil load page func")
 	}
-
-	// Lowest and highest ID
-	// vals of loaded statuses.
-	var lo, hi string
 
 	// Extract paging params, in particular
 	// limit is used separate to nextPg to
@@ -489,19 +488,13 @@ func loadStatusTimeline(
 		// Load next timeline statuses.
 		statuses, err := loadPage(nextPg)
 		if err != nil {
-			return nil, "", "", gtserror.Newf("error loading timeline: %w", err)
+			return nil, gtserror.Newf("error loading timeline: %w", err)
 		}
 
 		// No more statuses from
 		// load function = at end.
 		if len(statuses) == 0 {
 			break
-		}
-
-		if hi == "" {
-			// Set hi returned paging
-			// value if not already set.
-			hi = statuses[0].ID
 		}
 
 		// Update nextPg cursor parameter for next database query.
@@ -530,13 +523,7 @@ func loadStatusTimeline(
 		)
 	}
 
-	if len(apiStatuses) > 0 {
-		// We finished loading statuses with
-		// values to return, set lo paging value.
-		lo = apiStatuses[len(apiStatuses)-1].ID
-	}
-
-	return apiStatuses, lo, hi, nil
+	return apiStatuses, nil
 }
 
 // InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
@@ -671,6 +658,9 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 // timeline entries authored by account ID, including boosts by account ID.
 func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	keys := make([]structr.Key, len(accountIDs))
+	if len(keys) != len(accountIDs) {
+		panic(gtserror.New("BCE"))
+	}
 
 	// Nil check indices outside loops.
 	if t.idx_AccountID == nil ||
