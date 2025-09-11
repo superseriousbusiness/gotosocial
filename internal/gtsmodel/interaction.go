@@ -199,7 +199,7 @@ func (ir *InteractionRequest) IsRejected() bool {
 //   - from v0.21.0 onwards, we know about and can respond to both
 //     polite and impolite interaction requests, and we send out polite
 func (ir *InteractionRequest) IsPolite() bool {
-	return *ir.Polite
+	return ir.Polite != nil && *ir.Polite
 }
 
 // Interaction abstractly represents
