@@ -31,3 +31,9 @@ type InteractionRequest struct {
 	RejectedAt           time.Time `bun:"type:timestamptz,nullzero"`
 	URI                  string    `bun:",nullzero,unique"`
 }
+
+const (
+	InteractionLike     int = 0
+	InteractionReply    int = 1
+	InteractionAnnounce int = 2
+)

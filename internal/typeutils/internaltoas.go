@@ -2165,12 +2165,15 @@ func (c *Converter) InteractionReqToASAccept(
 		ap.AppendResultIRIs(accept, resultIRI)
 
 	} else {
-		// If accepting an impolite request,
-		// just set interaction URI as object.
+		// If accepting an impolite request, just set
+		// interaction URI as object and target status
+		// IRI as target. Don't give authorization in
+		// result field, as this will confuse pre v0.20.0
+		// instances who don't understand Auth types yet.
+		//
+		// TODO: remove this path in v0.21.0 and send an
+		// accept of a Request for impolite requests too.
 		ap.AppendObjectIRIs(accept, objectIRI)
-
-		// Target is the URI of the
-		// status being interacted with.
 		ap.AppendTargetIRIs(accept, targetIRI)
 	}
 
@@ -2315,7 +2318,7 @@ func (c *Converter) InteractionReqToASReject(
 	return reject, nil
 }
 
-// InteractionReqToASAuthorization converts a polite, approved *gtsmodel.InteractionRequest
+// InteractionReqToASAuthorization converts an approved *gtsmodel.InteractionRequest
 // to a LikeAuthorization, ReplyAuthorization, or AnnounceAuthorization object.
 //
 // End result will look something like this:
@@ -2335,12 +2338,7 @@ func (c *Converter) InteractionReqToASAuthorization(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
 ) (ap.Authorizationable, error) {
-	if !req.IsPolite() {
-		const text = "cannot convert impolite interaction request to Authorization type"
-		return nil, gtserror.New(text)
-	}
-
-	if req.AcceptedAt.IsZero() {
+	if !req.IsAccepted() {
 		const text = "cannot convert not-accepted interaction request to Authorization type"
 		return nil, gtserror.New(text)
 	}
@@ -2389,73 +2387,64 @@ func (c *Converter) InteractionReqToASAuthorization(
 }
 
 // appendASInteractionAuthorization is a utility function
-// that appends `approvedBy` and/or `likeAuthorization`,
-// `replyAuthorization`, or `announceAuthorization` to the given type.
+// that sets `approvedBy`, and `likeAuthorization`,
+// `replyAuthorization`, or `announceAuthorization`.
 func (c *Converter) appendASInteractionAuthorization(
 	ctx context.Context,
-	approvedByURI string,
+	approvedByURIStr string,
 	t vocab.Type,
 ) error {
-	// ApprovedByURI can be either the URI of an
-	// Authorization (for requests made politely),
-	// or the URI of an Accept (for requests made
-	// impolitely). Either way, parse it once here.
-	authedByURI, err := url.Parse(approvedByURI)
+	// ApprovedByURI is the URI of an
+	// Authorization for this interaction.
+	approvedByURI, err := url.Parse(approvedByURIStr)
 	if err != nil {
-		return gtserror.Newf("error parsing approvedBy: %w", err)
+		return gtserror.Newf("error parsing approvedByURIStr: %w", err)
 	}
 
-	// Check if we have an interaction request stored
-	// for this authorization URI. We will only find
-	// this if the request was made politely, as the
-	// authorization URI is only stored (and therefore
-	// searchable) for responses to polite requests.
+	// Fetch relevant approved interaction
+	// request for this approvedByURIStr.
 	intReq, err := c.state.DB.GetInteractionRequestByAuthorizationURI(
 		gtscontext.SetBarebones(ctx),
-		approvedByURI,
+		approvedByURIStr,
 	)
-
-	switch {
-	case err != nil && !errors.Is(err, db.ErrNoEntries):
-		// Proper db error.
+	if err != nil {
 		return gtserror.Newf("db error checking for int req: %w", err)
+	}
 
-	case intReq != nil && intReq.IsPolite():
-		// We have an int req and it was made politely.
-		// Set the appropriate authorization property.
-		switch intReq.InteractionType {
-		case gtsmodel.InteractionLike:
-			if wla, ok := t.(ap.WithLikeAuthorization); ok {
-				ap.SetLikeAuthorization(wla, authedByURI)
-			}
-		case gtsmodel.InteractionReply:
-			if wra, ok := t.(ap.WithReplyAuthorization); ok {
-				ap.SetReplyAuthorization(wra, authedByURI)
-			}
-		case gtsmodel.InteractionAnnounce:
-			if waa, ok := t.(ap.WithAnnounceAuthorization); ok {
-				ap.SetAnnounceAuthorization(waa, authedByURI)
-			}
+	// Make sure it's actually accepted.
+	if !intReq.IsAccepted() {
+		return gtserror.Newf(
+			"approvedByURIStr %s corresponded to not-accepted interaction request %s",
+			approvedByURIStr, intReq.ID,
+		)
+	}
+
+	// Deprecated: Set `approvedBy`
+	// property to URI of the Accept.
+	//
+	// Todo: Remove this in v0.21.0.
+	if wap, ok := t.(ap.WithApprovedBy); ok {
+		responseURI, err := url.Parse(intReq.ResponseURI)
+		if err != nil {
+			return gtserror.Newf("error parsing responseURI: %w", err)
 		}
+		ap.SetApprovedBy(wap, responseURI)
+	}
 
-		// Deprecated: set `approvedBy` property pointing
-		// to the Accept for back-compat with pre v0.20.0.
-		// Todo: remove this in v0.21.0.
-		if wap, ok := t.(ap.WithApprovedBy); ok {
-			responseURI, err := url.Parse(intReq.ResponseURI)
-			if err != nil {
-				return gtserror.Newf("error parsing responseURI: %w", err)
-			}
-			ap.SetApprovedBy(wap, responseURI)
+	// Set the appropriate authorization
+	// property depending on type.
+	switch intReq.InteractionType {
+	case gtsmodel.InteractionLike:
+		if wla, ok := t.(ap.WithLikeAuthorization); ok {
+			ap.SetLikeAuthorization(wla, approvedByURI)
 		}
-
-	default:
-		// This was not a polite request, but it was approved.
-		// Deprecated: set `approvedBy` property pointing
-		// to the Accept for back-compat with pre v0.20.0.
-		// Todo: remove this in v0.21.0.
-		if wap, ok := t.(ap.WithApprovedBy); ok {
-			ap.SetApprovedBy(wap, authedByURI)
+	case gtsmodel.InteractionReply:
+		if wra, ok := t.(ap.WithReplyAuthorization); ok {
+			ap.SetReplyAuthorization(wra, approvedByURI)
+		}
+	case gtsmodel.InteractionAnnounce:
+		if waa, ok := t.(ap.WithAnnounceAuthorization); ok {
+			ap.SetAnnounceAuthorization(waa, approvedByURI)
 		}
 	}
 

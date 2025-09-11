@@ -40,12 +40,15 @@ type InteractionRequest struct {
 	InteractingAccountID string `bun:"type:CHAR(26),nullzero,notnull"`
 
 	// Added in new model.
-	InteractionRequestURI string `bun:",nullzero,unique"`
+	InteractionRequestURI string `bun:",nullzero,notnull,unique"`
 
 	InteractionURI string `bun:",nullzero,notnull,unique"`
 
 	// Changed type from int to int16 in new model.
 	InteractionType int16 `bun:",notnull"`
+
+	// Added in new model.
+	Polite *bool `bun:",nullzero,notnull,default:false"`
 
 	AcceptedAt time.Time `bun:"type:timestamptz,nullzero"`
 
@@ -57,3 +60,9 @@ type InteractionRequest struct {
 	// Added in new model.
 	AuthorizationURI string `bun:",nullzero,unique"`
 }
+
+const (
+	LikeRequestSuffix     = "#LikeRequest"
+	ReplyRequestSuffix    = "#ReplyRequest"
+	AnnounceRequestSuffix = "#AnnounceRequest"
+)

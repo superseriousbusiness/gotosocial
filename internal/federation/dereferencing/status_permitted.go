@@ -368,14 +368,16 @@ func (d *Dereferencer) unpermittedByParent(
 	uri := ""
 
 	rejection := &gtsmodel.InteractionRequest{
-		ID:                   rejectID,
-		TargetStatusID:       inReplyToID,
-		TargetAccountID:      targetAccountID,
-		InteractingAccountID: reply.AccountID,
-		InteractionURI:       reply.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		ResponseURI:          uri,
-		RejectedAt:           time.Now(),
+		ID:                    rejectID,
+		TargetStatusID:        inReplyToID,
+		TargetAccountID:       targetAccountID,
+		InteractingAccountID:  reply.AccountID,
+		InteractionRequestURI: reply.URI + gtsmodel.ReplyRequestSuffix,
+		InteractionURI:        reply.URI,
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(false),
+		ResponseURI:           uri,
+		RejectedAt:            time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
@@ -500,14 +502,16 @@ func (d *Dereferencer) rejectedByPolicy(
 	// We haven't stored a rejected interaction
 	// request for this status yet, do it now.
 	rejection := &gtsmodel.InteractionRequest{
-		ID:                   rejectID,
-		TargetStatusID:       inReplyTo.ID,
-		TargetAccountID:      inReplyTo.AccountID,
-		InteractingAccountID: reply.AccountID,
-		InteractionURI:       reply.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		ResponseURI:          rejectURI,
-		RejectedAt:           time.Now(),
+		ID:                    rejectID,
+		TargetStatusID:        inReplyTo.ID,
+		TargetAccountID:       inReplyTo.AccountID,
+		InteractingAccountID:  reply.AccountID,
+		InteractionRequestURI: reply.URI + gtsmodel.ReplyRequestSuffix,
+		InteractionURI:        reply.URI,
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(false),
+		ResponseURI:           rejectURI,
+		RejectedAt:            time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {

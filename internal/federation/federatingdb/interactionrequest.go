@@ -276,6 +276,7 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        fave.URI,
 		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(true),
 		Like:                  fave,
 	}
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {
@@ -426,6 +427,7 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        ap.GetJSONLDId(statusable).String(),
 		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(true),
 		Reply:                 nil, // Not settable yet.
 	}
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {
@@ -536,6 +538,7 @@ func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAn
 		InteractionRequestURI: partial.intRequestURI,
 		InteractionURI:        boost.URI,
 		InteractionType:       gtsmodel.InteractionAnnounce,
+		Polite:                util.Ptr(true),
 		Announce:              boost,
 	}
 	switch err := f.state.DB.PutInteractionRequest(ctx, intReq); {

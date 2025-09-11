@@ -31,6 +31,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 func (f *DB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
@@ -305,18 +306,21 @@ func (f *DB) rejectStatusIRI(
 			InteractingAccountID: receivingAcct.ID,
 			InteractingAccount:   receivingAcct,
 			InteractionURI:       status.URI,
+			Polite:               util.Ptr(false),
 			ResponseURI:          activityID,
 			RejectedAt:           time.Now(),
 		}
 
 		if apObjectType == ap.ObjectNote {
 			// Reply.
+			req.InteractionRequestURI = status.URI + gtsmodel.ReplyRequestSuffix
 			req.InteractionType = gtsmodel.InteractionReply
 			req.TargetStatusID = status.InReplyToID
 			req.TargetStatus = status.InReplyTo
 			req.Reply = status
 		} else {
 			// Announce.
+			req.InteractionRequestURI = status.URI + gtsmodel.AnnounceRequestSuffix
 			req.InteractionType = gtsmodel.InteractionAnnounce
 			req.TargetStatusID = status.BoostOfID
 			req.TargetStatus = status.BoostOf
@@ -430,16 +434,18 @@ func (f *DB) rejectLikeIRI(
 		// No interaction request existed yet for this
 		// fave, create a pre-rejected request now.
 		req = &gtsmodel.InteractionRequest{
-			ID:                   id.NewULID(),
-			TargetAccountID:      requestingAcct.ID,
-			TargetAccount:        requestingAcct,
-			InteractingAccountID: receivingAcct.ID,
-			InteractingAccount:   receivingAcct,
-			InteractionURI:       fave.URI,
-			InteractionType:      gtsmodel.InteractionLike,
-			Like:                 fave,
-			ResponseURI:          activityID,
-			RejectedAt:           time.Now(),
+			ID:                    id.NewULID(),
+			TargetAccountID:       requestingAcct.ID,
+			TargetAccount:         requestingAcct,
+			InteractingAccountID:  receivingAcct.ID,
+			InteractingAccount:    receivingAcct,
+			InteractionRequestURI: fave.URI + gtsmodel.LikeRequestSuffix,
+			InteractionURI:        fave.URI,
+			InteractionType:       gtsmodel.InteractionLike,
+			Polite:                util.Ptr(false),
+			Like:                  fave,
+			ResponseURI:           activityID,
+			RejectedAt:            time.Now(),
 		}
 
 		if err := f.state.DB.PutInteractionRequest(ctx, req); err != nil {

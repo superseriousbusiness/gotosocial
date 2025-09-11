@@ -848,6 +848,7 @@ func (suite *FromFediAPITestSuite) TestCreateReplyRequest() {
 		InteractionRequestURI: intReqURI,
 		InteractionURI:        ap.GetJSONLDId(statusable).String(),
 		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(true),
 		Reply:                 nil, // Not settable yet.
 	}
 	if err := testStructs.State.DB.PutInteractionRequest(ctx, intReq); err != nil {

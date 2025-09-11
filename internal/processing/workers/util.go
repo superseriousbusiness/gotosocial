@@ -559,8 +559,8 @@ func (u *utils) impoliteFaveRequest(
 		return nil
 	}
 
-	// Create + store new interaction request.
-	req = typeutils.StatusFaveToInteractionRequest(fave)
+	// Create + store new impolite interaction request.
+	req = typeutils.StatusFaveToImpoliteInteractionRequest(fave)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -606,8 +606,8 @@ func (u *utils) impoliteReplyRequest(
 		return nil
 	}
 
-	// Create + store interaction request.
-	req = typeutils.StatusToInteractionRequest(reply)
+	// Create + store impolite interaction request.
+	req = typeutils.StatusToImpoliteInteractionRequest(reply)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -653,8 +653,8 @@ func (u *utils) impoliteAnnounceRequest(
 		return nil
 	}
 
-	// Create + store interaction request.
-	req = typeutils.StatusToInteractionRequest(boost)
+	// Create + store impolite interaction request.
+	req = typeutils.StatusToImpoliteInteractionRequest(boost)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}

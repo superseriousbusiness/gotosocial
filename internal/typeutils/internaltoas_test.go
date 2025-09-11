@@ -26,6 +26,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
@@ -959,8 +960,8 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
 	intReq := new(gtsmodel.InteractionRequest)
 	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
 
-	// Mark the status as politely approved by updating
-	// the status + corresponding interaction request.
+	// Mark the status as approved by updating the
+	// status + corresponding interaction request.
 	username := suite.testAccounts["local_account_2"].Username
 	intReq.ResponseURI = uris.GenerateURIForAccept(
 		username,
@@ -970,11 +971,18 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
 		username,
 		intReq.ID,
 	)
+	intReq.AcceptedAt = testrig.TimeMustParse("2024-11-01T11:00:00+02:00")
+
+	// Mark it as polite too.
+	intReq.Polite = util.Ptr(true)
+
 	if err := suite.state.DB.UpdateInteractionRequest(
 		ctx,
 		intReq,
 		"response_uri",
 		"authorization_uri",
+		"accepted_at",
+		"polite",
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -1083,24 +1091,30 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
 	intReq := new(gtsmodel.InteractionRequest)
 	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
 
-	// Mark the status as impolitely approved by updating
-	// the status + corresponding interaction request.
+	// Mark the status as approved by updating the
+	// status + corresponding interaction request.
 	username := suite.testAccounts["local_account_2"].Username
 	intReq.ResponseURI = uris.GenerateURIForAccept(
 		username,
 		intReq.ID,
 	)
-	intReq.InteractionRequestURI = ""
+	intReq.AuthorizationURI = uris.GenerateURIForAuthorization(
+		username,
+		intReq.ID,
+	)
+	intReq.AcceptedAt = testrig.TimeMustParse("2024-11-01T11:00:00+02:00")
+
 	if err := suite.state.DB.UpdateInteractionRequest(
 		ctx,
 		intReq,
 		"response_uri",
 		"authorization_uri",
+		"accepted_at",
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	testStatus.ApprovedByURI = intReq.ResponseURI
+	testStatus.ApprovedByURI = intReq.AuthorizationURI
 	if err := suite.state.DB.UpdateStatus(
 		ctx,
 		testStatus,
@@ -1179,6 +1193,7 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
     "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
     "type": "Collection"
   },
+  "replyAuthorization": "http://localhost:8080/users/1happyturtle/authorizations/01J5QVXCCEATJYSXM9H6MZT4JR",
   "sensitive": false,
   "summary": "",
   "tag": {
@@ -1565,22 +1580,24 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 }`, string(bytes1))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
+func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptAnnounce() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
 	req := &gtsmodel.InteractionRequest{
-		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		TargetStatusID:       "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		TargetStatus:         &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
-		TargetAccountID:      acceptingAccount.ID,
-		TargetAccount:        acceptingAccount,
-		InteractingAccountID: interactingAccount.ID,
-		InteractingAccount:   interactingAccount,
-		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
-		InteractionType:      gtsmodel.InteractionAnnounce,
-		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.AnnounceRequestSuffix,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionAnnounce,
+		Polite:                util.Ptr(false),
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
 	accept, err := suite.typeconverter.InteractionReqToASAccept(
@@ -1616,22 +1633,24 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 }`, string(b))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
+func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptLike() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
 	req := &gtsmodel.InteractionRequest{
-		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		TargetStatusID:       "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		TargetStatus:         &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
-		TargetAccountID:      acceptingAccount.ID,
-		TargetAccount:        acceptingAccount,
-		InteractingAccountID: interactingAccount.ID,
-		InteractingAccount:   interactingAccount,
-		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
-		InteractionType:      gtsmodel.InteractionLike,
-		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.LikeRequestSuffix,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(false),
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
 	accept, err := suite.typeconverter.InteractionReqToASAccept(
@@ -1656,7 +1675,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-  "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "object": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
   "target": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Accept"
@@ -1675,9 +1694,10 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLikePolite() {
 		TargetAccount:         acceptingAccount,
 		InteractingAccountID:  interactingAccount.ID,
 		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:       gtsmodel.InteractionLike,
-		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		Polite:                util.Ptr(true),
 		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AuthorizationURI:      "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
@@ -1721,7 +1741,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLikePolite() {
 }`, string(b))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAuthorization() {
+func (suite *InternalToASTestSuite) TestPoliteInteractionReqToASAuthorization() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
@@ -1735,6 +1755,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAuthorization() {
 		InteractingAccount:    interactingAccount,
 		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(true),
 		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
 		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AuthorizationURI:      "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",

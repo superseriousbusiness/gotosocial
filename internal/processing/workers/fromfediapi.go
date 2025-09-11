@@ -325,36 +325,33 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		intReqID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			TargetStatusID:       status.InReplyToID,
-			TargetAccountID:      status.InReplyToAccountID,
-			TargetAccount:        status.InReplyToAccount,
-			InteractingAccountID: status.AccountID,
-			InteractingAccount:   status.Account,
-			InteractionURI:       status.URI,
-			InteractionType:      gtsmodel.InteractionReply,
-			Reply:                status,
-			ResponseURI:          uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
-			AuthorizationURI:     uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    intReqID,
+			TargetStatusID:        status.InReplyToID,
+			TargetAccountID:       status.InReplyToAccountID,
+			TargetAccount:         status.InReplyToAccount,
+			InteractingAccountID:  status.AccountID,
+			InteractingAccount:    status.Account,
+			InteractionRequestURI: status.URI + gtsmodel.ReplyRequestSuffix,
+			InteractionURI:        status.URI,
+			InteractionType:       gtsmodel.InteractionReply,
+			Polite:                util.Ptr(false),
+			Reply:                 status,
+			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, intReqID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, intReqID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
 		// Mark the status as now approved.
-		//
-		// Because this was an "impolite" request, we will use the
-		// URI of the Accept rather than the URI of the authorization,
-		// for backwards compatibility with pre-v0.20.0 GtS instances.
-		//
-		// TODO: Change this in v0.21.0 to use the auth URI instead.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.ResponseURI
+		status.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -680,36 +677,33 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		intReqID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			TargetStatusID:       fave.StatusID,
-			TargetAccountID:      fave.TargetAccountID,
-			TargetAccount:        fave.TargetAccount,
-			InteractingAccountID: fave.AccountID,
-			InteractingAccount:   fave.Account,
-			InteractionURI:       fave.URI,
-			InteractionType:      gtsmodel.InteractionLike,
-			Like:                 fave,
-			ResponseURI:          uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
-			AuthorizationURI:     uris.GenerateURIForAuthorization(fave.TargetAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    intReqID,
+			TargetStatusID:        fave.StatusID,
+			TargetAccountID:       fave.TargetAccountID,
+			TargetAccount:         fave.TargetAccount,
+			InteractingAccountID:  fave.AccountID,
+			InteractingAccount:    fave.Account,
+			InteractionRequestURI: fave.URI + gtsmodel.LikeRequestSuffix,
+			InteractionURI:        fave.URI,
+			InteractionType:       gtsmodel.InteractionLike,
+			Polite:                util.Ptr(false),
+			Like:                  fave,
+			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, intReqID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, intReqID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
 		// Mark the fave itself as now approved.
-		//
-		// Because this was an "impolite" request, we will use the
-		// URI of the Accept rather than the URI of the authorization,
-		// for backwards compatibility with pre-v0.20.0 GtS instances.
-		//
-		// TODO: Change this in v0.21.0 to use the auth URI instead.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.ResponseURI
+		fave.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -794,7 +788,7 @@ func (p *fediAPI) CreateLikeRequest(ctx context.Context, fMsg *messages.FromFedi
 
 	// Mark the fave as approved.
 	req.Like.PendingApproval = util.Ptr(false)
-	req.Like.ApprovedByURI = req.ResponseURI
+	req.Like.ApprovedByURI = req.AuthorizationURI
 	req.Like.PreApproved = false
 
 	// Update in the db.
@@ -875,36 +869,33 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		intReqID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			TargetStatusID:       boost.BoostOfID,
-			TargetAccountID:      boost.BoostOfAccountID,
-			TargetAccount:        boost.BoostOfAccount,
-			InteractingAccountID: boost.AccountID,
-			InteractingAccount:   boost.Account,
-			InteractionURI:       boost.URI,
-			InteractionType:      gtsmodel.InteractionAnnounce,
-			Announce:             boost,
-			ResponseURI:          uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
-			AuthorizationURI:     uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    intReqID,
+			TargetStatusID:        boost.BoostOfID,
+			TargetAccountID:       boost.BoostOfAccountID,
+			TargetAccount:         boost.BoostOfAccount,
+			InteractingAccountID:  boost.AccountID,
+			InteractingAccount:    boost.Account,
+			InteractionRequestURI: boost.URI + gtsmodel.AnnounceRequestSuffix,
+			InteractionURI:        boost.URI,
+			InteractionType:       gtsmodel.InteractionAnnounce,
+			Polite:                util.Ptr(false),
+			Announce:              boost,
+			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, intReqID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, intReqID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
 		// Mark the boost itself as now approved.
-		//
-		// Because this was an "impolite" request, we will use the
-		// URI of the Accept rather than the URI of the authorization,
-		// for backwards compatibility with pre-v0.20.0 GtS instances.
-		//
-		// TODO: Change this in v0.21.0 to use the auth URI instead.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.ResponseURI
+		boost.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,

@@ -65,7 +65,7 @@ func (p *Processor) Accept(
 	defer unlock()
 
 	// Mark the request as accepted
-	// and generate a URI for it.
+	// and generate URIs for it.
 	req.AcceptedAt = time.Now()
 	req.ResponseURI = uris.GenerateURIForAccept(acct.Username, req.ID)
 	req.AuthorizationURI = uris.GenerateURIForAuthorization(acct.Username, req.ID)
@@ -132,15 +132,9 @@ func (p *Processor) acceptLike(
 	}
 
 	// Update the Like.
-	//
-	// For back-compat with pre-v0.20.0 GtS instances,
-	// we use the URI of the Accept instread of the URI
-	// of the authorization.
-	//
-	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Like.PendingApproval = util.Ptr(false)
 	req.Like.PreApproved = false
-	req.Like.ApprovedByURI = req.ResponseURI
+	req.Like.ApprovedByURI = req.AuthorizationURI
 	if err := p.state.DB.UpdateStatusFave(
 		ctx,
 		req.Like,
@@ -179,15 +173,9 @@ func (p *Processor) acceptReply(
 	}
 
 	// Update the Reply.
-	//
-	// For back-compat with pre-v0.20.0 GtS instances,
-	// we use the URI of the Accept instread of the URI
-	// of the authorization.
-	//
-	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Reply.PendingApproval = util.Ptr(false)
 	req.Reply.PreApproved = false
-	req.Reply.ApprovedByURI = req.ResponseURI
+	req.Reply.ApprovedByURI = req.AuthorizationURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Reply,
@@ -226,15 +214,9 @@ func (p *Processor) acceptAnnounce(
 	}
 
 	// Update the Announce.
-	//
-	// For back-compat with pre-v0.20.0 GtS instances,
-	// we use the URI of the Accept instread of the URI
-	// of the authorization.
-	//
-	// TODO: Change this in v0.21.0 to use the auth URI instead.
 	req.Announce.PendingApproval = util.Ptr(false)
 	req.Announce.PreApproved = false
-	req.Announce.ApprovedByURI = req.ResponseURI
+	req.Announce.ApprovedByURI = req.AuthorizationURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Announce,

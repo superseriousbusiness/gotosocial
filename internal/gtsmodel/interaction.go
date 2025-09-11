@@ -34,6 +34,20 @@ const (
 	InteractionAnnounce InteractionType = 2
 )
 
+const (
+	// Suffix to append to the URI of
+	// impolite Likes to mock a LikeRequest.
+	LikeRequestSuffix = "#LikeRequest"
+
+	// Suffix to append to the URI of
+	// impolite replies to mock a ReplyRequest.
+	ReplyRequestSuffix = "#ReplyRequest"
+
+	// Suffix to append to the URI of impolite
+	// Announces to mock an AnnounceRequest.
+	AnnounceRequestSuffix = "#AnnounceRequest"
+)
+
 // Stringifies this InteractionType in a
 // manner suitable for serving via the API.
 func (i InteractionType) String() string {
@@ -84,15 +98,20 @@ type InteractionRequest struct {
 	// URI of the Request, if this InteractionRequest originated from
 	// a polite Request type (LikeRequest, ReplyRequest, AnnounceRequest, etc.).
 	//
-	// Not set if interaction request results from an interaction
-	// (Like, Create (status), Announce, etc.) transmitted impolitely.
-	InteractionRequestURI string `bun:",nullzero,unique"`
+	// If the interaction request originated from an interaction
+	// (Like, Create (status), Announce, etc.) transmitted impolitely,
+	// this will be set to a mocked URI.
+	InteractionRequestURI string `bun:",nullzero,notnull,unique"`
 
 	// URI of the interaction itself.
 	InteractionURI string `bun:",nullzero,notnull,unique"`
 
 	// Type of interaction being requested.
 	InteractionType InteractionType `bun:",notnull"`
+
+	// True if this interaction request
+	// originated from a polite Request type.
+	Polite *bool `bun:",nullzero,notnull,default:false"`
 
 	// Set if InteractionType = InteractionLike.
 	// Column not stored in DB.
@@ -171,7 +190,7 @@ func (ir *InteractionRequest) IsRejected() bool {
 //   - from v0.21.0 onwards, we know about and can respond to both
 //     polite and impolite interaction requests, and we send out polite
 func (ir *InteractionRequest) IsPolite() bool {
-	return ir.InteractionRequestURI != ""
+	return *ir.Polite
 }
 
 // Interaction abstractly represents

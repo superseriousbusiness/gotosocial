@@ -21,10 +21,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/url"
+	"strings"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 
@@ -36,6 +40,8 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		const tmpTableName = "new_interaction_requests"
 		const tableName = "interaction_requests"
+		var host = config.GetHost()
+		var accountDomain = config.GetAccountDomain()
 
 		// Count number of interaction
 		// requests we need to update.
@@ -113,12 +119,79 @@ func init() {
 					newRequests[i].TargetStatusID = oldRequest.StatusID
 					newRequests[i].TargetAccountID = oldRequest.TargetAccountID
 					newRequests[i].InteractingAccountID = oldRequest.InteractingAccountID
-					newRequests[i].InteractionRequestURI = "" // this wasn't supported yet on old models
 					newRequests[i].InteractionURI = oldRequest.InteractionURI
 					newRequests[i].InteractionType = int16(oldRequest.InteractionType) // #nosec G115
 					newRequests[i].AcceptedAt = oldRequest.AcceptedAt
 					newRequests[i].RejectedAt = oldRequest.RejectedAt
 					newRequests[i].ResponseURI = oldRequest.URI
+					newRequests[i].Polite = util.Ptr(false) // old requests were always impolite
+
+					// If the request was accepted, and targeted
+					// a status on our instance, then generate an
+					// authorization URI for it, and reuse the
+					// interaction URI to build a fake interaction
+					// request URI, in order to be able to serve
+					// an Authorization for it that makes sense.
+					if oldRequest.AcceptedAt.IsZero() || oldRequest.URI == "" {
+						// Not accepted,
+						// nothing to do.
+						continue
+					}
+
+					// Check if one of our accepts.
+					acceptURI, err := url.Parse(oldRequest.URI)
+					if err != nil {
+						// Weird, skip this one.
+						log.Warnf(ctx,
+							"could not parse oldRequest.URI for interaction request %s,"+
+								" skipping forward-compat hack (don't worry, this is not a big deal): %v",
+							oldRequest.ID, err,
+						)
+						continue
+					}
+
+					if acceptURI.Host != host && acceptURI.Host != accountDomain {
+						// Not one of ours.
+						continue
+					}
+
+					// Do the nasty hack to bodge an authorization URI.
+					// Creates `https://example.org/users/aaa/authorizations/[ID]`
+					// from `https://example.org/users/aaa/authorizations/[ID]`.
+					authorizationURI := strings.ReplaceAll(
+						oldRequest.URI,
+						"/accepts/"+oldRequest.ID,
+						"/authorizations/"+oldRequest.ID,
+					)
+					newRequests[i].AuthorizationURI = authorizationURI
+
+					// Update the corresponding interaction
+					// with generated authorization URI.
+					var intUpdateQTable string
+					if oldRequest.InteractionType == old_gtsmodel.InteractionLike {
+						intUpdateQTable = "status_faves"
+					} else {
+						intUpdateQTable = "statuses"
+					}
+					if _, err := tx.
+						NewUpdate().
+						Table(intUpdateQTable).
+						Set("? = ?", bun.Ident("approved_by_uri"), authorizationURI).
+						Where("? = ?", bun.Ident("approved_by_uri"), oldRequest.URI).
+						Exec(ctx); err != nil {
+						return gtserror.Newf("error updating approved_by_uri: %w", err)
+					}
+
+					// Re-use the original interaction URI to create
+					// a mock interaction request URI on the new model.
+					switch oldRequest.InteractionType {
+					case old_gtsmodel.InteractionLike:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.LikeRequestSuffix
+					case old_gtsmodel.InteractionReply:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.ReplyRequestSuffix
+					case old_gtsmodel.InteractionAnnounce:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.AnnounceRequestSuffix
+					}
 				}
 
 				// Insert the converted interaction
