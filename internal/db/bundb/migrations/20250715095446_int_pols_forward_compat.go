@@ -72,10 +72,9 @@ func init() {
 			newRequests := make([]*new_gtsmodel.InteractionRequest, 0, batchsz)
 
 			for {
-				// Reset slices *without*
-				// clearing element memory,
-				// so we can reuse already
-				// allocated request models.
+				// Reset slices slices.
+				clear(oldRequests)
+				clear(newRequests)
 				oldRequests = oldRequests[:0]
 				newRequests = newRequests[:0]
 
@@ -106,19 +105,18 @@ func init() {
 
 				// Convert old request models to new.
 				for i, oldRequest := range oldRequests {
-					if newRequests[i] == nil {
-						newRequests[i] = new(new_gtsmodel.InteractionRequest)
+					newRequests[i] = &new_gtsmodel.InteractionRequest{
+						ID:                    oldRequest.ID,
+						TargetStatusID:        oldRequest.StatusID,
+						TargetAccountID:       oldRequest.TargetAccountID,
+						InteractingAccountID:  oldRequest.InteractingAccountID,
+						InteractionRequestURI: "", // This wasn't supported yet by old int reqs.
+						InteractionURI:        oldRequest.InteractionURI,
+						InteractionType:       int16(oldRequest.InteractionType), // #nosec G115
+						AcceptedAt:            oldRequest.AcceptedAt,
+						RejectedAt:            oldRequest.RejectedAt,
+						ResponseURI:           oldRequest.URI,
 					}
-					newRequests[i].ID = oldRequest.ID
-					newRequests[i].TargetStatusID = oldRequest.StatusID
-					newRequests[i].TargetAccountID = oldRequest.TargetAccountID
-					newRequests[i].InteractingAccountID = oldRequest.InteractingAccountID
-					newRequests[i].InteractionRequestURI = "" // this wasn't supported yet on old models
-					newRequests[i].InteractionURI = oldRequest.InteractionURI
-					newRequests[i].InteractionType = int16(oldRequest.InteractionType) // #nosec G115
-					newRequests[i].AcceptedAt = oldRequest.AcceptedAt
-					newRequests[i].RejectedAt = oldRequest.RejectedAt
-					newRequests[i].ResponseURI = oldRequest.URI
 				}
 
 				// Insert the converted interaction
