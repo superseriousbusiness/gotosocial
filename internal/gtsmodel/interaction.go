@@ -48,6 +48,15 @@ const (
 	AnnounceRequestSuffix = "#AnnounceRequest"
 )
 
+// A useless function that appends two strings, this exists largely
+// to indicate where a request URI is being generated as forward compatible
+// with our planned polite request flow fully introduced in v0.21.0.
+//
+// TODO: remove this in v0.21.0. everything the linter complains about after removing this, needs updating.
+func ForwardCompatibleInteractionRequestURI(interactionURI string, suffix string) string {
+	return interactionURI + suffix
+}
+
 // Stringifies this InteractionType in a
 // manner suitable for serving via the API.
 func (i InteractionType) String() string {

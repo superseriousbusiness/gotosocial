@@ -327,21 +327,21 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 
 		// Store an already-accepted
 		// impolite interaction request.
-		intReqID := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                    intReqID,
+			ID:                    requestID,
 			TargetStatusID:        status.InReplyToID,
 			TargetAccountID:       status.InReplyToAccountID,
 			TargetAccount:         status.InReplyToAccount,
 			InteractingAccountID:  status.AccountID,
 			InteractingAccount:    status.Account,
-			InteractionRequestURI: status.URI + gtsmodel.ReplyRequestSuffix,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix),
 			InteractionURI:        status.URI,
 			InteractionType:       gtsmodel.InteractionReply,
 			Polite:                util.Ptr(false),
 			Reply:                 status,
-			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, intReqID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, intReqID),
+			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, requestID),
 			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -679,21 +679,21 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 
 		// Store an already-accepted
 		// impolite interaction request.
-		intReqID := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                    intReqID,
+			ID:                    requestID,
 			TargetStatusID:        fave.StatusID,
 			TargetAccountID:       fave.TargetAccountID,
 			TargetAccount:         fave.TargetAccount,
 			InteractingAccountID:  fave.AccountID,
 			InteractingAccount:    fave.Account,
-			InteractionRequestURI: fave.URI + gtsmodel.LikeRequestSuffix,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
 			InteractionURI:        fave.URI,
 			InteractionType:       gtsmodel.InteractionLike,
 			Polite:                util.Ptr(false),
 			Like:                  fave,
-			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, intReqID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, intReqID),
+			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, requestID),
 			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -871,21 +871,21 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 
 		// Store an already-accepted
 		// impolite interaction request.
-		intReqID := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                    intReqID,
+			ID:                    requestID,
 			TargetStatusID:        boost.BoostOfID,
 			TargetAccountID:       boost.BoostOfAccountID,
 			TargetAccount:         boost.BoostOfAccount,
 			InteractingAccountID:  boost.AccountID,
 			InteractingAccount:    boost.Account,
-			InteractionRequestURI: boost.URI + gtsmodel.AnnounceRequestSuffix,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(boost.URI, gtsmodel.AnnounceRequestSuffix),
 			InteractionURI:        boost.URI,
 			InteractionType:       gtsmodel.InteractionAnnounce,
 			Polite:                util.Ptr(false),
 			Announce:              boost,
-			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, intReqID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, intReqID),
+			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, requestID),
 			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {

@@ -313,14 +313,14 @@ func (f *DB) rejectStatusIRI(
 
 		if apObjectType == ap.ObjectNote {
 			// Reply.
-			req.InteractionRequestURI = status.URI + gtsmodel.ReplyRequestSuffix
+			req.InteractionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix)
 			req.InteractionType = gtsmodel.InteractionReply
 			req.TargetStatusID = status.InReplyToID
 			req.TargetStatus = status.InReplyTo
 			req.Reply = status
 		} else {
 			// Announce.
-			req.InteractionRequestURI = status.URI + gtsmodel.AnnounceRequestSuffix
+			req.InteractionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.AnnounceRequestSuffix)
 			req.InteractionType = gtsmodel.InteractionAnnounce
 			req.TargetStatusID = status.BoostOfID
 			req.TargetStatus = status.BoostOf
@@ -439,7 +439,7 @@ func (f *DB) rejectLikeIRI(
 			TargetAccount:         requestingAcct,
 			InteractingAccountID:  receivingAcct.ID,
 			InteractingAccount:    receivingAcct,
-			InteractionRequestURI: fave.URI + gtsmodel.LikeRequestSuffix,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
 			InteractionURI:        fave.URI,
 			InteractionType:       gtsmodel.InteractionLike,
 			Polite:                util.Ptr(false),

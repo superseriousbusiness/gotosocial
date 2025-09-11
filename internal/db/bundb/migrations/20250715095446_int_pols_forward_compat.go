@@ -134,10 +134,9 @@ func init() {
 						continue
 					}
 
-					// Check if one of our accepts.
+					// Parse URI details of accept URI string.
 					acceptURI, err := url.Parse(oldRequest.URI)
 					if err != nil {
-						// Weird, skip this one.
 						log.Warnf(ctx,
 							"could not parse oldRequest.URI for interaction request %s,"+
 								" skipping forward-compat hack (don't worry, this is not a big deal): %v",
@@ -146,7 +145,9 @@ func init() {
 						continue
 					}
 
+					// Check whether accept URI originated from this instance.
 					if acceptURI.Host != host && acceptURI.Host != accountDomain {
+
 						// Not an accept from
 						// us, leave it alone.
 						continue
@@ -162,17 +163,19 @@ func init() {
 					)
 					newRequests[i].AuthorizationURI = authorizationURI
 
+					var updateTableName string
+
+					// Determine which table will have corresponding approved_by_uri.
+					if oldRequest.InteractionType == old_gtsmodel.InteractionLike {
+						updateTableName = "status_faves"
+					} else {
+						updateTableName = "statuses"
+					}
+
 					// Update the corresponding interaction
 					// with generated authorization URI.
-					var intUpdateQTable string
-					if oldRequest.InteractionType == old_gtsmodel.InteractionLike {
-						intUpdateQTable = "status_faves"
-					} else {
-						intUpdateQTable = "statuses"
-					}
-					if _, err := tx.
-						NewUpdate().
-						Table(intUpdateQTable).
+					if _, err := tx.NewUpdate().
+						Table(updateTableName).
 						Set("? = ?", bun.Ident("approved_by_uri"), authorizationURI).
 						Where("? = ?", bun.Ident("approved_by_uri"), oldRequest.URI).
 						Exec(ctx); err != nil {

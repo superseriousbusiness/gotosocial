@@ -124,7 +124,7 @@ func StatusToImpoliteInteractionRequest(status *gtsmodel.Status) *gtsmodel.Inter
 		target = status.InReplyTo
 		targetAccountID = status.InReplyToAccountID
 		targetAccount = status.InReplyToAccount
-		interactionRequestURI = status.URI + gtsmodel.AnnounceRequestSuffix
+		interactionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix)
 		interactionType = gtsmodel.InteractionReply
 		reply = status
 	} else {
@@ -133,7 +133,7 @@ func StatusToImpoliteInteractionRequest(status *gtsmodel.Status) *gtsmodel.Inter
 		target = status.BoostOf
 		targetAccountID = status.BoostOfAccountID
 		targetAccount = status.BoostOfAccount
-		interactionRequestURI = status.URI + gtsmodel.AnnounceRequestSuffix
+		interactionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.AnnounceRequestSuffix)
 		interactionType = gtsmodel.InteractionAnnounce
 		announce = status
 	}
@@ -157,7 +157,6 @@ func StatusToImpoliteInteractionRequest(status *gtsmodel.Status) *gtsmodel.Inter
 
 func StatusFaveToImpoliteInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel.InteractionRequest {
 	reqID := id.NewULIDFromTime(fave.CreatedAt)
-
 	return &gtsmodel.InteractionRequest{
 		ID:                    reqID,
 		TargetStatusID:        fave.StatusID,
@@ -166,7 +165,7 @@ func StatusFaveToImpoliteInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel
 		TargetAccount:         fave.TargetAccount,
 		InteractingAccountID:  fave.AccountID,
 		InteractingAccount:    fave.Account,
-		InteractionRequestURI: fave.URI + gtsmodel.LikeRequestSuffix,
+		InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
 		InteractionURI:        fave.URI,
 		InteractionType:       gtsmodel.InteractionLike,
 		Polite:                util.Ptr(false),
