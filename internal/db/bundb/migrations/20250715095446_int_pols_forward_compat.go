@@ -78,10 +78,9 @@ func init() {
 			newRequests := make([]*new_gtsmodel.InteractionRequest, 0, batchsz)
 
 			for {
-				// Reset slices *without*
-				// clearing element memory,
-				// so we can reuse already
-				// allocated request models.
+				// Reset slices slices.
+				clear(oldRequests)
+				clear(newRequests)
 				oldRequests = oldRequests[:0]
 				newRequests = newRequests[:0]
 
@@ -112,29 +111,26 @@ func init() {
 
 				// Convert old request models to new.
 				for i, oldRequest := range oldRequests {
-					if newRequests[i] == nil {
-						newRequests[i] = new(new_gtsmodel.InteractionRequest)
+					newRequests[i] = &new_gtsmodel.InteractionRequest{
+						ID:                   oldRequest.ID,
+						TargetStatusID:       oldRequest.StatusID,
+						TargetAccountID:      oldRequest.TargetAccountID,
+						InteractingAccountID: oldRequest.InteractingAccountID,
+						InteractionURI:       oldRequest.InteractionURI,
+						InteractionType:      int16(oldRequest.InteractionType), // #nosec G115
+						Polite:               util.Ptr(false),                   // old requests were always impolite
+						AcceptedAt:           oldRequest.AcceptedAt,
+						RejectedAt:           oldRequest.RejectedAt,
+						ResponseURI:          oldRequest.URI,
 					}
-					newRequests[i].ID = oldRequest.ID
-					newRequests[i].TargetStatusID = oldRequest.StatusID
-					newRequests[i].TargetAccountID = oldRequest.TargetAccountID
-					newRequests[i].InteractingAccountID = oldRequest.InteractingAccountID
-					newRequests[i].InteractionURI = oldRequest.InteractionURI
-					newRequests[i].InteractionType = int16(oldRequest.InteractionType) // #nosec G115
-					newRequests[i].AcceptedAt = oldRequest.AcceptedAt
-					newRequests[i].RejectedAt = oldRequest.RejectedAt
-					newRequests[i].ResponseURI = oldRequest.URI
-					newRequests[i].Polite = util.Ptr(false) // old requests were always impolite
 
-					// If the request was accepted, and targeted
-					// a status on our instance, then generate an
-					// authorization URI for it, and reuse the
-					// interaction URI to build a fake interaction
-					// request URI, in order to be able to serve
-					// an Authorization for it that makes sense.
+					// If the request was accepted by us, then generate an
+					// authorization URI for it, and reuse the interaction
+					// URI to build a mock interaction request URI, in order
+					// to be able to serve an Authorization if necessary.
 					if oldRequest.AcceptedAt.IsZero() || oldRequest.URI == "" {
-						// Not accepted,
-						// nothing to do.
+						// Wasn't accepted,
+						// nothing else to do.
 						continue
 					}
 
@@ -151,13 +147,14 @@ func init() {
 					}
 
 					if acceptURI.Host != host && acceptURI.Host != accountDomain {
-						// Not one of ours.
+						// Not an accept from
+						// us, leave it alone.
 						continue
 					}
 
-					// Do the nasty hack to bodge an authorization URI.
+					// Reuse the Accept URI to create an Authorization URI.
 					// Creates `https://example.org/users/aaa/authorizations/[ID]`
-					// from `https://example.org/users/aaa/authorizations/[ID]`.
+					// from `https://example.org/users/aaa/accepts/[ID]`.
 					authorizationURI := strings.ReplaceAll(
 						oldRequest.URI,
 						"/accepts/"+oldRequest.ID,
