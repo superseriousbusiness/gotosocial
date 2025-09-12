@@ -146,7 +146,7 @@ func init() {
 					}
 
 					// Check whether accept URI originated from this instance.
-					if acceptURI.Host != host && acceptURI.Host != accountDomain {
+					if !(acceptURI.Host == host || acceptURI.Host == accountDomain) {
 
 						// Not an accept from
 						// us, leave it alone.
