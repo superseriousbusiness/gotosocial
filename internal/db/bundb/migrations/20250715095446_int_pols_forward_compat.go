@@ -77,6 +77,8 @@ func init() {
 			oldRequests := make([]*old_gtsmodel.InteractionRequest, 0, batchsz)
 			newRequests := make([]*new_gtsmodel.InteractionRequest, 0, batchsz)
 
+			log.Info(ctx, "migrating interaction requests to new table, this may take some time!")
+		outer:
 			for {
 				// Reset slices slices.
 				clear(oldRequests)
@@ -97,7 +99,7 @@ func init() {
 
 				// Reached end of requests.
 				if len(oldRequests) == 0 {
-					break
+					break outer
 				}
 
 				// Set next maxID value from old requests.
@@ -110,6 +112,7 @@ func init() {
 				}
 
 				// Convert old request models to new.
+			inner:
 				for i, oldRequest := range oldRequests {
 					newRequests[i] = &new_gtsmodel.InteractionRequest{
 						ID:                   oldRequest.ID,
@@ -131,7 +134,7 @@ func init() {
 					if oldRequest.AcceptedAt.IsZero() || oldRequest.URI == "" {
 						// Wasn't accepted,
 						// nothing else to do.
-						continue
+						continue inner
 					}
 
 					// Parse URI details of accept URI string.
@@ -142,7 +145,7 @@ func init() {
 								" skipping forward-compat hack (don't worry, this is not a big deal): %v",
 							oldRequest.ID, err,
 						)
-						continue
+						continue inner
 					}
 
 					// Check whether accept URI originated from this instance.
@@ -150,7 +153,7 @@ func init() {
 
 						// Not an accept from
 						// us, leave it alone.
-						continue
+						continue inner
 					}
 
 					// Reuse the Accept URI to create an Authorization URI.
@@ -177,7 +180,7 @@ func init() {
 					if _, err := tx.NewUpdate().
 						Table(updateTableName).
 						Set("? = ?", bun.Ident("approved_by_uri"), authorizationURI).
-						Where("? = ?", bun.Ident("approved_by_uri"), oldRequest.URI).
+						Where("? = ?", bun.Ident("uri"), oldRequest.InteractionURI).
 						Exec(ctx); err != nil {
 						return gtserror.Newf("error updating approved_by_uri: %w", err)
 					}
