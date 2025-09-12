@@ -198,9 +198,10 @@ func init() {
 
 				// Insert the converted interaction
 				// request models to new table.
-				if _, err := tx.NewInsert().
-					Table(tmpTableName).
+				if _, err := tx.
+					NewInsert().
 					Model(&newRequests).
+					Returning("").
 					Exec(ctx); err != nil {
 					return gtserror.Newf("error inserting interaction requests: %w", err)
 				}
