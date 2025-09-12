@@ -2107,12 +2107,11 @@ func (c *Converter) InteractionReqToASAccept(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
-	// Set id to the URI of
-	// interaction request.
+	// Set id.
 	ap.SetJSONLDId(accept, acceptID)
 
-	// Actor is the account that
-	// owns the approval / accept.
+	// Actor is the account
+	// Accepting the interaction.
 	ap.AppendActorIRIs(accept, actorIRI)
 
 	polite := req.IsPolite()
@@ -2265,28 +2264,80 @@ func (c *Converter) InteractionReqToASReject(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
-	// Set id to the URI of
-	// interaction request.
+	// Set id.
 	ap.SetJSONLDId(reject, rejectID)
 
-	// Actor is the account that
-	// owns the approval / reject.
+	// Actor is the account
+	// Rejecting the interaction.
 	ap.AppendActorIRIs(reject, actorIRI)
 
-	// Object is the interaction URI.
-	ap.AppendObjectIRIs(reject, objectIRI)
+	polite := req.IsPolite()
+	if polite {
+		// If rejecting a polite request, put
+		// a barebones version of the *Request
+		// in the `object` property.
+		var (
+			objProp = streams.NewActivityStreamsObjectProperty()
+			ir      ap.InteractionRequestable
+		)
+		switch req.InteractionType {
+		case gtsmodel.InteractionLike:
+			v := streams.NewGoToSocialLikeRequest()
+			objProp.AppendGoToSocialLikeRequest(v)
+			ir = v
+		case gtsmodel.InteractionReply:
+			v := streams.NewGoToSocialReplyRequest()
+			objProp.AppendGoToSocialReplyRequest(v)
+			ir = v
+		case gtsmodel.InteractionAnnounce:
+			v := streams.NewGoToSocialAnnounceRequest()
+			objProp.AppendGoToSocialAnnounceRequest(v)
+			ir = v
+		}
 
-	// Target is the URI of the
-	// status being interacted with.
-	ap.AppendTargetIRIs(reject, targetIRI)
+		// URI of the interaction request.
+		if err := ap.SetJSONLDIdStr(ir, req.InteractionRequestURI); err != nil {
+			return nil, err
+		}
+
+		// URI of the interacting actor.
+		ap.AppendActorIRIs(ir, toIRI)
+
+		// URI of the status.
+		ap.AppendObjectIRIs(ir, targetIRI)
+
+		// URI of the interaction.
+		ap.AppendInstrumentIRIs(ir, objectIRI)
+
+		// Set the thing.
+		reject.SetActivityStreamsObject(objProp)
+
+	} else {
+		// If rejecting an impolite request, just set
+		// interaction URI as object and target status
+		// IRI as target.
+		//
+		// TODO: remove this path in v0.21.0 and send a
+		// Reject of a Request for impolite requests too.
+		ap.AppendObjectIRIs(reject, objectIRI)
+		ap.AppendTargetIRIs(reject, targetIRI)
+	}
 
 	// Address to the owner
 	// of interaction URI.
 	ap.AppendTo(reject, toIRI)
 
-	// Whether or not we cc this Reject to
-	// followers and public depends on the
-	// type of interaction it Rejects.
+	// If the request is polite, send
+	// the Reject only to the requester,
+	// no need to cc anything.
+	if polite {
+		return reject, nil
+	}
+
+	// If the request was impolite, it's
+	// helpful for federation to distribute
+	// the Reject to our followers as well,
+	// depending on the type of interaction.
 
 	var cc bool
 	switch req.InteractionType {
