@@ -105,16 +105,10 @@ func init() {
 				// Set next maxID value from old requests.
 				maxID = oldRequests[len(oldRequests)-1].ID
 
-				// Reslice new to equal that of old requests.
-				newRequests = newRequests[:len(oldRequests)]
-				if len(newRequests) != len(oldRequests) {
-					panic(gtserror.New("BCD"))
-				}
-
-				// Convert old request models to new.
 			inner:
-				for i, oldRequest := range oldRequests {
-					newRequests[i] = &new_gtsmodel.InteractionRequest{
+				// Convert old request models to new.
+				for _, oldRequest := range oldRequests {
+					newRequest := &new_gtsmodel.InteractionRequest{
 						ID:                   oldRequest.ID,
 						TargetStatusID:       oldRequest.StatusID,
 						TargetAccountID:      oldRequest.TargetAccountID,
@@ -127,21 +121,27 @@ func init() {
 						ResponseURI:          oldRequest.URI,
 					}
 
+					// Append new request to slice,
+					// though we continue operating on
+					// its ptr in the rest of this loop.
+					newRequests = append(newRequests,
+						newRequest)
+
 					// Re-use the original interaction URI to create
 					// a mock interaction request URI on the new model.
 					switch oldRequest.InteractionType {
 					case old_gtsmodel.InteractionLike:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.LikeRequestSuffix
+						newRequest.InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.LikeRequestSuffix
 					case old_gtsmodel.InteractionReply:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.ReplyRequestSuffix
+						newRequest.InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.ReplyRequestSuffix
 					case old_gtsmodel.InteractionAnnounce:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.AnnounceRequestSuffix
+						newRequest.InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.AnnounceRequestSuffix
 					}
 
-					// If the request was accepted by us, then generate an
-					// authorization URI for it, in order to be able to serve
-					// an Authorization if necessary.
+					// If the request was accepted by us, then generate an authorization
+					// URI for it, in order to be able to serve an Authorization if necessary.
 					if oldRequest.AcceptedAt.IsZero() || oldRequest.URI == "" {
+
 						// Wasn't accepted,
 						// nothing else to do.
 						continue inner
@@ -150,11 +150,9 @@ func init() {
 					// Parse URI details of accept URI string.
 					acceptURI, err := url.Parse(oldRequest.URI)
 					if err != nil {
-						log.Warnf(ctx,
-							"could not parse oldRequest.URI for interaction request %s,"+
-								" skipping forward-compat hack (don't worry, this is not a big deal): %v",
-							oldRequest.ID, err,
-						)
+						log.Warnf(ctx, "could not parse oldRequest.URI for interaction request %s,"+
+							" skipping forward-compat hack (don't worry, this is not a big deal): %v",
+							oldRequest.ID, err)
 						continue inner
 					}
 
@@ -174,7 +172,7 @@ func init() {
 						"/accepts/"+oldRequest.ID,
 						"/authorizations/"+oldRequest.ID,
 					)
-					newRequests[i].AuthorizationURI = authorizationURI
+					newRequest.AuthorizationURI = authorizationURI
 
 					var updateTableName string
 
@@ -196,12 +194,11 @@ func init() {
 					}
 				}
 
-				// Insert the converted interaction
+				// Insert converted interaction
 				// request models to new table.
 				if _, err := tx.
 					NewInsert().
 					Model(&newRequests).
-					Returning("").
 					Exec(ctx); err != nil {
 					return gtserror.Newf("error inserting interaction requests: %w", err)
 				}
