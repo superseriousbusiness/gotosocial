@@ -127,10 +127,20 @@ func init() {
 						ResponseURI:          oldRequest.URI,
 					}
 
+					// Re-use the original interaction URI to create
+					// a mock interaction request URI on the new model.
+					switch oldRequest.InteractionType {
+					case old_gtsmodel.InteractionLike:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.LikeRequestSuffix
+					case old_gtsmodel.InteractionReply:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.ReplyRequestSuffix
+					case old_gtsmodel.InteractionAnnounce:
+						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.AnnounceRequestSuffix
+					}
+
 					// If the request was accepted by us, then generate an
-					// authorization URI for it, and reuse the interaction
-					// URI to build a mock interaction request URI, in order
-					// to be able to serve an Authorization if necessary.
+					// authorization URI for it, in order to be able to serve
+					// an Authorization if necessary.
 					if oldRequest.AcceptedAt.IsZero() || oldRequest.URI == "" {
 						// Wasn't accepted,
 						// nothing else to do.
@@ -183,17 +193,6 @@ func init() {
 						Where("? = ?", bun.Ident("uri"), oldRequest.InteractionURI).
 						Exec(ctx); err != nil {
 						return gtserror.Newf("error updating approved_by_uri: %w", err)
-					}
-
-					// Re-use the original interaction URI to create
-					// a mock interaction request URI on the new model.
-					switch oldRequest.InteractionType {
-					case old_gtsmodel.InteractionLike:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.LikeRequestSuffix
-					case old_gtsmodel.InteractionReply:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.ReplyRequestSuffix
-					case old_gtsmodel.InteractionAnnounce:
-						newRequests[i].InteractionRequestURI = oldRequest.InteractionURI + new_gtsmodel.AnnounceRequestSuffix
 					}
 				}
 
