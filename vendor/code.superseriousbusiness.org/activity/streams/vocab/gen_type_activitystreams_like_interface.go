@@ -131,6 +131,9 @@ type ActivityStreamsLike interface {
 	// GetGoToSocialApprovedBy returns the "approvedBy" property if it exists,
 	// and nil otherwise.
 	GetGoToSocialApprovedBy() GoToSocialApprovedByProperty
+	// GetGoToSocialLikeAuthorization returns the "likeAuthorization" property
+	// if it exists, and nil otherwise.
+	GetGoToSocialLikeAuthorization() GoToSocialLikeAuthorizationProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetJSONLDType returns the "type" property if it exists, and nil
@@ -234,6 +237,8 @@ type ActivityStreamsLike interface {
 	SetActivityStreamsUrl(i ActivityStreamsUrlProperty)
 	// SetGoToSocialApprovedBy sets the "approvedBy" property.
 	SetGoToSocialApprovedBy(i GoToSocialApprovedByProperty)
+	// SetGoToSocialLikeAuthorization sets the "likeAuthorization" property.
+	SetGoToSocialLikeAuthorization(i GoToSocialLikeAuthorizationProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// SetJSONLDType sets the "type" property.

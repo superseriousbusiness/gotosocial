@@ -42,18 +42,14 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 	testNote := testrig.NewAPNote(
-		testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
-		testrig.URLMustParse("http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
-		time.Now(),
-		"boobies",
-		"",
-		testrig.URLMustParse(testAccount.URI),
-		[]*url.URL{testrig.URLMustParse(testAccount.FollowersURI)},
-		nil,
-		false,
-		nil,
-		nil,
-		nil,
+		&testrig.NewAPNoteParams{
+			ID:           testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
+			URL:          testrig.URLMustParse("http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
+			CreatedAt:    time.Now(),
+			Content:      "boobies",
+			AttributedTo: testrig.URLMustParse(testAccount.URI),
+			To:           []*url.URL{testrig.URLMustParse(testAccount.FollowersURI)},
+		},
 	)
 	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), time.Now(), testNote)
 
@@ -98,18 +94,14 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	suite.NoError(err)
 
 	testNote := testrig.NewAPNote(
-		testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
-		testrig.URLMustParse("http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
-		testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
-		"boobies",
-		"",
-		testrig.URLMustParse(testAccount.URI),
-		[]*url.URL{testrig.URLMustParse(testAccount.FollowersURI)},
-		nil,
-		false,
-		nil,
-		nil,
-		nil,
+		&testrig.NewAPNoteParams{
+			ID:           testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
+			URL:          testrig.URLMustParse("http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
+			CreatedAt:    testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
+			Content:      "boobies",
+			AttributedTo: testrig.URLMustParse(testAccount.URI),
+			To:           []*url.URL{testrig.URLMustParse(testAccount.FollowersURI)},
+		},
 	)
 	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), testrig.TimeMustParse("2022-06-02T12:22:21+02:00"), testNote)
 

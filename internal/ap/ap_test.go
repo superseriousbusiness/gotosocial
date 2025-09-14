@@ -110,7 +110,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Anyone can like.
 	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canLikeAlwaysProp.AppendIRI(ap.PublicURI())
+	canLikeAlwaysProp.AppendIRI(ap.PublicIRI())
 	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
 
 	// Empty approvalRequired.
@@ -127,7 +127,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Anyone can reply.
 	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canReplyAlwaysProp.AppendIRI(ap.PublicURI())
+	canReplyAlwaysProp.AppendIRI(ap.PublicIRI())
 	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
 
 	// Set empty approvalRequired.
@@ -150,7 +150,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Public requires approval to announce.
 	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	canAnnounceApprovalRequiredProp.AppendIRI(ap.PublicURI())
+	canAnnounceApprovalRequiredProp.AppendIRI(ap.PublicIRI())
 	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
 
 	// Set canAnnounce on the policy.
@@ -265,7 +265,7 @@ func addressable1() ap.Addressable {
 	note := streams.NewActivityStreamsNote()
 
 	toProp := streams.NewActivityStreamsToProperty()
-	toProp.AppendIRI(ap.PublicURI())
+	toProp.AppendIRI(ap.PublicIRI())
 
 	note.SetActivityStreamsTo(toProp)
 
@@ -287,7 +287,7 @@ func addressable2() ap.Addressable {
 	note.SetActivityStreamsTo(toProp)
 
 	ccProp := streams.NewActivityStreamsCcProperty()
-	ccProp.AppendIRI(ap.PublicURI())
+	ccProp.AppendIRI(ap.PublicIRI())
 
 	note.SetActivityStreamsCc(ccProp)
 

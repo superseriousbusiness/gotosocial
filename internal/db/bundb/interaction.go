@@ -58,31 +58,45 @@ func (i *interactionDB) GetInteractionRequestByID(ctx context.Context, id string
 	)
 }
 
-func (i *interactionDB) GetInteractionRequestByInteractionURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error) {
+func (i *interactionDB) GetInteractionRequestByInteractionURI(ctx context.Context, intURI string) (*gtsmodel.InteractionRequest, error) {
 	return i.getInteractionRequest(
 		ctx,
 		"InteractionURI",
 		func(request *gtsmodel.InteractionRequest) error {
 			return i.
 				newInteractionRequestQ(request).
-				Where("? = ?", bun.Ident("interaction_request.interaction_uri"), uri).
+				Where("? = ?", bun.Ident("interaction_request.interaction_uri"), intURI).
 				Scan(ctx)
 		},
-		uri,
+		intURI,
 	)
 }
 
-func (i *interactionDB) GetInteractionRequestByURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error) {
+func (i *interactionDB) GetInteractionRequestByResponseURI(ctx context.Context, respURI string) (*gtsmodel.InteractionRequest, error) {
 	return i.getInteractionRequest(
 		ctx,
-		"URI",
+		"ResponseURI",
 		func(request *gtsmodel.InteractionRequest) error {
 			return i.
 				newInteractionRequestQ(request).
-				Where("? = ?", bun.Ident("interaction_request.uri"), uri).
+				Where("? = ?", bun.Ident("interaction_request.response_uri"), respURI).
 				Scan(ctx)
 		},
-		uri,
+		respURI,
+	)
+}
+
+func (i *interactionDB) GetInteractionRequestByAuthorizationURI(ctx context.Context, authURI string) (*gtsmodel.InteractionRequest, error) {
+	return i.getInteractionRequest(
+		ctx,
+		"AuthorizationURI",
+		func(request *gtsmodel.InteractionRequest) error {
+			return i.
+				newInteractionRequestQ(request).
+				Where("? = ?", bun.Ident("interaction_request.authorization_uri"), authURI).
+				Scan(ctx)
+		},
+		authURI,
 	)
 }
 
@@ -173,11 +187,11 @@ func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gts
 		errs = gtserror.NewMultiError(4)
 	)
 
-	if req.Status == nil {
+	if req.TargetStatus == nil {
 		// Target status is not set, fetch from the database.
-		req.Status, err = i.state.DB.GetStatusByID(
+		req.TargetStatus, err = i.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			req.StatusID,
+			req.TargetStatusID,
 		)
 		if err != nil {
 			errs.Appendf("error populating interactionRequest target: %w", err)

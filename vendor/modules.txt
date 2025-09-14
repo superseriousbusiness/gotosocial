@@ -1,4 +1,4 @@
-# code.superseriousbusiness.org/activity v1.16.0
+# code.superseriousbusiness.org/activity v1.17.0
 ## explicit; go 1.23
 code.superseriousbusiness.org/activity/pub
 code.superseriousbusiness.org/activity/streams
@@ -139,6 +139,7 @@ code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_artist
 code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_library
 code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_track
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_always
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_announceauthorization
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvalrequired
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvedby
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_automaticapproval
@@ -151,7 +152,9 @@ code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestop
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_likeauthorization
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_manualapproval
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_replyauthorization
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceapproval
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceauthorization
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announcerequest

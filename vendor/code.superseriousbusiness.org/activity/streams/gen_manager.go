@@ -140,6 +140,7 @@ import (
 	typelibrary "code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_library"
 	typetrack "code.superseriousbusiness.org/activity/streams/impl/funkwhale/type_track"
 	propertyalways "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_always"
+	propertyannounceauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_announceauthorization"
 	propertyapprovalrequired "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvedby"
 	propertyautomaticapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_automaticapproval"
@@ -152,7 +153,9 @@ import (
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
+	propertylikeauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_likeauthorization"
 	propertymanualapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_manualapproval"
+	propertyreplyauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_replyauthorization"
 	typeannounceapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceapproval"
 	typeannounceauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announceauthorization"
 	typeannouncerequest "code.superseriousbusiness.org/activity/streams/impl/gotosocial/type_announcerequest"
@@ -344,6 +347,19 @@ func (this Manager) DeserializeAnnounceApprovalGoToSocial() func(map[string]inte
 func (this Manager) DeserializeAnnounceAuthorizationGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceAuthorization, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialAnnounceAuthorization, error) {
 		i, err := typeannounceauthorization.DeserializeAnnounceAuthorization(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeAnnounceAuthorizationPropertyGoToSocial returns the deserialization
+// method for the "GoToSocialAnnounceAuthorizationProperty" non-functional
+// property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeAnnounceAuthorizationPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceAuthorizationProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialAnnounceAuthorizationProperty, error) {
+		i, err := propertyannounceauthorization.DeserializeAnnounceAuthorizationProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1469,6 +1485,19 @@ func (this Manager) DeserializeLikeAuthorizationGoToSocial() func(map[string]int
 	}
 }
 
+// DeserializeLikeAuthorizationPropertyGoToSocial returns the deserialization
+// method for the "GoToSocialLikeAuthorizationProperty" non-functional
+// property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeLikeAuthorizationPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeAuthorizationProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialLikeAuthorizationProperty, error) {
+		i, err := propertylikeauthorization.DeserializeLikeAuthorizationProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
 // DeserializeLikeRequestGoToSocial returns the deserialization method for the
 // "GoToSocialLikeRequest" non-functional property in the vocabulary
 // "GoToSocial"
@@ -2125,6 +2154,19 @@ func (this Manager) DeserializeReplyApprovalGoToSocial() func(map[string]interfa
 func (this Manager) DeserializeReplyAuthorizationGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyAuthorization, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialReplyAuthorization, error) {
 		i, err := typereplyauthorization.DeserializeReplyAuthorization(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeReplyAuthorizationPropertyGoToSocial returns the deserialization
+// method for the "GoToSocialReplyAuthorizationProperty" non-functional
+// property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeReplyAuthorizationPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyAuthorizationProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialReplyAuthorizationProperty, error) {
+		i, err := propertyreplyauthorization.DeserializeReplyAuthorizationProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

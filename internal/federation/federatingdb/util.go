@@ -28,6 +28,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -110,11 +111,9 @@ func (f *DB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error
 		// based on actor (i.e. followER not the followEE).
 		if uri := ap.GetActorIRIs(follow); len(uri) == 1 {
 			if actorAccount, err := f.state.DB.GetAccountByURI(ctx, uri[0].String()); err == nil {
-				newID, err := id.NewRandomULID()
-				if err != nil {
-					return nil, err
-				}
-				return url.Parse(uris.GenerateURIForFollow(actorAccount.Username, newID))
+				newID := id.NewRandomULID()
+				uri := uris.GenerateURIForFollow(actorAccount.Username, newID)
+				return url.Parse(uri)
 			}
 		}
 	}
@@ -233,4 +232,54 @@ func (s serialize) String() string {
 	}
 
 	return byteutil.B2S(b)
+}
+
+// statusableOK is a util function to check if
+// the given statusable is "ok" in terms of being
+// relevant to the receiver, and passing spam checks.
+func (f *DB) statusableOK(
+	ctx context.Context,
+	receiver *gtsmodel.Account,
+	requester *gtsmodel.Account,
+	statusable ap.Statusable,
+) (bool, error) {
+	// Check whether this status is both
+	// relevant, and doesn't look like spam.
+	err := f.spamFilter.StatusableOK(ctx,
+		receiver,
+		requester,
+		statusable,
+	)
+
+	switch {
+	case err == nil:
+		// No problem!
+		return true, nil
+
+	case gtserror.IsNotRelevant(err):
+		// This case is quite common if a remote (Mastodon)
+		// instance forwards a message to us which is a reply
+		// from someone else to a status we've also replied to.
+		//
+		// It does this to try to ensure thread completion, but
+		// we have our own thread fetching mechanism anyway.
+		log.Debugf(ctx, "status %s is not relevant to receiver (%v); dropping it",
+			ap.GetJSONLDId(statusable), err,
+		)
+		return false, nil
+
+	case gtserror.IsSpam(err):
+		// Log this at a higher level so admins can
+		// gauge how much spam is being sent to them.
+		//
+		// TODO: add Prometheus metrics for this.
+		log.Infof(ctx, "status %s looked like spam (%v); dropping it",
+			ap.GetJSONLDId(statusable), err,
+		)
+		return false, nil
+
+	default:
+		// A real error has occurred.
+		return false, gtserror.Newf("error checking relevancy/spam: %w", err)
+	}
 }

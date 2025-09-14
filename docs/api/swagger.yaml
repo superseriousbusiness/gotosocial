@@ -2402,10 +2402,6 @@ definitions:
                     `reblog` - Someone reblogged / boosted a status.
                 type: string
                 x-go-name: Type
-            uri:
-                description: URI of the Accept or Reject. Only set if accepted_at or rejected_at is set, else omitted.
-                type: string
-                x-go-name: URI
         title: InteractionRequest represents a pending, approved, or rejected interaction of type favourite, reply, or reblog.
         type: object
         x-go-name: InteractionRequest

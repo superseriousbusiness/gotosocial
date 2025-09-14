@@ -226,6 +226,36 @@ func AppendObjectIRIs(with WithObject, object ...*url.URL) {
 	}, object...)
 }
 
+// AppendInstrumentIRIs appends the given IRIs to the Instrument property of 'with'.
+func AppendInstrumentIRIs(with WithInstrument, instrument ...*url.URL) {
+	appendIRIs(func() Property[vocab.ActivityStreamsInstrumentPropertyIterator] {
+		instrumentProp := with.GetActivityStreamsInstrument()
+		if instrumentProp == nil {
+			instrumentProp = streams.NewActivityStreamsInstrumentProperty()
+			with.SetActivityStreamsInstrument(instrumentProp)
+		}
+		return instrumentProp
+	}, instrument...)
+}
+
+// GetResultIRIs returns the IRIs contained in the `result` property of 'with'.
+func GetResultIRIs(with WithResult) []*url.URL {
+	resultProp := with.GetActivityStreamsResult()
+	return extractIRIs(resultProp)
+}
+
+// AppendResultIRIs appends the given IRIs to the Result property of 'with'.
+func AppendResultIRIs(with WithResult, result ...*url.URL) {
+	appendIRIs(func() Property[vocab.ActivityStreamsResultPropertyIterator] {
+		resultProp := with.GetActivityStreamsResult()
+		if resultProp == nil {
+			resultProp = streams.NewActivityStreamsResultProperty()
+			with.SetActivityStreamsResult(resultProp)
+		}
+		return resultProp
+	}, result...)
+}
+
 // GetTargetIRIs returns the IRIs contained in the Target property of 'with'.
 func GetTargetIRIs(with WithTarget) []*url.URL {
 	targetProp := with.GetActivityStreamsTarget()
@@ -260,6 +290,42 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 		}
 		return attribProp
 	}, attribTo...)
+}
+
+// GetInteractingObject returns IRIs contained in the interactingObject property of 'with'.
+func GetInteractingObject(with WithInteractingObject) []*url.URL {
+	intObjProp := with.GetGoToSocialInteractingObject()
+	return getIRIs(intObjProp)
+}
+
+// AppendInteractingObject appends the given IRIs to the interactingObject property of 'with'.
+func AppendInteractingObject(with WithInteractingObject, interactingObject ...*url.URL) {
+	appendIRIs(func() Property[vocab.GoToSocialInteractingObjectPropertyIterator] {
+		intObjProp := with.GetGoToSocialInteractingObject()
+		if intObjProp == nil {
+			intObjProp = streams.NewGoToSocialInteractingObjectProperty()
+			with.SetGoToSocialInteractingObject(intObjProp)
+		}
+		return intObjProp
+	}, interactingObject...)
+}
+
+// GetInteractionTarget returns IRIs contained in the interactionTarget property of 'with'.
+func GetInteractionTarget(with WithInteractionTarget) []*url.URL {
+	intTargetProp := with.GetGoToSocialInteractionTarget()
+	return getIRIs(intTargetProp)
+}
+
+// AppendInteractionTarget appends the given IRIs to the interactionTarget property of 'with'.
+func AppendInteractionTarget(with WithInteractionTarget, interactionTarget ...*url.URL) {
+	appendIRIs(func() Property[vocab.GoToSocialInteractionTargetPropertyIterator] {
+		intTargetProp := with.GetGoToSocialInteractionTarget()
+		if intTargetProp == nil {
+			intTargetProp = streams.NewGoToSocialInteractionTargetProperty()
+			with.SetGoToSocialInteractionTarget(intTargetProp)
+		}
+		return intTargetProp
+	}, interactionTarget...)
 }
 
 // GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'.
@@ -607,11 +673,11 @@ func SetHidesCcPublicFromUnauthedWeb(with WithHidesCcPublicFromUnauthedWeb, hide
 // GetApprovedBy returns the URL contained in
 // the ApprovedBy property of 'with', if set.
 func GetApprovedBy(with WithApprovedBy) *url.URL {
-	mafProp := with.GetGoToSocialApprovedBy()
-	if mafProp == nil || !mafProp.IsIRI() {
+	abProp := with.GetGoToSocialApprovedBy()
+	if abProp == nil || !abProp.IsIRI() {
 		return nil
 	}
-	return mafProp.Get()
+	return abProp.Get()
 }
 
 // SetApprovedBy sets the given url
@@ -623,6 +689,69 @@ func SetApprovedBy(with WithApprovedBy, approvedBy *url.URL) {
 		with.SetGoToSocialApprovedBy(abProp)
 	}
 	abProp.Set(approvedBy)
+}
+
+// GetLikeAuthorization returns the URL contained in
+// the likeAuthorization property of 'with', if set.
+func GetLikeAuthorization(with WithLikeAuthorization) *url.URL {
+	laProp := with.GetGoToSocialLikeAuthorization()
+	if laProp == nil || !laProp.IsIRI() {
+		return nil
+	}
+	return laProp.Get()
+}
+
+// SetLikeAuthorization sets the given url on
+// the 'likeAuthorization' property of 'with'.
+func SetLikeAuthorization(with WithLikeAuthorization, likeAuthorization *url.URL) {
+	laProp := with.GetGoToSocialLikeAuthorization()
+	if laProp == nil {
+		laProp = streams.NewGoToSocialLikeAuthorizationProperty()
+		with.SetGoToSocialLikeAuthorization(laProp)
+	}
+	laProp.Set(likeAuthorization)
+}
+
+// GetReplyAuthorization returns the URL contained in
+// the replyAuthorization property of 'with', if set.
+func GetReplyAuthorization(with WithReplyAuthorization) *url.URL {
+	raProp := with.GetGoToSocialReplyAuthorization()
+	if raProp == nil || !raProp.IsIRI() {
+		return nil
+	}
+	return raProp.Get()
+}
+
+// SetReplyAuthorization sets the given url on
+// the 'replyAuthorization' property of 'with'.
+func SetReplyAuthorization(with WithReplyAuthorization, replyAuthorization *url.URL) {
+	raProp := with.GetGoToSocialReplyAuthorization()
+	if raProp == nil {
+		raProp = streams.NewGoToSocialReplyAuthorizationProperty()
+		with.SetGoToSocialReplyAuthorization(raProp)
+	}
+	raProp.Set(replyAuthorization)
+}
+
+// GetAnnounceAuthorization returns the URL contained in
+// the announceAuthorization property of 'with', if set.
+func GetAnnounceAuthorization(with WithAnnounceAuthorization) *url.URL {
+	aaProp := with.GetGoToSocialAnnounceAuthorization()
+	if aaProp == nil || !aaProp.IsIRI() {
+		return nil
+	}
+	return aaProp.Get()
+}
+
+// SetAnnounceAuthorization sets the given url on
+// the 'announceAuthorization' property of 'with'.
+func SetAnnounceAuthorization(with WithAnnounceAuthorization, announceAuthorization *url.URL) {
+	aaProp := with.GetGoToSocialAnnounceAuthorization()
+	if aaProp == nil {
+		aaProp = streams.NewGoToSocialAnnounceAuthorizationProperty()
+		with.SetGoToSocialAnnounceAuthorization(aaProp)
+	}
+	aaProp.Set(announceAuthorization)
 }
 
 // GetMediaType returns the string contained in
@@ -687,6 +816,50 @@ func SetBlurhash(with WithBlurhash, mediaType string) {
 		with.SetTootBlurhash(bProp)
 	}
 	bProp.Set(mediaType)
+}
+
+// AppendSensitive appends the given sensitive
+// boolean to the `sensitive` property of 'with'.
+func AppendSensitive(with WithSensitive, sensitive bool) {
+	sProp := with.GetActivityStreamsSensitive()
+	if sProp == nil {
+		sProp = streams.NewActivityStreamsSensitiveProperty()
+		with.SetActivityStreamsSensitive(sProp)
+	}
+	sProp.AppendXMLSchemaBoolean(sensitive)
+}
+
+// AppendContent appends the given content
+// string to the `content` property of 'with'.
+func AppendContent(with WithContent, content string) {
+	cProp := with.GetActivityStreamsContent()
+	if cProp == nil {
+		cProp = streams.NewActivityStreamsContentProperty()
+		with.SetActivityStreamsContent(cProp)
+	}
+	cProp.AppendXMLSchemaString(content)
+}
+
+// AppendContentMap appends the given content
+// language map to the `content` property of 'with'.
+func AppendContentMap(with WithContent, contentMap map[string]string) {
+	cProp := with.GetActivityStreamsContent()
+	if cProp == nil {
+		cProp = streams.NewActivityStreamsContentProperty()
+		with.SetActivityStreamsContent(cProp)
+	}
+	cProp.AppendRDFLangString(contentMap)
+}
+
+// SetReplies sets the given replies collection
+// to the `replies` property of 'with'.
+func SetReplies(with WithReplies, replies vocab.ActivityStreamsCollection) {
+	rProp := with.GetActivityStreamsReplies()
+	if rProp == nil {
+		rProp = streams.NewActivityStreamsRepliesProperty()
+		with.SetActivityStreamsReplies(rProp)
+	}
+	rProp.SetActivityStreamsCollection(replies)
 }
 
 // extractIRIs extracts just the AP IRIs from an iterable

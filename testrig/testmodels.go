@@ -3360,21 +3360,20 @@ type ActivityWithSignature struct {
 // their requesting signatures.
 func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	dmForZork := NewAPNote(
-		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
-		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
-		TimeMustParse("2022-07-13T12:13:12+02:00"),
-		"@the_mighty_zork@localhost:8080 hey zork here's a new private note for you",
-		"new note for zork",
-		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
-		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
-		nil,
-		true,
-		[]vocab.ActivityStreamsMention{newAPMention(
-			URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-			"@the_mighty_zork@localhost:8080",
-		)},
-		[]vocab.TootHashtag{},
-		nil,
+		&NewAPNoteParams{
+			ID:           URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+			URL:          URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+			CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+			Content:      "@the_mighty_zork@localhost:8080 hey zork here's a new private note for you",
+			Summary:      "new note for zork",
+			AttributedTo: URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+			To:           []*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
+			Sensitive:    true,
+			Mentions: []vocab.ActivityStreamsMention{newAPMention(
+				URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+				"@the_mighty_zork@localhost:8080",
+			)},
+		},
 	)
 	createDmForZork := WrapAPNoteInCreate(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
@@ -3384,21 +3383,19 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	replyToTurtle := NewAPNote(
-		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
-		URLMustParse("http://fossbros-anonymous.io/@foss_satan/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
-		TimeMustParse("2022-07-13T12:13:12+02:00"),
-		"@1happyturtle@localhost:8080 u suck lol",
-		"",
-		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
-		[]*url.URL{URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers")},
-		[]*url.URL{URLMustParse("http://localhost:8080/users/1happyturtle")},
-		false,
-		[]vocab.ActivityStreamsMention{newAPMention(
-			URLMustParse("http://localhost:8080/users/1happyturtle"),
-			"@1happyturtle@localhost:8080",
-		)},
-		[]vocab.TootHashtag{},
-		nil,
+		&NewAPNoteParams{
+			ID:           URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+			URL:          URLMustParse("http://fossbros-anonymous.io/@foss_satan/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+			CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+			Content:      "@1happyturtle@localhost:8080 u suck lol",
+			AttributedTo: URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+			To:           []*url.URL{URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers")},
+			CC:           []*url.URL{URLMustParse("http://localhost:8080/users/1happyturtle")},
+			Mentions: []vocab.ActivityStreamsMention{newAPMention(
+				URLMustParse("http://localhost:8080/users/1happyturtle"),
+				"@1happyturtle@localhost:8080",
+			)},
+		},
 	)
 	createReplyToTurtle := WrapAPNoteInCreate(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
@@ -3409,23 +3406,20 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	createReplyToTurtleForTurtleSig, createReplyToTurtleForTurtleDigest, createReplyToTurtleForTurtleDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
 
 	forwardedMessage := NewAPNote(
-		URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-		URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
-		TimeMustParse("2022-07-13T12:13:12+02:00"),
-		"this is a public status, please forward it!",
-		"",
-		URLMustParse("http://example.org/users/Some_User"),
-		[]*url.URL{ap.PublicURI()},
-		nil,
-		false,
-		[]vocab.ActivityStreamsMention{},
-		[]vocab.TootHashtag{},
-		[]vocab.ActivityStreamsImage{
-			newAPImage(
-				URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
-				"image/jpeg",
-				"trent reznor looking handsome as balls",
-				"LEDara58O=t5EMSOENEN9]}?aK%0"),
+		&NewAPNoteParams{
+			ID:           URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+			URL:          URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
+			CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+			Content:      "this is a public status, please forward it!",
+			AttributedTo: URLMustParse("http://example.org/users/Some_User"),
+			To:           []*url.URL{ap.PublicIRI()},
+			Attachments: []vocab.ActivityStreamsImage{
+				newAPImage(
+					URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
+					"image/jpeg",
+					"trent reznor looking handsome as balls",
+					"LEDara58O=t5EMSOENEN9]}?aK%0"),
+			},
 		},
 	)
 	createForwardedMessage := WrapAPNoteInCreate(
@@ -3473,33 +3467,33 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	deleteForRemoteAccount3Sig, deleteForRemoteAccount3Digest, deleteForRemoteAccount3Date := GetSignatureForActivity(deleteForRemoteAccount3, "https://somewhere.mysterious/users/rest_in_piss#main-key", keyToSignDelete, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	remoteAccount2Status1Updated := NewAPNote(
-		URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
-		URLMustParse("http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
-		TimeMustParse("2023-11-02T12:44:25+02:00"),
-		`<p>hi <span class="h-card"><a href="http://localhost:8080/@admin" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>admin</span></a></span> here's some media for ya, <span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>the_mighty_zork</span></a></span> you might like this too</p>`,
-		"<p>some unknown media included</p>",
-		URLMustParse("http://example.org/users/Some_User"),
-		[]*url.URL{
-			ap.PublicURI(),
-		},
-		[]*url.URL{
-			URLMustParse("http://example.org/users/Some_User/followers"),
-			URLMustParse("http://localhost:8080/users/admin"),
-			URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-		},
-		true,
-		[]vocab.ActivityStreamsMention{
-			newAPMention(
+		&NewAPNoteParams{
+			ID:           URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
+			URL:          URLMustParse("http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
+			CreatedAt:    TimeMustParse("2023-11-02T12:44:25+02:00"),
+			Content:      `<p>hi <span class="h-card"><a href="http://localhost:8080/@admin" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>admin</span></a></span> here's some media for ya, <span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>the_mighty_zork</span></a></span> you might like this too</p>`,
+			Summary:      "<p>some unknown media included</p>",
+			AttributedTo: URLMustParse("http://example.org/users/Some_User"),
+			To: []*url.URL{
+				ap.PublicIRI(),
+			},
+			CC: []*url.URL{
+				URLMustParse("http://example.org/users/Some_User/followers"),
 				URLMustParse("http://localhost:8080/users/admin"),
-				"@admin@localhost:8080",
-			),
-			newAPMention(
 				URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-				"@the_mighty_zork@localhost:8080",
-			),
+			},
+			Sensitive: true,
+			Mentions: []vocab.ActivityStreamsMention{
+				newAPMention(
+					URLMustParse("http://localhost:8080/users/admin"),
+					"@admin@localhost:8080",
+				),
+				newAPMention(
+					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+					"@the_mighty_zork@localhost:8080",
+				),
+			},
 		},
-		nil,
-		nil,
 	)
 	update := WrapAPNoteInUpdate(
 		URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5/update1"),
@@ -3849,126 +3843,114 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
 		"http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
-			URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-			URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
-			TimeMustParse("2022-07-13T12:13:12+02:00"),
-			"this is a public status, please forward it!",
-			"",
-			URLMustParse("http://example.org/users/Some_User"),
-			[]*url.URL{ap.PublicURI()},
-			nil,
-			false,
-			[]vocab.ActivityStreamsMention{},
-			[]vocab.TootHashtag{},
-			[]vocab.ActivityStreamsImage{
-				newAPImage(
-					URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
-					"image/jpeg",
-					"trent reznor looking handsome as balls",
-					"LEDara58O=t5EMSOENEN9]}?aK%0"),
+			&NewAPNoteParams{
+				ID:           URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+				URL:          URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
+				CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+				Content:      "this is a public status, please forward it!",
+				AttributedTo: URLMustParse("http://example.org/users/Some_User"),
+				To:           []*url.URL{ap.PublicIRI()},
+				Attachments: []vocab.ActivityStreamsImage{
+					newAPImage(
+						URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
+						"image/jpeg",
+						"trent reznor looking handsome as balls",
+						"LEDara58O=t5EMSOENEN9]}?aK%0"),
+				},
 			},
 		),
 		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": NewAPNote(
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
-			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),
-			TimeMustParse("2022-07-13T12:13:12+02:00"),
-			"Hello world!",
-			"",
-			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
-			[]*url.URL{
-				ap.PublicURI(),
+			&NewAPNoteParams{
+				ID:           URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
+				URL:          URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),
+				CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+				Content:      "Hello world!",
+				AttributedTo: URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+				To: []*url.URL{
+					ap.PublicIRI(),
+				},
 			},
-			[]*url.URL{},
-			false,
-			nil,
-			[]vocab.TootHashtag{},
-			nil,
 		),
 		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": NewAPNote(
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
-			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
-			TimeMustParse("2022-07-13T12:13:12+02:00"),
-			"Hey @the_mighty_zork@localhost:8080 how's it going?",
-			"",
-			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
-			[]*url.URL{
-				ap.PublicURI(),
+			&NewAPNoteParams{
+				ID:           URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
+				URL:          URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
+				CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+				Content:      "Hey @the_mighty_zork@localhost:8080 how's it going?",
+				AttributedTo: URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+				To: []*url.URL{
+					ap.PublicIRI(),
+				},
+				Mentions: []vocab.ActivityStreamsMention{
+					newAPMention(
+						URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+						"@the_mighty_zork@localhost:8080",
+					),
+				},
 			},
-			[]*url.URL{},
-			false,
-			[]vocab.ActivityStreamsMention{
-				newAPMention(
-					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-					"@the_mighty_zork@localhost:8080",
-				),
-			},
-			[]vocab.TootHashtag{},
-			nil,
 		),
 		"https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7": NewAPNote(
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7"),
-			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01H641QSRS3TCXSVC10X4GPKW7"),
-			TimeMustParse("2023-04-12T12:13:12+02:00"),
-			"<p>Babe are you okay, you've hardly touched your <a href=\"https://unknown-instance.com/tags/piss\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>piss</span></a></p>",
-			"",
-			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
-			[]*url.URL{
-				ap.PublicURI(),
+			&NewAPNoteParams{
+				ID:           URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7"),
+				URL:          URLMustParse("https://unknown-instance.com/users/@brand_new_person/01H641QSRS3TCXSVC10X4GPKW7"),
+				CreatedAt:    TimeMustParse("2023-04-12T12:13:12+02:00"),
+				Content:      `<p><span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>Babe are you okay, you've hardly touched your <a href="https://unknown-instance.com/tags/piss" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>piss</span></a></p>`,
+				AttributedTo: URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+				To: []*url.URL{
+					ap.PublicIRI(),
+					URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+				},
+				Mentions: []vocab.ActivityStreamsMention{
+					newAPMention(
+						URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+						"@foss_satan@fossbros-anonymous.io",
+					),
+				},
+				Tags: []vocab.TootHashtag{
+					newAPHashtag(
+						URLMustParse("https://unknown-instance.com/tags/piss"),
+						"#piss",
+					),
+				},
+				InReplyTo: URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M"),
 			},
-			[]*url.URL{},
-			false,
-			[]vocab.ActivityStreamsMention{},
-			[]vocab.TootHashtag{
-				newAPHashtag(
-					URLMustParse("https://unknown-instance.com/tags/piss"),
-					"#piss",
-				),
-			},
-			nil,
 		),
 		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": NewAPNote(
-			URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"),
-			URLMustParse("https://turnip.farm/@turniplover6969/70c53e54-3146-42d5-a630-83c8b6c7c042"),
-			TimeMustParse("2022-07-13T12:13:12+02:00"),
-			"",
-			"",
-			URLMustParse("https://turnip.farm/users/turniplover6969"),
-			[]*url.URL{
-				ap.PublicURI(),
-			},
-			[]*url.URL{},
-			false,
-			nil,
-			[]vocab.TootHashtag{},
-			[]vocab.ActivityStreamsImage{
-				newAPImage(
-					URLMustParse("https://turnip.farm/attachments/f17843c7-015e-4251-9b5a-91389c49ee57.jpg"),
-					"image/jpeg",
-					"",
-					"",
-				),
+			&NewAPNoteParams{
+				ID:           URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"),
+				URL:          URLMustParse("https://turnip.farm/@turniplover6969/70c53e54-3146-42d5-a630-83c8b6c7c042"),
+				CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+				AttributedTo: URLMustParse("https://turnip.farm/users/turniplover6969"),
+				To: []*url.URL{
+					ap.PublicIRI(),
+				},
+				Attachments: []vocab.ActivityStreamsImage{
+					newAPImage(
+						URLMustParse("https://turnip.farm/attachments/f17843c7-015e-4251-9b5a-91389c49ee57.jpg"),
+						"image/jpeg",
+						"",
+						"",
+					),
+				},
 			},
 		),
 		"http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552": NewAPNote(
-			URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"),
-			URLMustParse("http://fossbros-anonymous.io/@foss_satan/106221634728637552"),
-			TimeMustParse("2022-07-13T12:13:12+02:00"),
-			`<p><span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span> nice there it is:</p><p><a href="http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">social.pixie.town/users/f0x/st</span><span class="invisible">atuses/106221628567855262/activity</span></a></p>`,
-			"",
-			URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
-			[]*url.URL{
-				ap.PublicURI(),
+			&NewAPNoteParams{
+				ID:           URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"),
+				URL:          URLMustParse("http://fossbros-anonymous.io/@foss_satan/106221634728637552"),
+				CreatedAt:    TimeMustParse("2022-07-13T12:13:12+02:00"),
+				Content:      `<p><span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span> nice there it is:</p><p><a href="http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">social.pixie.town/users/f0x/st</span><span class="invisible">atuses/106221628567855262/activity</span></a></p>`,
+				AttributedTo: URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+				To: []*url.URL{
+					ap.PublicIRI(),
+				},
+				Mentions: []vocab.ActivityStreamsMention{
+					newAPMention(
+						URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+						"@the_mighty_zork@localhost:8080",
+					),
+				},
 			},
-			[]*url.URL{},
-			false,
-			[]vocab.ActivityStreamsMention{
-				newAPMention(
-					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-					"@the_mighty_zork@localhost:8080",
-				),
-			},
-			[]vocab.TootHashtag{},
-			nil,
 		),
 	}
 }
@@ -4235,14 +4217,21 @@ func NewTestWebPushSubscriptions() map[string]*gtsmodel.WebPushSubscription {
 
 func NewTestInteractionRequests() map[string]*gtsmodel.InteractionRequest {
 	return map[string]*gtsmodel.InteractionRequest{
+		// Impolite reply request.
+		//
+		// TODO: in v0.21.0 change this to a polite
+		// reply request, as this is a local interaction
+		// request, and polite is the only kind we'll
+		// be sending out *ourselves* from then on.
 		"admin_account_reply_turtle": {
-			ID:                   "01J5QVXCCEATJYSXM9H6MZT4JR",
-			CreatedAt:            TimeMustParse("2024-02-20T12:41:37+02:00"),
-			StatusID:             "01F8MHC8VWDRBQR0N1BATDDEM5",
-			TargetAccountID:      "01F8MH5NBDF2MV7CTC4Q5128HF",
-			InteractingAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
-			InteractionURI:       "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
-			InteractionType:      gtsmodel.InteractionReply,
+			ID:                    "01J5QVXCCEATJYSXM9H6MZT4JR",
+			TargetStatusID:        "01F8MHC8VWDRBQR0N1BATDDEM5",
+			TargetAccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			InteractingAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
+			InteractionURI:        "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+			InteractionRequestURI: "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ#ReplyRequest",
+			InteractionType:       gtsmodel.InteractionReply,
+			Polite:                util.Ptr(false),
 		},
 	}
 }
@@ -5080,99 +5069,103 @@ func newAPEmoji(id *url.URL, name string, updated time.Time, image vocab.Activit
 	return emoji
 }
 
-// NewAPNote returns a new activity streams note for the given parameters
-func NewAPNote(
-	noteID *url.URL,
-	noteURL *url.URL,
-	noteCreatedAt time.Time,
-	noteContent string,
-	noteSummary string,
-	noteAttributedTo *url.URL,
-	noteTo []*url.URL,
-	noteCC []*url.URL,
-	noteSensitive bool,
-	noteMentions []vocab.ActivityStreamsMention,
-	noteTags []vocab.TootHashtag,
-	noteAttachments []vocab.ActivityStreamsImage,
-) vocab.ActivityStreamsNote {
-	// create the note itself
+type NewAPNoteParams struct {
+	ID                 *url.URL
+	URL                *url.URL
+	CreatedAt          time.Time
+	Content            string
+	Summary            string
+	AttributedTo       *url.URL
+	To                 []*url.URL
+	CC                 []*url.URL
+	Sensitive          bool
+	Mentions           []vocab.ActivityStreamsMention
+	Tags               []vocab.TootHashtag
+	Attachments        []vocab.ActivityStreamsImage
+	InReplyTo          *url.URL
+	ApprovedBy         *url.URL
+	ReplyAuthorization *url.URL
+}
+
+// NewAPNote is a utility function that returns a new
+// activity streams note using the given parameters.
+func NewAPNote(p *NewAPNoteParams) vocab.ActivityStreamsNote {
+	// Instantiate the note itself.
 	note := streams.NewActivityStreamsNote()
 
-	// set id
-	if noteID != nil {
-		id := streams.NewJSONLDIdProperty()
-		id.Set(noteID)
-		note.SetJSONLDId(id)
+	// Set id.
+	if p.ID != nil {
+		ap.SetJSONLDId(note, p.ID)
 	}
 
-	// set noteURL
-	if noteURL != nil {
-		url := streams.NewActivityStreamsUrlProperty()
-		url.AppendIRI(noteURL)
-		note.SetActivityStreamsUrl(url)
+	// Set noteURL.
+	if p.URL != nil {
+		ap.AppendURL(note, p.URL)
 	}
 
-	published := streams.NewActivityStreamsPublishedProperty()
-	published.Set(noteCreatedAt)
-	note.SetActivityStreamsPublished(published)
+	// Set published.
+	ap.SetPublished(note, p.CreatedAt)
 
-	// set noteContent
-	if noteContent != "" {
-		content := streams.NewActivityStreamsContentProperty()
-		content.AppendXMLSchemaString(noteContent)
-		note.SetActivityStreamsContent(content)
+	// Set content.
+	if p.Content != "" {
+		ap.AppendContent(note, p.Content)
 	}
 
-	// set noteSummary (aka content warning)
-	if noteSummary != "" {
-		summary := streams.NewActivityStreamsSummaryProperty()
-		summary.AppendXMLSchemaString(noteSummary)
-		note.SetActivityStreamsSummary(summary)
+	// Set summary (aka content warning).
+	if p.Summary != "" {
+		ap.AppendSummary(note, p.Summary)
 	}
 
-	// set noteAttributedTo (the url of the author of the note)
-	if noteAttributedTo != nil {
-		attributedTo := streams.NewActivityStreamsAttributedToProperty()
-		attributedTo.AppendIRI(noteAttributedTo)
-		note.SetActivityStreamsAttributedTo(attributedTo)
+	// Set attributedTo (ie., the
+	// uri of the author of the note).
+	if p.AttributedTo != nil {
+		ap.AppendAttributedTo(note, p.AttributedTo)
 	}
 
-	// set noteTO
-	if noteTo != nil {
-		to := streams.NewActivityStreamsToProperty()
-		for _, r := range noteTo {
-			to.AppendIRI(r)
-		}
-		note.SetActivityStreamsTo(to)
+	// Set `to`.
+	if p.To != nil {
+		ap.AppendTo(note, p.To...)
 	}
 
-	// set noteCC
-	if noteCC != nil {
-		cc := streams.NewActivityStreamsCcProperty()
-		for _, r := range noteCC {
-			cc.AppendIRI(r)
-		}
-		note.SetActivityStreamsCc(cc)
+	// Set `cc`.
+	if p.CC != nil {
+		ap.AppendCc(note, p.CC...)
+	}
+
+	// Set `inReplyTo`.
+	if p.InReplyTo != nil {
+		ap.AppendInReplyTo(note, p.InReplyTo)
+	}
+
+	// Set `approvedBy`.
+	if p.ApprovedBy != nil {
+		ap.SetApprovedBy(note, p.ApprovedBy)
+	}
+
+	// Set `replyAuthorization`.
+	if p.ReplyAuthorization != nil {
+		ap.SetReplyAuthorization(note, p.ReplyAuthorization)
 	}
 
 	// Tag entries
 	tag := streams.NewActivityStreamsTagProperty()
 
-	// mentions
-	for _, m := range noteMentions {
+	// Set mentions.
+	for _, m := range p.Mentions {
 		tag.AppendActivityStreamsMention(m)
 	}
 	note.SetActivityStreamsTag(tag)
 
-	// hashtags
-	for _, t := range noteTags {
+	// Set hashtags.
+	for _, t := range p.Tags {
 		tag.AppendTootHashtag(t)
 	}
 
-	// append any attachments as ActivityStreamsImage
-	if noteAttachments != nil {
+	// Append any attachments
+	// as ActivityStreamsImage
+	if p.Attachments != nil {
 		attachmentProperty := streams.NewActivityStreamsAttachmentProperty()
-		for _, a := range noteAttachments {
+		for _, a := range p.Attachments {
 			attachmentProperty.AppendActivityStreamsImage(a)
 		}
 		note.SetActivityStreamsAttachment(attachmentProperty)

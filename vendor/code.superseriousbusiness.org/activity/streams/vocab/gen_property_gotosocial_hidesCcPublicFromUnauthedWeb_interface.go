@@ -8,8 +8,7 @@ import "net/url"
 // (Notes, Articles, etc) from unauthenticated (ie., logged-out) access via
 // web pages, web apps, web APIs, etc. This setting has no bearing on
 // dereferences via HTTP GET to ActivityPub endpoints (application/ld+json;
-// profile="https://www.w3.org/ns/activitystreams"), for which GoToSocial
-// always requires HTTP signatures.
+// profile="https://www.w3.org/ns/activitystreams").
 type GoToSocialHidesCcPublicFromUnauthedWebProperty interface {
 	// Clear ensures no value of this property is set. Calling
 	// IsXMLSchemaBoolean afterwards will return false.

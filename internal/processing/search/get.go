@@ -524,7 +524,7 @@ func (p *Processor) byURI(
 			switch {
 			case gtserror.IsUnretrievable(err),
 				gtserror.IsWrongType(err),
-				gtserror.NotPermitted(err):
+				gtserror.IsNotPermitted(err):
 				log.Debugf(ctx,
 					"semi-expected error type looking up %s as status: %v",
 					uri, err,

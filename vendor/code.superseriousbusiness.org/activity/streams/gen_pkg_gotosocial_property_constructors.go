@@ -4,6 +4,7 @@ package streams
 
 import (
 	propertyalways "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_always"
+	propertyannounceauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_announceauthorization"
 	propertyapprovalrequired "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_approvedby"
 	propertyautomaticapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_automaticapproval"
@@ -16,13 +17,21 @@ import (
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
+	propertylikeauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_likeauthorization"
 	propertymanualapproval "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_manualapproval"
+	propertyreplyauthorization "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_replyauthorization"
 	vocab "code.superseriousbusiness.org/activity/streams/vocab"
 )
 
 // NewGoToSocialGoToSocialAlwaysProperty creates a new GoToSocialAlwaysProperty
 func NewGoToSocialAlwaysProperty() vocab.GoToSocialAlwaysProperty {
 	return propertyalways.NewGoToSocialAlwaysProperty()
+}
+
+// NewGoToSocialGoToSocialAnnounceAuthorizationProperty creates a new
+// GoToSocialAnnounceAuthorizationProperty
+func NewGoToSocialAnnounceAuthorizationProperty() vocab.GoToSocialAnnounceAuthorizationProperty {
+	return propertyannounceauthorization.NewGoToSocialAnnounceAuthorizationProperty()
 }
 
 // NewGoToSocialGoToSocialApprovalRequiredProperty creates a new
@@ -94,8 +103,20 @@ func NewGoToSocialInteractionTargetProperty() vocab.GoToSocialInteractionTargetP
 	return propertyinteractiontarget.NewGoToSocialInteractionTargetProperty()
 }
 
+// NewGoToSocialGoToSocialLikeAuthorizationProperty creates a new
+// GoToSocialLikeAuthorizationProperty
+func NewGoToSocialLikeAuthorizationProperty() vocab.GoToSocialLikeAuthorizationProperty {
+	return propertylikeauthorization.NewGoToSocialLikeAuthorizationProperty()
+}
+
 // NewGoToSocialGoToSocialManualApprovalProperty creates a new
 // GoToSocialManualApprovalProperty
 func NewGoToSocialManualApprovalProperty() vocab.GoToSocialManualApprovalProperty {
 	return propertymanualapproval.NewGoToSocialManualApprovalProperty()
+}
+
+// NewGoToSocialGoToSocialReplyAuthorizationProperty creates a new
+// GoToSocialReplyAuthorizationProperty
+func NewGoToSocialReplyAuthorizationProperty() vocab.GoToSocialReplyAuthorizationProperty {
+	return propertyreplyauthorization.NewGoToSocialReplyAuthorizationProperty()
 }

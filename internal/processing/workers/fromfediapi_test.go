@@ -18,6 +18,7 @@
 package workers_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -26,11 +27,13 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 	"code.superseriousbusiness.org/gotosocial/internal/stream"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
@@ -779,6 +782,123 @@ func (suite *FromFediAPITestSuite) TestUpdateNote() {
 	}) {
 		suite.FailNow("timed out waiting for mention notif")
 	}
+}
+
+func (suite *FromFediAPITestSuite) TestCreateReplyRequest() {
+	var (
+		ctx         = suite.T().Context()
+		testStructs = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		requesting  = suite.testAccounts["remote_account_1"]
+		receiving   = suite.testAccounts["admin_account"]
+		testStatus  = suite.testStatuses["admin_account_status_1"]
+		intReqURI   = "http://fossbros-anonymous.io/requests/87fb1478-ac46-406a-8463-96ce05645219"
+		intURI      = "http://fossbros-anonymous.io/users/foss_satan/statuses/87fb1478-ac46-406a-8463-96ce05645219"
+		jsonStr     = `{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://gotosocial.org/ns",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
+  "type": "ReplyRequest",
+  "id": "` + intReqURI + `",
+  "actor": "` + requesting.URI + `",
+  "object": "` + testStatus.URI + `",
+  "to": "` + receiving.URI + `",
+  "instrument": {
+    "attributedTo": "` + requesting.URI + `",
+    "cc": "` + requesting.FollowersURI + `",
+    "content": "\u003cp\u003ethis is a reply!\u003c/p\u003e",
+    "id": "` + intURI + `",
+    "inReplyTo": "` + testStatus.URI + `",
+    "tag": {
+      "href": "` + receiving.URI + `",
+      "name": "@` + receiving.Username + `@localhost:8080",
+      "type": "Mention"
+    },
+    "to": "https://www.w3.org/ns/activitystreams#Public",
+    "type": "Note"
+  }
+}`
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	suite.T().Logf("testing reply request:\n\n%s", jsonStr)
+
+	// Decode the reply request + embedded statusable.
+	t, err := ap.DecodeType(ctx, io.NopCloser(bytes.NewBufferString(jsonStr)))
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	replyReq := t.(vocab.GoToSocialReplyRequest)
+	statusable := replyReq.GetActivityStreamsInstrument().At(0).GetActivityStreamsNote().(ap.Statusable)
+
+	// Create a pending interaction request in the
+	// database, as though the reply req had already
+	// passed through the federatingdb function.
+	intReq := &gtsmodel.InteractionRequest{
+		ID:                    id.NewULID(),
+		TargetStatusID:        testStatus.ID,
+		TargetStatus:          testStatus,
+		TargetAccountID:       receiving.ID,
+		TargetAccount:         receiving,
+		InteractingAccountID:  requesting.ID,
+		InteractingAccount:    requesting,
+		InteractionRequestURI: intReqURI,
+		InteractionURI:        ap.GetJSONLDId(statusable).String(),
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(true),
+		Reply:                 nil, // Not settable yet.
+	}
+	if err := testStructs.State.DB.PutInteractionRequest(ctx, intReq); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the message.
+	if err = testStructs.Processor.Workers().ProcessFromFediAPI(
+		ctx,
+		&messages.FromFediAPI{
+			APObjectType:   ap.ActivityReplyRequest,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       intReq,
+			APObject:       statusable,
+			Receiving:      receiving,
+			Requesting:     requesting,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// The interaction request should be accepted.
+	intReq, err = testStructs.State.DB.GetInteractionRequestByID(ctx, intReq.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.WithinDuration(time.Now(), intReq.AcceptedAt, 1*time.Minute)
+	suite.NotEmpty(intReq.AuthorizationURI)
+	suite.NotEmpty(intReq.ResponseURI)
+
+	// Federator should send out an Accept that looks something like:
+	//
+	// {
+	//   "@context": [
+	//     "https://gotosocial.org/ns",
+	//     "https://www.w3.org/ns/activitystreams"
+	//   ],
+	//   "actor": "http://localhost:8080/users/admin",
+	//   "id": "http://localhost:8080/users/admin/accepts/01K2CV90660VRPZM39R35NMSG9",
+	//   "object": {
+	//     "actor": "http://fossbros-anonymous.io/users/foss_satan",
+	//     "id": "http://fossbros-anonymous.io/requests/87fb1478-ac46-406a-8463-96ce05645219",
+	//     "instrument": "http://fossbros-anonymous.io/users/foss_satan/statuses/87fb1478-ac46-406a-8463-96ce05645219",
+	//     "object": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+	//     "type": "ReplyRequest"
+	//   },
+	//   "result": "http://localhost:8080/users/admin/authorizations/01K2CV90660VRPZM39R35NMSG9",
+	//   "to": "http://fossbros-anonymous.io/users/foss_satan",
+	//   "type": "Accept"
+	// }
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {

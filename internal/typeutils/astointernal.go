@@ -444,8 +444,8 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// Set approvedByURI if present,
 	// for later dereferencing.
-	if ipa, ok := statusable.(ap.InteractionPolicyAware); ok {
-		approvedByURI := ap.GetApprovedBy(ipa)
+	if wab, ok := statusable.(ap.WithApprovedBy); ok {
+		approvedByURI := ap.GetApprovedBy(wab)
 		if approvedByURI != nil {
 			status.ApprovedByURI = approvedByURI.String()
 		}

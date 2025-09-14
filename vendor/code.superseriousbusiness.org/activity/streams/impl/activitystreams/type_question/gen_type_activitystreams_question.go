@@ -40,52 +40,53 @@ import (
 //	  "type": "Question"
 //	}
 type ActivityStreamsQuestion struct {
-	ActivityStreamsActor        vocab.ActivityStreamsActorProperty
-	ActivityStreamsAltitude     vocab.ActivityStreamsAltitudeProperty
-	ActivityStreamsAnyOf        vocab.ActivityStreamsAnyOfProperty
-	GoToSocialApprovedBy        vocab.GoToSocialApprovedByProperty
-	ActivityStreamsAttachment   vocab.ActivityStreamsAttachmentProperty
-	ActivityStreamsAttributedTo vocab.ActivityStreamsAttributedToProperty
-	ActivityStreamsAudience     vocab.ActivityStreamsAudienceProperty
-	ActivityStreamsBcc          vocab.ActivityStreamsBccProperty
-	ActivityStreamsBto          vocab.ActivityStreamsBtoProperty
-	ActivityStreamsCc           vocab.ActivityStreamsCcProperty
-	ActivityStreamsClosed       vocab.ActivityStreamsClosedProperty
-	ActivityStreamsContent      vocab.ActivityStreamsContentProperty
-	ActivityStreamsContext      vocab.ActivityStreamsContextProperty
-	ActivityStreamsDuration     vocab.ActivityStreamsDurationProperty
-	ActivityStreamsEndTime      vocab.ActivityStreamsEndTimeProperty
-	ActivityStreamsGenerator    vocab.ActivityStreamsGeneratorProperty
-	ActivityStreamsIcon         vocab.ActivityStreamsIconProperty
-	JSONLDId                    vocab.JSONLDIdProperty
-	ActivityStreamsImage        vocab.ActivityStreamsImageProperty
-	ActivityStreamsInReplyTo    vocab.ActivityStreamsInReplyToProperty
-	ActivityStreamsInstrument   vocab.ActivityStreamsInstrumentProperty
-	GoToSocialInteractionPolicy vocab.GoToSocialInteractionPolicyProperty
-	ActivityStreamsLikes        vocab.ActivityStreamsLikesProperty
-	ActivityStreamsLocation     vocab.ActivityStreamsLocationProperty
-	ActivityStreamsMediaType    vocab.ActivityStreamsMediaTypeProperty
-	ActivityStreamsName         vocab.ActivityStreamsNameProperty
-	ActivityStreamsOneOf        vocab.ActivityStreamsOneOfProperty
-	ActivityStreamsOrigin       vocab.ActivityStreamsOriginProperty
-	ActivityStreamsPreview      vocab.ActivityStreamsPreviewProperty
-	ActivityStreamsPublished    vocab.ActivityStreamsPublishedProperty
-	ActivityStreamsReplies      vocab.ActivityStreamsRepliesProperty
-	ActivityStreamsResult       vocab.ActivityStreamsResultProperty
-	ActivityStreamsSensitive    vocab.ActivityStreamsSensitiveProperty
-	ActivityStreamsShares       vocab.ActivityStreamsSharesProperty
-	ActivityStreamsSource       vocab.ActivityStreamsSourceProperty
-	ActivityStreamsStartTime    vocab.ActivityStreamsStartTimeProperty
-	ActivityStreamsSummary      vocab.ActivityStreamsSummaryProperty
-	ActivityStreamsTag          vocab.ActivityStreamsTagProperty
-	ActivityStreamsTarget       vocab.ActivityStreamsTargetProperty
-	ActivityStreamsTo           vocab.ActivityStreamsToProperty
-	JSONLDType                  vocab.JSONLDTypeProperty
-	ActivityStreamsUpdated      vocab.ActivityStreamsUpdatedProperty
-	ActivityStreamsUrl          vocab.ActivityStreamsUrlProperty
-	TootVotersCount             vocab.TootVotersCountProperty
-	alias                       string
-	unknown                     map[string]interface{}
+	ActivityStreamsActor         vocab.ActivityStreamsActorProperty
+	ActivityStreamsAltitude      vocab.ActivityStreamsAltitudeProperty
+	ActivityStreamsAnyOf         vocab.ActivityStreamsAnyOfProperty
+	GoToSocialApprovedBy         vocab.GoToSocialApprovedByProperty
+	ActivityStreamsAttachment    vocab.ActivityStreamsAttachmentProperty
+	ActivityStreamsAttributedTo  vocab.ActivityStreamsAttributedToProperty
+	ActivityStreamsAudience      vocab.ActivityStreamsAudienceProperty
+	ActivityStreamsBcc           vocab.ActivityStreamsBccProperty
+	ActivityStreamsBto           vocab.ActivityStreamsBtoProperty
+	ActivityStreamsCc            vocab.ActivityStreamsCcProperty
+	ActivityStreamsClosed        vocab.ActivityStreamsClosedProperty
+	ActivityStreamsContent       vocab.ActivityStreamsContentProperty
+	ActivityStreamsContext       vocab.ActivityStreamsContextProperty
+	ActivityStreamsDuration      vocab.ActivityStreamsDurationProperty
+	ActivityStreamsEndTime       vocab.ActivityStreamsEndTimeProperty
+	ActivityStreamsGenerator     vocab.ActivityStreamsGeneratorProperty
+	ActivityStreamsIcon          vocab.ActivityStreamsIconProperty
+	JSONLDId                     vocab.JSONLDIdProperty
+	ActivityStreamsImage         vocab.ActivityStreamsImageProperty
+	ActivityStreamsInReplyTo     vocab.ActivityStreamsInReplyToProperty
+	ActivityStreamsInstrument    vocab.ActivityStreamsInstrumentProperty
+	GoToSocialInteractionPolicy  vocab.GoToSocialInteractionPolicyProperty
+	ActivityStreamsLikes         vocab.ActivityStreamsLikesProperty
+	ActivityStreamsLocation      vocab.ActivityStreamsLocationProperty
+	ActivityStreamsMediaType     vocab.ActivityStreamsMediaTypeProperty
+	ActivityStreamsName          vocab.ActivityStreamsNameProperty
+	ActivityStreamsOneOf         vocab.ActivityStreamsOneOfProperty
+	ActivityStreamsOrigin        vocab.ActivityStreamsOriginProperty
+	ActivityStreamsPreview       vocab.ActivityStreamsPreviewProperty
+	ActivityStreamsPublished     vocab.ActivityStreamsPublishedProperty
+	ActivityStreamsReplies       vocab.ActivityStreamsRepliesProperty
+	GoToSocialReplyAuthorization vocab.GoToSocialReplyAuthorizationProperty
+	ActivityStreamsResult        vocab.ActivityStreamsResultProperty
+	ActivityStreamsSensitive     vocab.ActivityStreamsSensitiveProperty
+	ActivityStreamsShares        vocab.ActivityStreamsSharesProperty
+	ActivityStreamsSource        vocab.ActivityStreamsSourceProperty
+	ActivityStreamsStartTime     vocab.ActivityStreamsStartTimeProperty
+	ActivityStreamsSummary       vocab.ActivityStreamsSummaryProperty
+	ActivityStreamsTag           vocab.ActivityStreamsTagProperty
+	ActivityStreamsTarget        vocab.ActivityStreamsTargetProperty
+	ActivityStreamsTo            vocab.ActivityStreamsToProperty
+	JSONLDType                   vocab.JSONLDTypeProperty
+	ActivityStreamsUpdated       vocab.ActivityStreamsUpdatedProperty
+	ActivityStreamsUrl           vocab.ActivityStreamsUrlProperty
+	TootVotersCount              vocab.TootVotersCountProperty
+	alias                        string
+	unknown                      map[string]interface{}
 }
 
 // ActivityStreamsQuestionExtends returns true if the Question type extends from
@@ -292,6 +293,11 @@ func DeserializeQuestion(m map[string]interface{}, aliasMap map[string]string) (
 	} else if p != nil {
 		this.ActivityStreamsReplies = p
 	}
+	if p, err := mgr.DeserializeReplyAuthorizationPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialReplyAuthorization = p
+	}
 	if p, err := mgr.DeserializeResultPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -427,6 +433,8 @@ func DeserializeQuestion(m map[string]interface{}, aliasMap map[string]string) (
 		} else if k == "published" {
 			continue
 		} else if k == "replies" {
+			continue
+		} else if k == "replyAuthorization" {
 			continue
 		} else if k == "result" {
 			continue
@@ -749,6 +757,12 @@ func (this ActivityStreamsQuestion) GetGoToSocialInteractionPolicy() vocab.GoToS
 	return this.GoToSocialInteractionPolicy
 }
 
+// GetGoToSocialReplyAuthorization returns the "replyAuthorization" property if it
+// exists, and nil otherwise.
+func (this ActivityStreamsQuestion) GetGoToSocialReplyAuthorization() vocab.GoToSocialReplyAuthorizationProperty {
+	return this.GoToSocialReplyAuthorization
+}
+
 // GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 func (this ActivityStreamsQuestion) GetJSONLDId() vocab.JSONLDIdProperty {
 	return this.JSONLDId
@@ -821,6 +835,7 @@ func (this ActivityStreamsQuestion) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsPreview, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsPublished, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsReplies, m)
+	m = this.helperJSONLDContext(this.GoToSocialReplyAuthorization, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsResult, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsSensitive, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsShares, m)
@@ -1264,6 +1279,20 @@ func (this ActivityStreamsQuestion) LessThan(o vocab.ActivityStreamsQuestion) bo
 	} // Else: Both are nil
 	// Compare property "replies"
 	if lhs, rhs := this.ActivityStreamsReplies, o.GetActivityStreamsReplies(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "replyAuthorization"
+	if lhs, rhs := this.GoToSocialReplyAuthorization, o.GetGoToSocialReplyAuthorization(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1729,6 +1758,14 @@ func (this ActivityStreamsQuestion) Serialize() (map[string]interface{}, error) 
 			m[this.ActivityStreamsReplies.Name()] = i
 		}
 	}
+	// Maybe serialize property "replyAuthorization"
+	if this.GoToSocialReplyAuthorization != nil {
+		if i, err := this.GoToSocialReplyAuthorization.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialReplyAuthorization.Name()] = i
+		}
+	}
 	// Maybe serialize property "result"
 	if this.ActivityStreamsResult != nil {
 		if i, err := this.ActivityStreamsResult.Serialize(); err != nil {
@@ -2050,6 +2087,11 @@ func (this *ActivityStreamsQuestion) SetGoToSocialApprovedBy(i vocab.GoToSocialA
 // SetGoToSocialInteractionPolicy sets the "interactionPolicy" property.
 func (this *ActivityStreamsQuestion) SetGoToSocialInteractionPolicy(i vocab.GoToSocialInteractionPolicyProperty) {
 	this.GoToSocialInteractionPolicy = i
+}
+
+// SetGoToSocialReplyAuthorization sets the "replyAuthorization" property.
+func (this *ActivityStreamsQuestion) SetGoToSocialReplyAuthorization(i vocab.GoToSocialReplyAuthorizationProperty) {
+	this.GoToSocialReplyAuthorization = i
 }
 
 // SetJSONLDId sets the "id" property.

@@ -57,9 +57,8 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 			suite.FailNow(err.Error())
 		}
 
-		// Put an interaction request
-		// in the DB for this reply.
-		req := typeutils.StatusToInteractionRequest(reply)
+		// Put an impolite interaction request in the DB for this reply.
+		req := typeutils.StatusToImpoliteInteractionRequest(reply)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -84,9 +83,8 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 			suite.FailNow(err.Error())
 		}
 
-		// Put an interaction request
-		// in the DB for this boost.
-		req := typeutils.StatusToInteractionRequest(boost)
+		// Put an impolite interaction request in the DB for this boost.
+		req := typeutils.StatusToImpoliteInteractionRequest(boost)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -111,9 +109,8 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 			suite.FailNow(err.Error())
 		}
 
-		// Put an interaction request
-		// in the DB for this fave.
-		req := typeutils.StatusFaveToInteractionRequest(fave)
+		// Put an impolite interaction request in the DB for this fave.
+		req := typeutils.StatusFaveToImpoliteInteractionRequest(fave)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -229,8 +226,8 @@ func (suite *InteractionTestSuite) TestInteractionRejected() {
 
 	// Update the interaction request to mark it rejected.
 	req.RejectedAt = time.Now()
-	req.URI = "https://some.reject.uri"
-	if err := suite.state.DB.UpdateInteractionRequest(ctx, req, "uri", "rejected_at"); err != nil {
+	req.ResponseURI = "https://some.reject.uri"
+	if err := suite.state.DB.UpdateInteractionRequest(ctx, req, "response_uri", "rejected_at"); err != nil {
 		suite.FailNow(err.Error())
 	}
 

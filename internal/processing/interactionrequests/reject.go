@@ -66,12 +66,12 @@ func (p *Processor) Reject(
 	// Mark the request as rejected
 	// and generate a URI for it.
 	req.RejectedAt = time.Now()
-	req.URI = uris.GenerateURIForReject(acct.Username, req.ID)
+	req.ResponseURI = uris.GenerateURIForReject(acct.Username, req.ID)
 	if err := p.state.DB.UpdateInteractionRequest(
 		ctx,
 		req,
 		"rejected_at",
-		"uri",
+		"response_uri",
 	); err != nil {
 		err := gtserror.Newf("db error updating interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

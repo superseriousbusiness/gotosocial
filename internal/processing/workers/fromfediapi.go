@@ -88,6 +88,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ObjectNote:
 			return p.fediAPI.CreateStatus(ctx, fMsg)
 
+		// REQUEST TO REPLY TO A STATUS
+		case ap.ActivityReplyRequest:
+			return p.fediAPI.CreateReplyRequest(ctx, fMsg)
+
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.fediAPI.CreateFollowReq(ctx, fMsg)
@@ -96,9 +100,17 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ActivityLike:
 			return p.fediAPI.CreateLike(ctx, fMsg)
 
+		// REQUEST TO LIKE A STATUS
+		case ap.ActivityLikeRequest:
+			return p.fediAPI.CreateLikeRequest(ctx, fMsg)
+
 		// CREATE ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
 			return p.fediAPI.CreateAnnounce(ctx, fMsg)
+
+		// REQUEST TO BOOST A STATUS
+		case ap.ActivityAnnounceRequest:
+			return p.fediAPI.CreateAnnounceRequest(ctx, fMsg)
 
 		// CREATE BLOCK
 		case ap.ActivityBlock:
@@ -146,11 +158,15 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ObjectNote:
 			return p.fediAPI.AcceptReply(ctx, fMsg)
 
+		// ACCEPT (pending) POLITE REPLY REQUEST
+		case ap.ActivityReplyRequest:
+			return p.fediAPI.AcceptPoliteReplyRequest(ctx, fMsg)
+
 		// ACCEPT (pending) ANNOUNCE
 		case ap.ActivityAnnounce:
 			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
 
-		// ACCEPT (remote) REPLY or ANNOUNCE
+		// ACCEPT (remote) IMPOLITE REPLY or ANNOUNCE
 		case ap.ObjectUnknown:
 			return p.fediAPI.AcceptRemoteStatus(ctx, fMsg)
 		}
@@ -219,6 +235,9 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)
 }
 
+// CreateStatus handles the creation of a status/post sent as a Create message.
+// It is also capable of handling impolite reply requests to local + remote statuses,
+// ie., replies sent directly without doing the ReplyRequest process first.
 func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	var (
 		status     *gtsmodel.Status
@@ -291,7 +310,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestReply(ctx, status); err != nil {
+		if err := p.utils.impoliteReplyRequest(ctx, status); err != nil {
 			return gtserror.Newf("error pending reply: %w", err)
 		}
 
@@ -306,20 +325,24 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             status.InReplyToID,
-			TargetAccountID:      status.InReplyToAccountID,
-			TargetAccount:        status.InReplyToAccount,
-			InteractingAccountID: status.AccountID,
-			InteractingAccount:   status.Account,
-			InteractionURI:       status.URI,
-			InteractionType:      gtsmodel.InteractionReply,
-			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        status.InReplyToID,
+			TargetAccountID:       status.InReplyToAccountID,
+			TargetAccount:         status.InReplyToAccount,
+			InteractingAccountID:  status.AccountID,
+			InteractingAccount:    status.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix),
+			InteractionURI:        status.URI,
+			InteractionType:       gtsmodel.InteractionReply,
+			Polite:                util.Ptr(false),
+			Reply:                 status,
+			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -328,7 +351,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -361,6 +384,118 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// functions will ensure necessary ancestors exist before this point.
 		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
+
+	return nil
+}
+
+// CreateReplyRequest handles a polite ReplyRequest.
+// This is distinct from CreateStatus, which is capable
+// of handling both "normal" top-level status creation,
+// in addition to *impolite* reply requests.
+func (p *fediAPI) CreateReplyRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// Extract the ap model Statusable
+	// set by the federating db.
+	statusable, ok := fMsg.APObject.(ap.Statusable)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObject)
+	}
+
+	// Call RefreshStatus to parse and process the
+	// statusable. This will also check permissions.
+	replyURI := ap.GetJSONLDId(statusable).String()
+	reply, _, err := p.federate.RefreshStatus(ctx,
+		fMsg.Receiving.Username,
+		&gtsmodel.Status{
+			URI:   replyURI,
+			Local: util.Ptr(false),
+		},
+		statusable,
+		// Force refresh within 5min window.
+		dereferencing.Fresh,
+	)
+
+	switch {
+	case err == nil:
+		// All fine.
+
+	case gtserror.IsNotPermitted(err):
+		// Reply is straight up not permitted by
+		// the interaction policy of the status
+		// it's replying to. Nothing more to do.
+		log.Debugf(ctx,
+			"dropping unpermitted ReplyRequest with instrument %s",
+			replyURI,
+		)
+		return nil
+
+	default:
+		// There's some real error.
+		return gtserror.Newf(
+			"error processing ReplyRequest with instrument %s: %w",
+			replyURI, err,
+		)
+	}
+
+	// The reply is permitted. Check if we
+	// should send out an Accept immediately.
+	manualApproval := *reply.PendingApproval && !reply.PreApproved
+	if manualApproval {
+		// The reply requires manual approval.
+		//
+		// Just notify target account about
+		// the requested interaction.
+		if err := p.surface.notifyPendingReply(ctx, reply); err != nil {
+			return gtserror.Newf("error notifying pending reply: %w", err)
+		}
+
+		return nil
+	}
+
+	// The reply is automatically approved,
+	// handle side effects of this.
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// Mark the request as accepted.
+	req.AcceptedAt = time.Now()
+	req.ResponseURI = uris.GenerateURIForAccept(
+		req.TargetAccount.Username, req.ID,
+	)
+	req.AuthorizationURI = uris.GenerateURIForAuthorization(
+		req.TargetAccount.Username, req.ID,
+	)
+
+	// Update in the db.
+	if err := p.state.DB.UpdateInteractionRequest(
+		ctx,
+		req,
+		"accepted_at",
+		"response_uri",
+		"authorization_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating interaction request: %w", err)
+	}
+
+	// Send out the accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating accept: %v", err)
+	}
+
+	// Update stats for the replying account.
+	if err := p.utils.incrementStatusesCount(ctx, fMsg.Requesting, reply); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline the reply + notify recipient(s).
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Interaction counts changed on the replied status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -430,18 +565,18 @@ func (p *fediAPI) UpdatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 	}
 
 	// Get the origin status.
-	status := vote.Poll.Status
+	reply := vote.Poll.Status
 
-	if *status.Local {
+	if *reply.Local {
 		// These were poll votes in a local status, we need to
 		// federate the updated status model with latest vote counts.
-		if err := p.federate.UpdateStatus(ctx, status); err != nil {
+		if err := p.federate.UpdateStatus(ctx, reply); err != nil {
 			log.Errorf(ctx, "error federating status update: %v", err)
 		}
 	}
 
 	// Interaction counts changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(status.ID)
+	p.surface.invalidateStatusFromTimelines(reply.ID)
 
 	return nil
 }
@@ -503,6 +638,8 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg *messages.FromFediAP
 	return nil
 }
 
+// CreateLike handles an impolite Like, ie., a Like sent directly.
+// This is different from the CreateLikeRequest function, which handles polite LikeRequests.
 func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	fave, ok := fMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
@@ -525,7 +662,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestFave(ctx, fave); err != nil {
+		if err := p.utils.impoliteFaveRequest(ctx, fave); err != nil {
 			return gtserror.Newf("error pending fave: %w", err)
 		}
 
@@ -540,20 +677,24 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             fave.StatusID,
-			TargetAccountID:      fave.TargetAccountID,
-			TargetAccount:        fave.TargetAccount,
-			InteractingAccountID: fave.AccountID,
-			InteractingAccount:   fave.Account,
-			InteractionURI:       fave.URI,
-			InteractionType:      gtsmodel.InteractionLike,
-			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        fave.StatusID,
+			TargetAccountID:       fave.TargetAccountID,
+			TargetAccount:         fave.TargetAccount,
+			InteractingAccountID:  fave.AccountID,
+			InteractingAccount:    fave.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
+			InteractionURI:        fave.URI,
+			InteractionType:       gtsmodel.InteractionLike,
+			Polite:                util.Ptr(false),
+			Like:                  fave,
+			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -562,7 +703,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -591,6 +732,87 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 	return nil
 }
 
+// CreateLikeRequest handles a polite LikeRequest, as
+// opposed to CreateLike, which handles *impolite* like
+// requests (ie., Likes sent directly).
+func (p *fediAPI) CreateLikeRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the not-yet-approved
+	// interaction request, and the pending
+	// fave, are both in the database.
+
+	if !req.Like.PreApproved {
+		// The fave is *not* pre-approved, and
+		// therefore requires manual approval.
+		//
+		// Just notify target account about
+		// the requested interaction.
+		if err := p.surface.notifyPendingFave(ctx, req.Like); err != nil {
+			return gtserror.Newf("error notifying pending like: %w", err)
+		}
+
+		return nil
+	}
+
+	// If it's pre-approved on the other hand
+	// we can handle everything immediately.
+
+	// Mark the request as accepted.
+	req.AcceptedAt = time.Now()
+	req.ResponseURI = uris.GenerateURIForAccept(
+		req.TargetAccount.Username, req.ID,
+	)
+	req.AuthorizationURI = uris.GenerateURIForAuthorization(
+		req.TargetAccount.Username, req.ID,
+	)
+
+	// Update in the db.
+	if err := p.state.DB.UpdateInteractionRequest(
+		ctx,
+		req,
+		"accepted_at",
+		"response_uri",
+		"authorization_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating interaction request: %w", err)
+	}
+
+	// Send out the accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating accept: %v", err)
+	}
+
+	// Mark the fave as approved.
+	req.Like.PendingApproval = util.Ptr(false)
+	req.Like.ApprovedByURI = req.AuthorizationURI
+	req.Like.PreApproved = false
+
+	// Update in the db.
+	if err := p.state.DB.UpdateStatusFave(
+		ctx,
+		req.Like,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating status fave: %w", err)
+	}
+
+	// Notify the faved account.
+	if err := p.surface.notifyFave(ctx, req.Like); err != nil {
+		log.Errorf(ctx, "error notifying fave: %v", err)
+	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
+
+	return nil
+}
+
 func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	boost, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
@@ -610,7 +832,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	)
 	if err != nil {
 		if gtserror.IsUnretrievable(err) ||
-			gtserror.NotPermitted(err) {
+			gtserror.IsNotPermitted(err) {
 			// Boosted status domain blocked, or
 			// otherwise not permitted, nothing to do.
 			log.Debugf(ctx, "skipping announce: %v", err)
@@ -632,7 +854,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestAnnounce(ctx, boost); err != nil {
+		if err := p.utils.impoliteAnnounceRequest(ctx, boost); err != nil {
 			return gtserror.Newf("error pending boost: %w", err)
 		}
 
@@ -647,20 +869,24 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		// Store an already-accepted
+		// impolite interaction request.
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             boost.BoostOfID,
-			TargetAccountID:      boost.BoostOfAccountID,
-			TargetAccount:        boost.BoostOfAccount,
-			InteractingAccountID: boost.AccountID,
-			InteractingAccount:   boost.Account,
-			InteractionURI:       boost.URI,
-			InteractionType:      gtsmodel.InteractionAnnounce,
-			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        boost.BoostOfID,
+			TargetAccountID:       boost.BoostOfAccountID,
+			TargetAccount:         boost.BoostOfAccount,
+			InteractingAccountID:  boost.AccountID,
+			InteractingAccount:    boost.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(boost.URI, gtsmodel.AnnounceRequestSuffix),
+			InteractionURI:        boost.URI,
+			InteractionType:       gtsmodel.InteractionAnnounce,
+			Polite:                util.Ptr(false),
+			Announce:              boost,
+			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -669,7 +895,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,
@@ -702,6 +928,103 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	}
 
 	// Interaction counts changed on the original status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
+
+	return nil
+}
+
+func (p *fediAPI) CreateAnnounceRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the not-yet-handled interaction req
+	// is in the database, but the announce isn't yet.
+	//
+	// We can check permissions for the announce *and*
+	// put it in the db (if acceptable) by doing Enrich.
+	boost, err := p.federate.EnrichAnnounce(
+		ctx,
+		req.Announce,
+		fMsg.Receiving.Username,
+	)
+
+	switch {
+	case err == nil:
+		// All fine.
+
+	case gtserror.IsNotPermitted(err):
+		// Announce is straight up not permitted
+		// by the interaction policy of the status
+		// it's targeting. Nothing more to do.
+		log.Debugf(ctx,
+			"dropping unpermitted AnnounceRequest with instrument %s",
+			req.Announce.URI,
+		)
+		return nil
+
+	default:
+		// There's some real error.
+		return gtserror.Newf(
+			"error processing AnnounceRequest with instrument %s: %w",
+			req.Announce.URI, err,
+		)
+	}
+
+	// The announce is permitted. Check if we
+	// should send out an Accept immediately.
+	manualApproval := *boost.PendingApproval && !boost.PreApproved
+	if manualApproval {
+		// The announce requires manual approval.
+		//
+		// Just notify target account about
+		// the requested interaction.
+		if err := p.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+			return gtserror.Newf("error notifying pending announce: %w", err)
+		}
+
+		return nil
+	}
+
+	// The announce is automatically approved,
+	// mark the request as accepted.
+	req.AcceptedAt = time.Now()
+	req.ResponseURI = uris.GenerateURIForAccept(
+		req.TargetAccount.Username, req.ID,
+	)
+	req.AuthorizationURI = uris.GenerateURIForAuthorization(
+		req.TargetAccount.Username, req.ID,
+	)
+
+	// Update in the db.
+	if err := p.state.DB.UpdateInteractionRequest(
+		ctx,
+		req,
+		"accepted_at",
+		"response_uri",
+		"authorization_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating interaction request: %w", err)
+	}
+
+	// Send out the accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating accept: %v", err)
+	}
+
+	// Update stats for the boosting account.
+	if err := p.utils.incrementStatusesCount(ctx, fMsg.Requesting, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline the boost + notify recipient(s).
+	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
@@ -842,29 +1165,29 @@ func (p *fediAPI) AcceptLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 }
 
 func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) error {
-	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	reply, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
 	// Update stats for the actor account.
-	if err := p.utils.incrementStatusesCount(ctx, status.Account, status); err != nil {
+	if err := p.utils.incrementStatusesCount(ctx, reply.Account, reply); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	// Timeline and notify the status.
-	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	// Send out the reply again, fully this time.
-	if err := p.federate.CreateStatus(ctx, status); err != nil {
+	if err := p.federate.CreateStatus(ctx, reply); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
 
 	// Interaction counts changed on the replied-to status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(status.InReplyToID)
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -893,9 +1216,9 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 	// barebones status and insert it into the database,
 	// if indeed it's actually a status URI we can fetch.
 	//
-	// This will also check whether the given AcceptIRI
+	// This will also check whether the given approvedByURI
 	// actually grants permission for this status.
-	status, _, err := p.federate.RefreshStatus(ctx,
+	reply, _, err := p.federate.RefreshStatus(ctx,
 		fMsg.Receiving.Username,
 		bareStatus,
 		nil, nil,
@@ -906,19 +1229,69 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 
 	// No error means it was indeed a remote status, and the
 	// given approvedByURI permitted it. Timeline and notify it.
-	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	// Interaction counts changed on the interacted status;
 	// uncache the prepared version from all timelines.
-	if status.InReplyToID != "" {
-		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
+	if reply.InReplyToID != "" {
+		p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 	}
 
-	if status.BoostOfID != "" {
-		p.surface.invalidateStatusFromTimelines(status.BoostOfID)
+	if reply.BoostOfID != "" {
+		p.surface.invalidateStatusFromTimelines(reply.BoostOfID)
 	}
+
+	return nil
+}
+
+func (p *fediAPI) AcceptPoliteReplyRequest(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	if util.IsNil(fMsg.GTSModel) {
+		// If the interaction request is nil, this
+		// must be an accept of a remote ReplyRequest
+		// not targeting one of our statuses.
+		//
+		// Just pass it to the AcceptRemoteStatus
+		// func to do dereferencing + side effects.
+		log.Debug(ctx, "accepting remote ReplyRequest for remote reply")
+		return p.AcceptRemoteStatus(ctx, fMsg)
+	}
+
+	// If the interaction request is not nil, this will
+	// be an accept of one of our replies to a remote.
+	//
+	// Since the int req + reply have already been updated
+	// in the federatingDB, we just need to do side effects.
+	intReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// Ensure reply populated.
+	reply := intReq.Reply
+	if err := p.state.DB.PopulateStatus(ctx, reply); err != nil {
+		return gtserror.Newf("error populating status: %w", err)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utils.incrementStatusesCount(ctx, reply.Account, reply); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline and notify the status.
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Send out the reply with approval attached.
+	if err := p.federate.CreateStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error federating announce: %v", err)
+	}
+
+	// Interaction counts changed on the replied-to status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -1169,7 +1542,7 @@ func (p *fediAPI) RejectReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	// be in the database, we just need to do side effects.
 
 	// Get the rejected status.
-	status, err := p.state.DB.GetStatusByURI(
+	reply, err := p.state.DB.GetStatusByURI(
 		gtscontext.SetBarebones(ctx),
 		req.InteractionURI,
 	)
@@ -1189,7 +1562,7 @@ func (p *fediAPI) RejectReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	// Perform the actual status deletion.
 	if err := p.utils.wipeStatus(
 		ctx,
-		status,
+		reply,
 		deleteAttachments,
 		copyToSinBin,
 	); err != nil {

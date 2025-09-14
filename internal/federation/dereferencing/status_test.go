@@ -136,7 +136,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 	// status values should be set
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7", status.URI)
 	suite.Equal("https://unknown-instance.com/users/@brand_new_person/01H641QSRS3TCXSVC10X4GPKW7", status.URL)
-	suite.Equal("<p>Babe are you okay, you've hardly touched your <a href=\"https://unknown-instance.com/tags/piss\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>piss</span></a></p>", status.Content)
+	suite.Equal("<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span>Babe are you okay, you've hardly touched your <a href=\"https://unknown-instance.com/tags/piss\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>piss</span></a></p>", status.Content)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", status.AccountURI)
 	suite.False(*status.Local)
 	suite.Empty(status.ContentWarning)

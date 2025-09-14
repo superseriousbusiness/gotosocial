@@ -115,7 +115,7 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 
 	// Address the delete CC public.
 	deleteCC := streams.NewActivityStreamsCcProperty()
-	deleteCC.AppendIRI(ap.PublicURI())
+	deleteCC.AppendIRI(ap.PublicIRI())
 	delete.SetActivityStreamsCc(deleteCC)
 
 	// Send the Delete via the Actor's outbox.
@@ -491,12 +491,7 @@ func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) err
 	}
 
 	// Recreate the ActivityStreams Announce.
-	asAnnounce, err := f.converter.BoostToAS(
-		ctx,
-		boost,
-		boost.Account,
-		boost.BoostOfAccount,
-	)
+	asAnnounce, err := f.converter.BoostToAS(ctx, boost)
 	if err != nil {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
@@ -767,12 +762,7 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	}
 
 	// Create the ActivityStreams Announce.
-	announce, err := f.converter.BoostToAS(
-		ctx,
-		boost,
-		boost.Account,
-		boost.BoostOfAccount,
-	)
+	announce, err := f.converter.BoostToAS(ctx, boost)
 	if err != nil {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
@@ -1104,7 +1094,7 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 	ap.AppendTo(move, followersIRI)
 
 	// Address the move CC public.
-	ap.AppendCc(move, ap.PublicURI())
+	ap.AppendCc(move, ap.PublicIRI())
 
 	// Send the Move via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(

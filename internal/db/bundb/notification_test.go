@@ -46,21 +46,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 		if i%2 == 0 {
 			targetAccountID = zork.ID
 		} else {
-			randomAssID, err := id.NewRandomULID()
-			if err != nil {
-				panic(err)
-			}
-			targetAccountID = randomAssID
-		}
-
-		statusID, err := id.NewRandomULID()
-		if err != nil {
-			panic(err)
-		}
-
-		originAccountID, err := id.NewRandomULID()
-		if err != nil {
-			panic(err)
+			targetAccountID = id.NewRandomULID()
 		}
 
 		notif := &gtsmodel.Notification{
@@ -68,8 +54,8 @@ func (suite *NotificationTestSuite) spamNotifs() {
 			NotificationType: gtsmodel.NotificationFavourite,
 			CreatedAt:        time.Now(),
 			TargetAccountID:  targetAccountID,
-			OriginAccountID:  originAccountID,
-			StatusOrEditID:   statusID,
+			OriginAccountID:  id.NewRandomULID(),
+			StatusOrEditID:   id.NewRandomULID(),
 			Read:             util.Ptr(false),
 		}
 

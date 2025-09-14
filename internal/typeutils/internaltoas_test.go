@@ -25,6 +25,8 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
@@ -947,6 +949,264 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 }`, string(bytes))
 }
 
+func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
+	ctx := suite.T().Context()
+
+	// Take a status from admin that replies to turtle.
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_5"]
+
+	// Take corresponding interaction request.
+	intReq := new(gtsmodel.InteractionRequest)
+	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
+
+	// Mark the status as approved by updating the
+	// status + corresponding interaction request.
+	username := suite.testAccounts["local_account_2"].Username
+	intReq.ResponseURI = uris.GenerateURIForAccept(
+		username,
+		intReq.ID,
+	)
+	intReq.AuthorizationURI = uris.GenerateURIForAuthorization(
+		username,
+		intReq.ID,
+	)
+	intReq.AcceptedAt = testrig.TimeMustParse("2024-11-01T11:00:00+02:00")
+
+	// Mark it as polite too.
+	intReq.Polite = util.Ptr(true)
+
+	if err := suite.state.DB.UpdateInteractionRequest(
+		ctx,
+		intReq,
+		"response_uri",
+		"authorization_uri",
+		"accepted_at",
+		"polite",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testStatus.ApprovedByURI = intReq.AuthorizationURI
+	if err := suite.state.DB.UpdateStatus(
+		ctx,
+		testStatus,
+		"approved_by_uri",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(asStatus)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
+  "approvedBy": "http://localhost:8080/users/1happyturtle/accepts/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "attachment": [],
+  "attributedTo": "http://localhost:8080/users/admin",
+  "cc": [
+    "http://localhost:8080/users/admin/followers",
+    "http://localhost:8080/users/1happyturtle"
+  ],
+  "content": "\u003cp\u003eHi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003e1happyturtle\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e, can I reply?\u003c/p\u003e",
+  "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "inReplyTo": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    }
+  },
+  "published": "2024-02-20T12:41:37+02:00",
+  "replies": {
+    "first": {
+      "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true",
+      "next": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true\u0026only_other_accounts=false",
+      "partOf": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+      "type": "CollectionPage"
+    },
+    "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+    "type": "Collection"
+  },
+  "replyAuthorization": "http://localhost:8080/users/1happyturtle/authorizations/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "sensitive": false,
+  "summary": "",
+  "tag": {
+    "href": "http://localhost:8080/users/1happyturtle",
+    "name": "@1happyturtle@localhost:8080",
+    "type": "Mention"
+  },
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
+	ctx := suite.T().Context()
+
+	// Take a status from admin that replies to turtle.
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_5"]
+
+	// Take corresponding interaction request.
+	intReq := new(gtsmodel.InteractionRequest)
+	*intReq = *suite.testInteractionRequests["admin_account_reply_turtle"]
+
+	// Mark the status as approved by updating the
+	// status + corresponding interaction request.
+	username := suite.testAccounts["local_account_2"].Username
+	intReq.ResponseURI = uris.GenerateURIForAccept(
+		username,
+		intReq.ID,
+	)
+	intReq.AuthorizationURI = uris.GenerateURIForAuthorization(
+		username,
+		intReq.ID,
+	)
+	intReq.AcceptedAt = testrig.TimeMustParse("2024-11-01T11:00:00+02:00")
+
+	if err := suite.state.DB.UpdateInteractionRequest(
+		ctx,
+		intReq,
+		"response_uri",
+		"authorization_uri",
+		"accepted_at",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testStatus.ApprovedByURI = intReq.AuthorizationURI
+	if err := suite.state.DB.UpdateStatus(
+		ctx,
+		testStatus,
+		"approved_by_uri",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(asStatus)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
+  "approvedBy": "http://localhost:8080/users/1happyturtle/accepts/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "attachment": [],
+  "attributedTo": "http://localhost:8080/users/admin",
+  "cc": [
+    "http://localhost:8080/users/admin/followers",
+    "http://localhost:8080/users/1happyturtle"
+  ],
+  "content": "\u003cp\u003eHi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003e1happyturtle\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e, can I reply?\u003c/p\u003e",
+  "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "inReplyTo": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
+    }
+  },
+  "published": "2024-02-20T12:41:37+02:00",
+  "replies": {
+    "first": {
+      "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true",
+      "next": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies?page=true\u0026only_other_accounts=false",
+      "partOf": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+      "type": "CollectionPage"
+    },
+    "id": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ/replies",
+    "type": "Collection"
+  },
+  "replyAuthorization": "http://localhost:8080/users/1happyturtle/authorizations/01J5QVXCCEATJYSXM9H6MZT4JR",
+  "sensitive": false,
+  "summary": "",
+  "tag": {
+    "href": "http://localhost:8080/users/1happyturtle",
+    "name": "@1happyturtle@localhost:8080",
+    "type": "Mention"
+  },
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ"
+}`, string(bytes))
+}
+
 func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReply() {
 	testStatus := suite.testStatuses["admin_account_status_3"]
 	ctx := suite.T().Context()
@@ -1119,7 +1379,7 @@ func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
 	boostWrapperStatus.URI = "http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER"
 	boostWrapperStatus.CreatedAt = testrig.TimeMustParse("2022-06-09T13:12:00Z")
 
-	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus, testAccount, testAccount)
+	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus)
 	suite.NoError(err)
 
 	ser, err := ap.Serialize(asBoost)
@@ -1320,23 +1580,24 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 }`, string(bytes1))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
+func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptAnnounce() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
 	req := &gtsmodel.InteractionRequest{
-		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
-		TargetAccountID:      acceptingAccount.ID,
-		TargetAccount:        acceptingAccount,
-		InteractingAccountID: interactingAccount.ID,
-		InteractingAccount:   interactingAccount,
-		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
-		InteractionType:      gtsmodel.InteractionAnnounce,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.AnnounceRequestSuffix,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionAnnounce,
+		Polite:                util.Ptr(false),
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
 	accept, err := suite.typeconverter.InteractionReqToASAccept(
@@ -1372,23 +1633,24 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 }`, string(b))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
+func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptLike() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
 	req := &gtsmodel.InteractionRequest{
-		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
-		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
-		TargetAccountID:      acceptingAccount.ID,
-		TargetAccount:        acceptingAccount,
-		InteractingAccountID: interactingAccount.ID,
-		InteractingAccount:   interactingAccount,
-		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
-		InteractionType:      gtsmodel.InteractionLike,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.LikeRequestSuffix,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(false),
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
 	accept, err := suite.typeconverter.InteractionReqToASAccept(
@@ -1413,10 +1675,121 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
-  "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "object": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
   "target": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Accept"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLikePolite() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(true),
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AuthorizationURI:      "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
+		suite.T().Context(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "object": {
+    "actor": "http://fossbros-anonymous.io/users/foss_satan",
+    "id": "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+    "instrument": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+    "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+    "type": "LikeRequest"
+  },
+  "result": "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Accept"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestPoliteInteractionReqToASAuthorization() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       acceptingAccount.ID,
+		TargetAccount:         acceptingAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(true),
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		ResponseURI:           "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AuthorizationURI:      "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	auth, err := suite.typeconverter.InteractionReqToASAuthorization(
+		suite.T().Context(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(auth)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/authorizations/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "interactingObject": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "interactionTarget": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+  "type": "LikeAuthorization"
 }`, string(b))
 }
 

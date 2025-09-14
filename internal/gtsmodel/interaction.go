@@ -20,7 +20,7 @@ package gtsmodel
 import "time"
 
 // Like / Reply / Announce
-type InteractionType int
+type InteractionType enumType
 
 const (
 	// WARNING: DO NOT CHANGE THE ORDER OF THESE,
@@ -29,10 +29,33 @@ const (
 	// If you need to add new interaction types,
 	// add them *to the end* of the list.
 
-	InteractionLike InteractionType = iota
-	InteractionReply
-	InteractionAnnounce
+	InteractionLike     InteractionType = 0
+	InteractionReply    InteractionType = 1
+	InteractionAnnounce InteractionType = 2
 )
+
+const (
+	// Suffix to append to the URI of
+	// impolite Likes to mock a LikeRequest.
+	LikeRequestSuffix = "#LikeRequest"
+
+	// Suffix to append to the URI of
+	// impolite replies to mock a ReplyRequest.
+	ReplyRequestSuffix = "#ReplyRequest"
+
+	// Suffix to append to the URI of impolite
+	// Announces to mock an AnnounceRequest.
+	AnnounceRequestSuffix = "#AnnounceRequest"
+)
+
+// A useless function that appends two strings, this exists largely
+// to indicate where a request URI is being generated as forward compatible
+// with our planned polite request flow fully introduced in v0.21.0.
+//
+// TODO: remove this in v0.21.0. everything the linter complains about after removing this, needs updating.
+func ForwardCompatibleInteractionRequestURI(interactionURI string, suffix string) string {
+	return interactionURI + suffix
+}
 
 // Stringifies this InteractionType in a
 // manner suitable for serving via the API.
@@ -52,30 +75,80 @@ func (i InteractionType) String() string {
 	}
 }
 
-// InteractionRequest represents one interaction (like, reply, fave)
-// that is either accepted, rejected, or currently still awaiting
+// InteractionRequest represents one interaction request
+// that is either accepted, rejected, or awaiting
 // acceptance or rejection by the target account.
 type InteractionRequest struct {
-	ID                   string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt            time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	StatusID             string          `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the interaction target status.
-	Status               *Status         `bun:"-"`                                                           // Not stored in DB. Status being interacted with.
-	TargetAccountID      string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account being interacted with
-	TargetAccount        *Account        `bun:"-"`                                                           // Not stored in DB. Account being interacted with.
-	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account requesting the interaction.
-	InteractingAccount   *Account        `bun:"-"`                                                           // Not stored in DB. Account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like, reply, or announce. Unique (only one interaction request allowed per interaction URI).
-	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
-	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
-	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
-	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
-	AcceptedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was accepted, time at which this occurred.
-	RejectedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was rejected, time at which this occurred.
 
-	// ActivityPub URI of the Accept (if accepted) or Reject (if rejected).
+	// ID of this item in the database.
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+
+	// ID of the status targeted by the interaction.
+	TargetStatusID string `bun:"type:CHAR(26),nullzero,notnull"`
+
+	// Local status corresponding to TargetStatusID.
+	// Column not stored in DB.
+	TargetStatus *Status `bun:"-"`
+
+	// ID of the account being interacted with.
+	TargetAccountID string `bun:"type:CHAR(26),nullzero,notnull"`
+
+	// Account corresponding to TargetAccountID.
+	// Column not stored in DB.
+	TargetAccount *Account `bun:"-"`
+
+	// ID of the account doing the interaction request.
+	InteractingAccountID string `bun:"type:CHAR(26),nullzero,notnull"`
+
+	// Account corresponding to InteractingAccountID.
+	// Column not stored in DB.
+	InteractingAccount *Account `bun:"-"`
+
+	// URI of the Request, if this InteractionRequest originated from
+	// a polite Request type (LikeRequest, ReplyRequest, AnnounceRequest, etc.).
+	//
+	// If the interaction request originated from an interaction
+	// (Like, Create (status), Announce, etc.) transmitted impolitely,
+	// this will be set to a mocked URI.
+	InteractionRequestURI string `bun:",nullzero,notnull,unique"`
+
+	// URI of the interaction itself.
+	InteractionURI string `bun:",nullzero,notnull,unique"`
+
+	// Type of interaction being requested.
+	InteractionType InteractionType `bun:",notnull"`
+
+	// True if this interaction request
+	// originated from a polite Request type.
+	Polite *bool `bun:",nullzero,notnull,default:false"`
+
+	// Set if InteractionType = InteractionLike.
+	// Column not stored in DB.
+	Like *StatusFave `bun:"-"`
+
+	// Set if InteractionType = InteractionReply.
+	// Column not stored in DB.
+	Reply *Status `bun:"-"`
+
+	// Set if InteractionType = InteractionAnnounce.
+	// Column not stored in DB.
+	Announce *Status `bun:"-"`
+
+	// If interaction request was accepted, time at which this occurred.
+	AcceptedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// If interaction request was rejected, time at which this occurred.
+	RejectedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// URI of the Accept (if accepted) or Reject (if rejected).
 	// Field may be empty if currently neither accepted not rejected, or if
 	// acceptance/rejection was implicit (ie., not resulting from an Activity).
-	URI string `bun:",nullzero,unique"`
+	ResponseURI string `bun:",nullzero,unique"`
+
+	// URI of the Authorization object (if accepted).
+	//
+	// Field will only be set if the interaction has been accepted.
+	AuthorizationURI string `bun:",nullzero,unique"`
 }
 
 // IsHandled returns true if interaction
@@ -94,6 +167,39 @@ func (ir *InteractionRequest) IsAccepted() bool {
 // interaction request has been rejected.
 func (ir *InteractionRequest) IsRejected() bool {
 	return !ir.RejectedAt.IsZero()
+}
+
+// IsPolite returns true if this interaction request was done
+// "politely" with a *Request type, or false if it was done
+// "impolitely" with direct send of a like, reply, or announce.
+//
+// The following information is not strictly needed but provides
+// useful context for why interaction requests are determined to
+// be either "polite" or "impolite".
+//
+// A "polite" interaction request flow indicates that it was
+// performed with the latest currently accepted manner of doing
+// things. This manner is different to that initially introduced
+// by us (GoToSocial) pre-v0.20.0, as it is the result of our
+// previous design going through many iterations with Mastodon
+// developers as part of designing their similar quote post flow.
+//
+// An "impolite" interaction request flow is that produced either
+// by an older interaction-policy-AWARE GoToSocial instance, or
+// by any interaction-policy-UNAWARE server instance.
+//
+// Regarding per-version GoToSocial behaviour (summarized by tobi):
+//
+//   - from v0.19.0 and before, we know about and can respond only to
+//     impolite interactions, and we send out impolite as well
+//
+//   - from v0.20.0 onwards, we know about and can respond to both
+//     polite / impolite interaction requests, but we still send out impolite
+//
+//   - from v0.21.0 onwards, we know about and can respond to both
+//     polite and impolite interaction requests, and we send out polite
+func (ir *InteractionRequest) IsPolite() bool {
+	return ir.Polite != nil && *ir.Polite
 }
 
 // Interaction abstractly represents

@@ -41,6 +41,4 @@ type InteractionRequest struct {
 	AcceptedAt string `json:"accepted_at,omitempty"`
 	// The timestamp that the interaction request was rejected (ISO 8601 Datetime). Field omitted if request not rejected (yet).
 	RejectedAt string `json:"rejected_at,omitempty"`
-	// URI of the Accept or Reject. Only set if accepted_at or rejected_at is set, else omitted.
-	URI string `json:"uri,omitempty"`
 }

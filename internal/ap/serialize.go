@@ -153,8 +153,8 @@ func serializeStatusable(t vocab.Type, includeContext bool) (map[string]interfac
 
 	NormalizeOutgoingAttachmentProp(statusable, data)
 	NormalizeOutgoingContentProp(statusable, data)
-	if ipa, ok := statusable.(InteractionPolicyAware); ok {
-		NormalizeOutgoingInteractionPolicyProp(ipa, data)
+	if wip, ok := statusable.(WithInteractionPolicy); ok {
+		NormalizeOutgoingInteractionPolicyProp(wip, data)
 	}
 
 	return data, nil

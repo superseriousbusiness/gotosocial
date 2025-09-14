@@ -287,7 +287,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestReply(ctx, status); err != nil {
+		if err := p.utils.impoliteReplyRequest(ctx, status); err != nil {
 			return gtserror.Newf("error pending reply: %w", err)
 		}
 
@@ -310,19 +310,22 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// URI attached.
 
 		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             status.InReplyToID,
-			TargetAccountID:      status.InReplyToAccountID,
-			TargetAccount:        status.InReplyToAccount,
-			InteractingAccountID: status.AccountID,
-			InteractingAccount:   status.Account,
-			InteractionURI:       status.URI,
-			InteractionType:      gtsmodel.InteractionReply,
-			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        status.InReplyToID,
+			TargetAccountID:       status.InReplyToAccountID,
+			TargetAccount:         status.InReplyToAccount,
+			InteractingAccountID:  status.AccountID,
+			InteractingAccount:    status.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix),
+			InteractionURI:        status.URI,
+			InteractionType:       gtsmodel.InteractionReply,
+			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
+			Reply:                 status,
+			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -331,7 +334,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -494,7 +497,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestFave(ctx, fave); err != nil {
+		if err := p.utils.impoliteFaveRequest(ctx, fave); err != nil {
 			return gtserror.Newf("error pending fave: %w", err)
 		}
 
@@ -517,19 +520,22 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// URI attached.
 
 		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             fave.StatusID,
-			TargetAccountID:      fave.TargetAccountID,
-			TargetAccount:        fave.TargetAccount,
-			InteractingAccountID: fave.AccountID,
-			InteractingAccount:   fave.Account,
-			InteractionURI:       fave.URI,
-			InteractionType:      gtsmodel.InteractionLike,
-			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        fave.StatusID,
+			TargetAccountID:       fave.TargetAccountID,
+			TargetAccount:         fave.TargetAccount,
+			InteractingAccountID:  fave.AccountID,
+			InteractingAccount:    fave.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
+			InteractionURI:        fave.URI,
+			InteractionType:       gtsmodel.InteractionLike,
+			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
+			Like:                  fave,
+			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -538,7 +544,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -589,7 +595,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestAnnounce(ctx, boost); err != nil {
+		if err := p.utils.impoliteAnnounceRequest(ctx, boost); err != nil {
 			return gtserror.Newf("error pending boost: %w", err)
 		}
 
@@ -612,19 +618,22 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// URI attached.
 
 		// Store an already-accepted interaction request.
-		id := id.NewULID()
+		requestID := id.NewULID()
 		approval := &gtsmodel.InteractionRequest{
-			ID:                   id,
-			StatusID:             boost.BoostOfID,
-			TargetAccountID:      boost.BoostOfAccountID,
-			TargetAccount:        boost.BoostOfAccount,
-			InteractingAccountID: boost.AccountID,
-			InteractingAccount:   boost.Account,
-			InteractionURI:       boost.URI,
-			InteractionType:      gtsmodel.InteractionAnnounce,
-			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
-			AcceptedAt:           time.Now(),
+			ID:                    requestID,
+			TargetStatusID:        boost.BoostOfID,
+			TargetAccountID:       boost.BoostOfAccountID,
+			TargetAccount:         boost.BoostOfAccount,
+			InteractingAccountID:  boost.AccountID,
+			InteractingAccount:    boost.Account,
+			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(boost.URI, gtsmodel.AnnounceRequestSuffix),
+			InteractionURI:        boost.URI,
+			InteractionType:       gtsmodel.InteractionAnnounce,
+			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
+			Announce:              boost,
+			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, requestID),
+			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, requestID),
+			AcceptedAt:            time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
 			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
@@ -633,7 +642,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.AuthorizationURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,

@@ -3054,7 +3054,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
 	suite.Equal(`{
   "id": "01J5QVXCCEATJYSXM9H6MZT4JR",
   "type": "reply",
-  "created_at": "2024-02-20T10:41:37.000Z",
+  "created_at": "2024-08-20T12:24:13.966Z",
   "account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",

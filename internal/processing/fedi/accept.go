@@ -19,10 +19,8 @@ package fedi
 
 import (
 	"context"
-	"errors"
 
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
@@ -34,44 +32,18 @@ import (
 func (p *Processor) AcceptGet(
 	ctx context.Context,
 	requestedUser string,
-	reqID string,
-) (interface{}, gtserror.WithCode) {
-	// Authenticate incoming request, getting related accounts.
-	auth, errWithCode := p.authenticate(ctx, requestedUser)
+	intReqID string,
+) (any, gtserror.WithCode) {
+	// Ensure valid request, intReq exists, etc.
+	intReq, errWithCode := p.validateIntReqRequest(ctx, requestedUser, intReqID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if auth.handshakingURI != nil {
-		// We're currently handshaking, which means
-		// we don't know this account yet. This should
-		// be a very rare race condition.
-		err := gtserror.Newf("network race handshaking %s", auth.handshakingURI)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	receivingAcct := auth.receivingAcct
-
-	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if req == nil || !req.IsAccepted() {
-		// Request doesn't exist or hasn't been accepted.
-		err := gtserror.Newf("interaction request %s not found", reqID)
-		return nil, gtserror.NewErrorNotFound(err)
-	}
-
-	if req.TargetAccountID != receivingAcct.ID {
-		const text = "interaction request does not belong to receiving account"
-		return nil, gtserror.NewErrorNotFound(errors.New(text))
-	}
-
-	accept, err := p.converter.InteractionReqToASAccept(ctx, req)
+	// Convert + serialize the Accept.
+	accept, err := p.converter.InteractionReqToASAccept(ctx, intReq)
 	if err != nil {
-		err := gtserror.Newf("error converting accept: %w", err)
+		err := gtserror.Newf("error converting to accept: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

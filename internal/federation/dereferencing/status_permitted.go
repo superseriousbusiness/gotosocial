@@ -70,7 +70,7 @@ func (d *Dereferencer) isPermittedStatus(
 	switch {
 	case status.Account.IsSuspended():
 		// we shouldn't reach this point, log to poke devs to investigate.
-		log.Warnf(ctx, "status author suspended: %s", status.AccountURI)
+		log.Warnf(ctx, "should not have reached here, author suspended: %s", status.AccountURI)
 		permitted = false
 
 	case status.InReplyToURI != "":
@@ -111,7 +111,8 @@ func (d *Dereferencer) isPermittedStatus(
 	return
 }
 
-// isPermittedReply ...
+// isPermittedReply checks whether the given status
+// is a permitted reply to its referenced inReplyTo.
 func (d *Dereferencer) isPermittedReply(
 	ctx context.Context,
 	requestUser string,
@@ -119,20 +120,21 @@ func (d *Dereferencer) isPermittedReply(
 ) (bool, error) {
 
 	var (
-		replyURI      = reply.URI           // Definitely set.
-		inReplyToURI  = reply.InReplyToURI  // Definitely set.
-		inReplyTo     = reply.InReplyTo     // Might not be set.
+		replyURI = reply.URI // Definitely set.
+
+		parentURI = reply.InReplyToURI // Definitely set.
+		parent    = reply.InReplyTo    // Might not be set.
+
 		approvedByURI = reply.ApprovedByURI // Might not be set.
 	)
 
 	// Check if we have a stored interaction request for parent status.
 	parentReq, err := d.state.DB.GetInteractionRequestByInteractionURI(
 		gtscontext.SetBarebones(ctx),
-		inReplyToURI,
+		parentURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting interaction request: %w", err)
-		return false, err
+		return false, gtserror.Newf("db error getting interaction request: %w", err)
 	}
 
 	// Check if we have a stored interaction request for this reply.
@@ -141,8 +143,7 @@ func (d *Dereferencer) isPermittedReply(
 		replyURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting interaction request: %w", err)
-		return false, err
+		return false, gtserror.Newf("db error getting interaction request: %w", err)
 	}
 
 	parentRejected := (parentReq != nil && parentReq.IsRejected())
@@ -176,8 +177,7 @@ func (d *Dereferencer) isPermittedReply(
 	// it was rejected previously and now claims
 	// to be approved. Continue permission checks.
 
-	if inReplyTo == nil {
-
+	if parent == nil {
 		// If we didn't have the replied-to status
 		// in our database (yet), we can't check
 		// right now if this reply is permitted.
@@ -191,24 +191,23 @@ func (d *Dereferencer) isPermittedReply(
 	}
 
 	// We have the replied-to status; ensure it's fully populated.
-	if err := d.state.DB.PopulateStatus(ctx, inReplyTo); err != nil {
+	if err := d.state.DB.PopulateStatus(ctx, parent); err != nil {
 		return false, gtserror.Newf("error populating status %s: %w", reply.ID, err)
 	}
 
-	// Make sure replied-to status is not
-	// a boost wrapper, and make sure it's
-	// actually visible to the requester.
-	if inReplyTo.BoostOfID != "" {
-		// We do not permit replies
-		// to boost wrapper statuses.
-		log.Info(ctx, "rejecting reply to boost wrapper status")
+	// Boost wrapper statuses
+	// cannot receive replies.
+	if parent.BoostOfID != "" {
+		log.Warn(ctx, "received reply to boost wrapper status: %s", parent.URI)
 		return false, nil
 	}
 
-	if inReplyTo.IsLocal() {
+	// If parent is a local status
+	// check visibility to replyer.
+	if parent.IsLocal() {
 		visible, err := d.visFilter.StatusVisible(ctx,
 			reply.Account,
-			inReplyTo,
+			parent,
 		)
 		if err != nil {
 			err := gtserror.Newf("error checking inReplyTo visibility: %w", err)
@@ -227,12 +226,12 @@ func (d *Dereferencer) isPermittedReply(
 	// approval and checking the return value.
 	// No further checks are required.
 	if approvedByURI != "" {
-		return d.isPermittedByApprovedByIRI(
+		return d.isPermittedByAuthURI(
 			ctx,
 			gtsmodel.InteractionReply,
 			requestUser,
 			reply,
-			inReplyTo,
+			parent,
 			thisReq,
 			approvedByURI,
 		)
@@ -243,7 +242,7 @@ func (d *Dereferencer) isPermittedReply(
 	// to see what we need to do with it.
 	replyable, err := d.intFilter.StatusReplyable(ctx,
 		reply.Account,
-		inReplyTo,
+		parent,
 	)
 	if err != nil {
 		err := gtserror.Newf("error checking status replyability: %w", err)
@@ -260,7 +259,7 @@ func (d *Dereferencer) isPermittedReply(
 		return false, d.rejectedByPolicy(
 			ctx,
 			reply,
-			inReplyTo,
+			parent,
 			thisReq,
 		)
 	}
@@ -279,7 +278,7 @@ func (d *Dereferencer) isPermittedReply(
 	// pending approval, though we know at this point
 	// that the status did not include an approvedBy URI.
 
-	if !inReplyTo.IsLocal() {
+	if !parent.IsLocal() {
 		// If the replied-to status is remote, we should just
 		// drop this reply at this point, as we can't verify
 		// that the remote replied-to account approves it, and
@@ -359,7 +358,7 @@ func (d *Dereferencer) unpermittedByParent(
 	// This collapses the chain beyond the first
 	// rejected reply and allows us to avoid derefing
 	// further replies we already know we don't want.
-	inReplyToID := parentReq.StatusID
+	inReplyToID := parentReq.TargetStatusID
 	targetAccountID := parentReq.TargetAccountID
 
 	// As nobody is actually Rejecting the reply
@@ -369,14 +368,16 @@ func (d *Dereferencer) unpermittedByParent(
 	uri := ""
 
 	rejection := &gtsmodel.InteractionRequest{
-		ID:                   rejectID,
-		StatusID:             inReplyToID,
-		TargetAccountID:      targetAccountID,
-		InteractingAccountID: reply.AccountID,
-		InteractionURI:       reply.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  uri,
-		RejectedAt:           time.Now(),
+		ID:                    rejectID,
+		TargetStatusID:        inReplyToID,
+		TargetAccountID:       targetAccountID,
+		InteractingAccountID:  reply.AccountID,
+		InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(reply.URI, gtsmodel.ReplyRequestSuffix),
+		InteractionURI:        reply.URI,
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(false),
+		ResponseURI:           uri,
+		RejectedAt:            time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
@@ -386,14 +387,14 @@ func (d *Dereferencer) unpermittedByParent(
 	return nil
 }
 
-// isPermittedByApprovedByIRI checks whether the given URI
+// isPermittedByAuthURI checks whether the given URI
 // can be dereferenced, and whether it returns either an
-// Accept activity or an approval object which permits the
-// given reply to the given inReplyTo status.
+// Accept activity or an authorization object that permits
+// the given reply to the given inReplyTo status.
 //
 // If yes, then thisReq will be updated to
 // reflect the approval, if it's not nil.
-func (d *Dereferencer) isPermittedByApprovedByIRI(
+func (d *Dereferencer) isPermittedByAuthURI(
 	ctx context.Context,
 	interactionType gtsmodel.InteractionType,
 	requestUser string,
@@ -402,7 +403,7 @@ func (d *Dereferencer) isPermittedByApprovedByIRI(
 	thisReq *gtsmodel.InteractionRequest,
 	approvedByIRI string,
 ) (bool, error) {
-	permitted, err := d.isValidApprovedByIRI(
+	permitted, err := d.isValidAuthURI(
 		ctx,
 		interactionType,
 		requestUser,
@@ -430,13 +431,13 @@ func (d *Dereferencer) isPermittedByApprovedByIRI(
 	// pending approval, clear that now.
 	reply.PendingApproval = util.Ptr(false)
 	if thisReq != nil {
-		thisReq.URI = approvedByIRI
+		thisReq.ResponseURI = approvedByIRI
 		thisReq.AcceptedAt = time.Now()
 		thisReq.RejectedAt = time.Time{}
 		err := d.state.DB.UpdateInteractionRequest(
 			ctx,
 			thisReq,
-			"uri",
+			"response_uri",
 			"accepted_at",
 			"rejected_at",
 		)
@@ -483,13 +484,13 @@ func (d *Dereferencer) rejectedByPolicy(
 		// request is marked as rejected.
 		thisReq.RejectedAt = time.Now()
 		thisReq.AcceptedAt = time.Time{}
-		thisReq.URI = rejectURI
+		thisReq.ResponseURI = rejectURI
 		err := d.state.DB.UpdateInteractionRequest(
 			ctx,
 			thisReq,
 			"rejected_at",
 			"accepted_at",
-			"uri",
+			"response_uri",
 		)
 		if err != nil {
 			return gtserror.Newf("db error updating interaction request: %w", err)
@@ -501,14 +502,16 @@ func (d *Dereferencer) rejectedByPolicy(
 	// We haven't stored a rejected interaction
 	// request for this status yet, do it now.
 	rejection := &gtsmodel.InteractionRequest{
-		ID:                   rejectID,
-		StatusID:             inReplyTo.ID,
-		TargetAccountID:      inReplyTo.AccountID,
-		InteractingAccountID: reply.AccountID,
-		InteractionURI:       reply.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  rejectURI,
-		RejectedAt:           time.Now(),
+		ID:                    rejectID,
+		TargetStatusID:        inReplyTo.ID,
+		TargetAccountID:       inReplyTo.AccountID,
+		InteractingAccountID:  reply.AccountID,
+		InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(reply.URI, gtsmodel.ReplyRequestSuffix),
+		InteractionURI:        reply.URI,
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(false),
+		ResponseURI:           rejectURI,
+		RejectedAt:            time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
@@ -611,7 +614,7 @@ func (d *Dereferencer) isPermittedBoost(
 	// Boost claims to be approved, check
 	// this by dereferencing the approvedBy
 	// and inspecting the return value.
-	permitted, err := d.isValidApprovedByIRI(
+	permitted, err := d.isValidAuthURI(
 		ctx,
 		gtsmodel.InteractionAnnounce,
 		requestUser,
@@ -637,36 +640,36 @@ func (d *Dereferencer) isPermittedBoost(
 	return true, nil
 }
 
-// isValidApprovedByIRI dereferences the activitystreams Accept or approval
-// at the specified IRI, and checks the Accept or approval for validity
-// against the provided expectedActor, expectedObject, and expectedTarget.
+// isValidAuthURI dereferences the activitystreams Accept or authorization
+// at the specified IRI, and checks it for validity against the provided
+// expectedActor, expectedObject, and expectedTarget.
 //
 // Will return either (true, nil) if everything looked OK, an error
 // if something went wrong internally during deref, or (false, nil)
 // if the dereferenced Accept/Approval did not meet expectations.
-func (d *Dereferencer) isValidApprovedByIRI(
+func (d *Dereferencer) isValidAuthURI(
 	ctx context.Context,
 	interactionType gtsmodel.InteractionType,
 	requestUser string,
-	approvedByIRIStr string, // approval uri Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
+	authIRIStr string, // authorization uri Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
 	expectActorURIStr string, // actor Eg., "https://example.org/users/someone"
 	expectObjectURIStr string, // object Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
 	expectTargetURIStr string, // target Eg., "https://example.org/users/someone/statuses/01JM4REQTJ1BZ1R4BPYP1W4R9E"
 ) (bool, error) {
 	l := log.
 		WithContext(ctx).
-		WithField("approvedByIRI", approvedByIRIStr)
+		WithField("authIRI", authIRIStr)
 
-	approvedByIRI, err := url.Parse(approvedByIRIStr)
+	authIRI, err := url.Parse(authIRIStr)
 	if err != nil {
 		// Real returnable error.
-		err := gtserror.Newf("error parsing approvedByIRI: %w", err)
+		err := gtserror.Newf("error parsing authIRI: %w", err)
 		return false, err
 	}
 
 	// Don't make calls to the IRI if its
 	// domain is blocked, just return false.
-	blocked, err := d.state.DB.IsDomainBlocked(ctx, approvedByIRI.Host)
+	blocked, err := d.state.DB.IsDomainBlocked(ctx, authIRI.Host)
 	if err != nil {
 		// Real returnable error.
 		err := gtserror.Newf("error checking domain block: %w", err)
@@ -674,7 +677,7 @@ func (d *Dereferencer) isValidApprovedByIRI(
 	}
 
 	if blocked {
-		l.Info("approvedByIRI host is blocked")
+		l.Info("authIRI host is blocked")
 		return false, nil
 	}
 
@@ -685,12 +688,12 @@ func (d *Dereferencer) isValidApprovedByIRI(
 		return false, err
 	}
 
-	// Make the call to the approvedByURI.
+	// Make the call to the authIRI.
 	// Log any error encountered here but don't
 	// return it as it's not *our* error.
-	rsp, err := tsport.Dereference(ctx, approvedByIRI)
+	rsp, err := tsport.Dereference(ctx, authIRI)
 	if err != nil {
-		l.Errorf("error dereferencing approvedByIRI: %v", err)
+		l.Errorf("error dereferencing authIRI: %v", err)
 		return false, nil
 	}
 
@@ -706,31 +709,31 @@ func (d *Dereferencer) isValidApprovedByIRI(
 	}
 
 	// Extract the URI/ID of the type.
-	approvedByID := ap.GetJSONLDId(t)
-	approvedByIDStr := approvedByID.String()
+	authID := ap.GetJSONLDId(t)
+	authIDStr := authID.String()
 
 	// Check whether input URI and final returned URI
 	// have changed (i.e. we followed some redirects).
 	rspURL := rsp.Request.URL
 	rspURLStr := rspURL.String()
-	if rspURLStr != approvedByIRIStr {
+	if rspURLStr != authIRIStr {
 		// If rspURLStr != approvedByIRI, make sure final
 		// response URL is at least on the same host as
 		// what we expected (ie., we weren't redirected
 		// across domains), and make sure it's the same
 		// as the ID of the Accept we were returned.
 		switch {
-		case rspURL.Host != approvedByIRI.Host:
+		case rspURL.Host != authIRI.Host:
 			l.Errorf(
-				"final deref host %s did not match approvedByIRI host",
+				"final deref host %s did not match authIRI host",
 				rspURL.Host,
 			)
 			return false, nil
 
-		case approvedByIDStr != rspURLStr:
+		case authIDStr != rspURLStr:
 			l.Errorf(
 				"final deref uri %s did not match returned ID %s",
-				rspURLStr, approvedByIDStr,
+				rspURLStr, authIDStr,
 			)
 			return false, nil
 		}
@@ -739,13 +742,13 @@ func (d *Dereferencer) isValidApprovedByIRI(
 	// Response is superficially OK,
 	// check in more detail now.
 
-	// First try to parse type as Approval stamp.
-	if approvable, ok := ap.ToApprovable(t); ok {
-		return isValidApprovable(
+	// First try to parse type as Authorization stamp.
+	if authable, ok := ap.ToAuthorizationable(t); ok {
+		return isValidAuthorization(
 			ctx,
 			interactionType,
-			approvable,
-			approvedByID,
+			authable,
+			authID,
 			expectActorURIStr,  // actor
 			expectObjectURIStr, // object
 			expectTargetURIStr, // target
@@ -757,7 +760,7 @@ func (d *Dereferencer) isValidApprovedByIRI(
 		return isValidAcceptable(
 			ctx,
 			acceptable,
-			approvedByID,
+			authID,
 			expectActorURIStr,  // actor
 			expectObjectURIStr, // object
 			expectTargetURIStr, // target
@@ -767,8 +770,8 @@ func (d *Dereferencer) isValidApprovedByIRI(
 	// Type wasn't something we
 	// could do anything with!
 	l.Errorf(
-		"%T at %s not approvable or acceptable",
-		t, approvedByIRIStr,
+		"%T at %s not authorization or accept",
+		t, authIRIStr,
 	)
 	return false, nil
 }
@@ -850,55 +853,55 @@ func isValidAcceptable(
 	return true, nil
 }
 
-func isValidApprovable(
+func isValidAuthorization(
 	ctx context.Context,
 	interactionType gtsmodel.InteractionType,
-	approvable ap.Approvable,
-	approvalID *url.URL,
+	auth ap.Authorizationable,
+	authID *url.URL,
 	expectActorURIStr string, // actor Eg., "https://example.org/users/someone"
 	expectObjectURIStr string, // object Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
 	expectTargetURIStr string, // target Eg., "https://example.org/users/someone/statuses/01JM4REQTJ1BZ1R4BPYP1W4R9E"
 ) (bool, error) {
 	l := log.
 		WithContext(ctx).
-		WithField("approval", approvalID.String())
+		WithField("auth", authID.String())
 
-	// Check that the type of the Approval
+	// Check that the type of the Authorization
 	// matches the interaction it's approving.
-	switch tn := approvable.GetTypeName(); {
-	case (tn == ap.ObjectLikeApproval && interactionType == gtsmodel.InteractionLike),
-		(tn == ap.ObjectReplyApproval && interactionType == gtsmodel.InteractionReply),
-		(tn == ap.ObjectAnnounceApproval && interactionType == gtsmodel.InteractionAnnounce):
+	switch tn := auth.GetTypeName(); {
+	case (tn == ap.ObjectLikeAuthorization && interactionType == gtsmodel.InteractionLike),
+		(tn == ap.ObjectReplyAuthorization && interactionType == gtsmodel.InteractionReply),
+		(tn == ap.ObjectAnnounceAuthorization && interactionType == gtsmodel.InteractionAnnounce):
 		// All good baby!
 	default:
 		// There's a mismatch.
 		l.Errorf(
-			"approval type %s cannot approve %s",
+			"authorization type %s cannot approve %s",
 			tn, interactionType.String(),
 		)
 		return false, nil
 	}
 
 	// Extract the actor IRI and string from Approval.
-	actorIRIs := ap.GetAttributedTo(approvable)
+	actorIRIs := ap.GetAttributedTo(auth)
 	actorIRI, actorIRIStr := extractIRI(actorIRIs)
 	switch {
 	case actorIRIStr == "":
-		l.Error("Approval missing attributedTo IRI")
+		l.Error("authorization missing attributedTo IRI")
 		return false, nil
 
-	// Ensure the Approval actor is on
+	// Ensure the authorization actor is on
 	// the instance hosting the Approval.
-	case actorIRI.Host != approvalID.Host:
+	case actorIRI.Host != authID.Host:
 		l.Errorf(
-			"actor %s not on the same host as Approval",
+			"actor %s not on the same host as authorization",
 			actorIRIStr,
 		)
 		return false, nil
 
-	// Ensure the Approval actor is who we expect
+	// Ensure the auth actor is who we expect
 	// it to be, and not someone else trying to
-	// do an Approval for an interaction with a
+	// do an auth for an interaction with a
 	// statusable they don't own.
 	case actorIRIStr != expectActorURIStr:
 		l.Errorf(
@@ -908,33 +911,32 @@ func isValidApprovable(
 		return false, nil
 	}
 
-	// Extract the object IRI string from Approval.
-	objectIRIs := ap.GetObjectIRIs(approvable)
+	// Extract the object IRI string from authorization.
+	objectIRIs := ap.GetInteractingObject(auth)
 	_, objectIRIStr := extractIRI(objectIRIs)
 	switch {
 	case objectIRIStr == "":
-		l.Error("missing Approval object IRI")
+		l.Error("missing authorization interactingObject IRI")
 		return false, nil
 
-	// Ensure the Approval Object is what we expect
+	// Ensure the authorization object is what we expect
 	// it to be, ie., it's approving the interaction
 	// we need it to approve, and not something else.
 	case objectIRIStr != expectObjectURIStr:
 		l.Errorf(
-			"resolved Approval object IRI %s was not the same as expected object %s",
+			"resolved authorization interactingObject IRI %s was not the same as expected object %s",
 			objectIRIStr, expectObjectURIStr,
 		)
 		return false, nil
 	}
 
-	// If there's a Target set then verify it's
-	// what we expect it to be, ie., it should point
-	// back to the post that's being interacted with.
-	targetIRIs := ap.GetTargetIRIs(approvable)
+	// Ensure the authorization target is what we expect,
+	// ie., it should be the status being interacted with.
+	targetIRIs := ap.GetInteractionTarget(auth)
 	_, targetIRIStr := extractIRI(targetIRIs)
 	if targetIRIStr != "" && targetIRIStr != expectTargetURIStr {
 		l.Errorf(
-			"resolved Approval target IRI %s was not the same as expected target %s",
+			"resolved authorization interactionTarget IRI %s was not the same as expected target %s",
 			targetIRIStr, expectTargetURIStr,
 		)
 		return false, nil

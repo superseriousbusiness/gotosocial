@@ -64,17 +64,12 @@ func (p *Processor) RuleGet(ctx context.Context, id string) (*apimodel.AdminInst
 
 // RuleCreate adds a new rule to the instance.
 func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleCreateRequest) (*apimodel.AdminInstanceRule, gtserror.WithCode) {
-	ruleID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new instance rule: %s", err), "error creating rule ID")
-	}
-
 	rule := &gtsmodel.Rule{
-		ID:   ruleID,
+		ID:   id.NewRandomULID(),
 		Text: form.Text,
 	}
 
-	if err = p.state.DB.PutRule(ctx, rule); err != nil {
+	if err := p.state.DB.PutRule(ctx, rule); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

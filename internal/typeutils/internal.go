@@ -104,17 +104,18 @@ func (c *Converter) StatusToBoost(
 	return boost, nil
 }
 
-func StatusToInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRequest {
+func StatusToImpoliteInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRequest {
 	reqID := id.NewULIDFromTime(status.CreatedAt)
 
 	var (
-		targetID        string
-		target          *gtsmodel.Status
-		targetAccountID string
-		targetAccount   *gtsmodel.Account
-		interactionType gtsmodel.InteractionType
-		reply           *gtsmodel.Status
-		announce        *gtsmodel.Status
+		targetID              string
+		target                *gtsmodel.Status
+		targetAccountID       string
+		targetAccount         *gtsmodel.Account
+		interactionRequestURI string
+		interactionType       gtsmodel.InteractionType
+		reply                 *gtsmodel.Status
+		announce              *gtsmodel.Status
 	)
 
 	if status.InReplyToID != "" {
@@ -123,6 +124,7 @@ func StatusToInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRe
 		target = status.InReplyTo
 		targetAccountID = status.InReplyToAccountID
 		targetAccount = status.InReplyToAccount
+		interactionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix)
 		interactionType = gtsmodel.InteractionReply
 		reply = status
 	} else {
@@ -131,41 +133,43 @@ func StatusToInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRe
 		target = status.BoostOf
 		targetAccountID = status.BoostOfAccountID
 		targetAccount = status.BoostOfAccount
+		interactionRequestURI = gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.AnnounceRequestSuffix)
 		interactionType = gtsmodel.InteractionAnnounce
 		announce = status
 	}
 
 	return &gtsmodel.InteractionRequest{
-		ID:                   reqID,
-		CreatedAt:            status.CreatedAt,
-		StatusID:             targetID,
-		Status:               target,
-		TargetAccountID:      targetAccountID,
-		TargetAccount:        targetAccount,
-		InteractingAccountID: status.AccountID,
-		InteractingAccount:   status.Account,
-		InteractionURI:       status.URI,
-		InteractionType:      interactionType,
-		Reply:                reply,
-		Announce:             announce,
+		ID:                    reqID,
+		TargetStatusID:        targetID,
+		TargetStatus:          target,
+		TargetAccountID:       targetAccountID,
+		TargetAccount:         targetAccount,
+		InteractingAccountID:  status.AccountID,
+		InteractingAccount:    status.Account,
+		InteractionRequestURI: interactionRequestURI,
+		InteractionURI:        status.URI,
+		InteractionType:       interactionType,
+		Polite:                util.Ptr(false),
+		Reply:                 reply,
+		Announce:              announce,
 	}
 }
 
-func StatusFaveToInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel.InteractionRequest {
+func StatusFaveToImpoliteInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel.InteractionRequest {
 	reqID := id.NewULIDFromTime(fave.CreatedAt)
-
 	return &gtsmodel.InteractionRequest{
-		ID:                   reqID,
-		CreatedAt:            fave.CreatedAt,
-		StatusID:             fave.StatusID,
-		Status:               fave.Status,
-		TargetAccountID:      fave.TargetAccountID,
-		TargetAccount:        fave.TargetAccount,
-		InteractingAccountID: fave.AccountID,
-		InteractingAccount:   fave.Account,
-		InteractionURI:       fave.URI,
-		InteractionType:      gtsmodel.InteractionLike,
-		Like:                 fave,
+		ID:                    reqID,
+		TargetStatusID:        fave.StatusID,
+		TargetStatus:          fave.Status,
+		TargetAccountID:       fave.TargetAccountID,
+		TargetAccount:         fave.TargetAccount,
+		InteractingAccountID:  fave.AccountID,
+		InteractingAccount:    fave.Account,
+		InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
+		InteractionURI:        fave.URI,
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(false),
+		Like:                  fave,
 	}
 }
 

@@ -143,13 +143,13 @@ func ToAcceptable(t vocab.Type) (Acceptable, bool) {
 	return acceptable, true
 }
 
-// IsApprovable returns whether AS vocab type name
-// is something that can be cast to Approvable.
-func IsApprovable(typeName string) bool {
+// IsAuthorizationable returns whether AS vocab type name
+// is something that can be cast to Authorizationable.
+func IsAuthorizationable(typeName string) bool {
 	switch typeName {
-	case ObjectLikeApproval,
-		ObjectReplyApproval,
-		ObjectAnnounceApproval:
+	case ObjectLikeAuthorization,
+		ObjectReplyAuthorization,
+		ObjectAnnounceAuthorization:
 		return true
 	default:
 		return false
@@ -157,12 +157,12 @@ func IsApprovable(typeName string) bool {
 }
 
 // ToAcceptable safely tries to cast vocab.Type as Approvable.
-func ToApprovable(t vocab.Type) (Approvable, bool) {
-	approvable, ok := t.(Approvable)
-	if !ok || !IsApprovable(t.GetTypeName()) {
+func ToAuthorizationable(t vocab.Type) (Authorizationable, bool) {
+	authable, ok := t.(Authorizationable)
+	if !ok || !IsAuthorizationable(t.GetTypeName()) {
 		return nil, false
 	}
-	return approvable, true
+	return authable, true
 }
 
 // IsAttachmentable returns whether AS vocab type name
@@ -186,6 +186,36 @@ func ToAttachmentable(t vocab.Type) (Attachmentable, bool) {
 		return nil, false
 	}
 	return attachmentable, true
+}
+
+// IsAnnounceable returns whether AS vocab type name
+// is something that can be cast to vocab.ActivityStreamsAnnounce.
+func IsAnnounceable(typeName string) bool {
+	return typeName == ActivityAnnounce
+}
+
+// ToAnnounceable safely tries to cast vocab.Type as vocab.ActivityStreamsAnnounce.
+func ToAnnounceable(t vocab.Type) (vocab.ActivityStreamsAnnounce, bool) {
+	announceable, ok := t.(vocab.ActivityStreamsAnnounce)
+	if !ok || t.GetTypeName() != ActivityAnnounce {
+		return nil, false
+	}
+	return announceable, true
+}
+
+// IsLikeable returns whether AS vocab type name
+// is something that can be cast to vocab.ActivityStreamsLike.
+func IsLikeable(typeName string) bool {
+	return typeName == ActivityLike
+}
+
+// ToAnnouncToLikeableeable safely tries to cast vocab.Type as vocab.ActivityStreamsLike.
+func ToLikeable(t vocab.Type) (vocab.ActivityStreamsLike, bool) {
+	likeable, ok := t.(vocab.ActivityStreamsLike)
+	if !ok || t.GetTypeName() != ActivityLike {
+		return nil, false
+	}
+	return likeable, true
 }
 
 // Activityable represents the minimum activitypub interface for representing an 'activity'.
@@ -258,11 +288,6 @@ type Statusable interface {
 	WithReplies
 }
 
-type InteractionPolicyAware interface {
-	WithInteractionPolicy
-	WithApprovedBy
-}
-
 // Pollable represents the minimum activitypub interface for representing a 'poll' (it's a subset of a status).
 // (see: IsPollable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Pollable types).
@@ -299,14 +324,14 @@ type Acceptable interface {
 	WithResult
 }
 
-// Approvable represents the minimum activitypub interface
-// for a LikeApproval, ReplyApproval, or AnnounceApproval.
-type Approvable interface {
+// Authorizationable represents the minimum interface for a
+// LikeAuthorization, ReplyAuthorization, AnnounceAuthorization.
+type Authorizationable interface {
 	vocab.Type
 
 	WithAttributedTo
-	WithObject
-	WithTarget
+	WithInteractingObject
+	WithInteractionTarget
 }
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).
@@ -390,6 +415,16 @@ type Addressable interface {
 // ReplyToable represents the minimum interface for an Activity that can be InReplyTo another activity.
 type ReplyToable interface {
 	WithInReplyTo
+}
+
+// InteractionRequestable represents the minimum interface for an interaction request
+// activity, eg., LikeRequest, ReplyRequest, AnnounceRequest, QuoteRequest, etc..
+type InteractionRequestable interface {
+	vocab.Type
+
+	WithActor
+	WithObject
+	WithInstrument
 }
 
 // CollectionIterator represents the minimum interface for interacting with a
@@ -683,6 +718,12 @@ type WithObject interface {
 	SetActivityStreamsObject(vocab.ActivityStreamsObjectProperty)
 }
 
+// WithInstrument represents an activity with ActivityStreamsInstrumentProperty
+type WithInstrument interface {
+	GetActivityStreamsInstrument() vocab.ActivityStreamsInstrumentProperty
+	SetActivityStreamsInstrument(vocab.ActivityStreamsInstrumentProperty)
+}
+
 // WithTarget represents an activity with ActivityStreamsTargetProperty
 type WithTarget interface {
 	GetActivityStreamsTarget() vocab.ActivityStreamsTargetProperty
@@ -775,14 +816,44 @@ type WithPolicyRules interface {
 	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty // Deprecated
 }
 
-// WithApprovedBy represents a Statusable with the approvedBy property.
+// WithApprovedBy represents an object with the approvedBy property.
 type WithApprovedBy interface {
 	GetGoToSocialApprovedBy() vocab.GoToSocialApprovedByProperty
 	SetGoToSocialApprovedBy(vocab.GoToSocialApprovedByProperty)
 }
 
-// WithVotersCount represents an activity or object the result property.
+// WithLikeAuthorization represents a Likeable with the likeAuthorization property.
+type WithLikeAuthorization interface {
+	GetGoToSocialLikeAuthorization() vocab.GoToSocialLikeAuthorizationProperty
+	SetGoToSocialLikeAuthorization(vocab.GoToSocialLikeAuthorizationProperty)
+}
+
+// WithReplyAuthorization represents a statusable with the replyAuthorization property.
+type WithReplyAuthorization interface {
+	GetGoToSocialReplyAuthorization() vocab.GoToSocialReplyAuthorizationProperty
+	SetGoToSocialReplyAuthorization(vocab.GoToSocialReplyAuthorizationProperty)
+}
+
+// WithAnnounceAuthorization represents an Announceable with the announceAuthorization property.
+type WithAnnounceAuthorization interface {
+	GetGoToSocialAnnounceAuthorization() vocab.GoToSocialAnnounceAuthorizationProperty
+	SetGoToSocialAnnounceAuthorization(vocab.GoToSocialAnnounceAuthorizationProperty)
+}
+
+// WithResult represents an activity or object with the result property.
 type WithResult interface {
 	GetActivityStreamsResult() vocab.ActivityStreamsResultProperty
 	SetActivityStreamsResult(vocab.ActivityStreamsResultProperty)
+}
+
+// WithInteractingObject represents an activity or object with the InteractingObject property.
+type WithInteractingObject interface {
+	GetGoToSocialInteractingObject() vocab.GoToSocialInteractingObjectProperty
+	SetGoToSocialInteractingObject(vocab.GoToSocialInteractingObjectProperty)
+}
+
+// WithInteractionTarget represents an activity or object with the InteractionTarget property.
+type WithInteractionTarget interface {
+	GetGoToSocialInteractionTarget() vocab.GoToSocialInteractionTargetProperty
+	SetGoToSocialInteractionTarget(vocab.GoToSocialInteractionTargetProperty)
 }

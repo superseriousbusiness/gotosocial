@@ -99,6 +99,9 @@ func NewFederator(
 			federatingDB.Announce,
 			federatingDB.Move,
 			federatingDB.Flag,
+			federatingDB.LikeRequest,
+			federatingDB.ReplyRequest,
+			federatingDB.AnnounceRequest,
 		},
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)

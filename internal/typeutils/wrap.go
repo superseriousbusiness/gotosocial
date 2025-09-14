@@ -53,7 +53,7 @@ func (c *Converter) WrapAccountableInUpdate(accountable ap.Accountable) (vocab.A
 	update.SetActivityStreamsObject(objectProp)
 
 	// to should be public.
-	ap.AppendTo(update, ap.PublicURI())
+	ap.AppendTo(update, ap.PublicIRI())
 
 	// bcc should be followers.
 	ap.AppendBcc(update, ap.GetFollowers(accountable))

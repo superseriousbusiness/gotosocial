@@ -41,7 +41,7 @@ func (f *DB) Block(ctx context.Context, blockable vocab.ActivityStreamsBlock) er
 	requesting := activityContext.requestingAcct
 	receiving := activityContext.receivingAcct
 
-	if receiving.IsMoving() {
+	if requesting.IsMoving() {
 		// A Moving account
 		// can't do this.
 		return nil

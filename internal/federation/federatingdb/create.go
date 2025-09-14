@@ -281,43 +281,18 @@ func (f *DB) createStatusable(
 	statusable ap.Statusable,
 	forwarded bool,
 ) error {
-	// Check whether this status is both
-	// relevant, and doesn't look like spam.
-	err := f.spamFilter.StatusableOK(ctx,
-		receiver,
-		requester,
-		statusable,
-	)
+	// Check for spam / relevance.
+	ok, err := f.statusableOK(ctx, receiver, requester, statusable)
+	if err != nil {
+		// Error already
+		// wrapped.
+		return err
+	}
 
-	switch {
-	case err == nil:
-		// No problem!
-
-	case gtserror.IsNotRelevant(err):
-		// This case is quite common if a remote (Mastodon)
-		// instance forwards a message to us which is a reply
-		// from someone else to a status we've also replied to.
-		//
-		// It does this to try to ensure thread completion, but
-		// we have our own thread fetching mechanism anyway.
-		log.Debugf(ctx, "status %s is not relevant to receiver (%v); dropping it",
-			ap.GetJSONLDId(statusable), err,
-		)
+	if !ok {
+		// Not relevant / spam.
+		// Already logged.
 		return nil
-
-	case gtserror.IsSpam(err):
-		// Log this at a higher level so admins can
-		// gauge how much spam is being sent to them.
-		//
-		// TODO: add Prometheus metrics for this.
-		log.Infof(ctx, "status %s looked like spam (%v); dropping it",
-			ap.GetJSONLDId(statusable), err,
-		)
-		return nil
-
-	default:
-		// A real error has occurred.
-		return gtserror.Newf("error checking relevancy/spam: %w", err)
 	}
 
 	// If we do have a forward, we should ignore the content

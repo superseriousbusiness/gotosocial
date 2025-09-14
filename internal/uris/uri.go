@@ -27,27 +27,28 @@ import (
 )
 
 const (
-	UsersPath        = "users"         // UsersPath is for serving users info
-	StatusesPath     = "statuses"      // StatusesPath is for serving statuses
-	InboxPath        = "inbox"         // InboxPath represents the activitypub inbox location
-	OutboxPath       = "outbox"        // OutboxPath represents the activitypub outbox location
-	FollowersPath    = "followers"     // FollowersPath represents the activitypub followers location
-	FollowingPath    = "following"     // FollowingPath represents the activitypub following location
-	LikedPath        = "liked"         // LikedPath represents the activitypub liked location
-	CollectionsPath  = "collections"   // CollectionsPath represents the activitypub collections location
-	FeaturedPath     = "featured"      // FeaturedPath represents the activitypub featured location
-	PublicKeyPath    = "main-key"      // PublicKeyPath is for serving an account's public key
-	FollowPath       = "follow"        // FollowPath used to generate the URI for an individual follow or follow request
-	UpdatePath       = "updates"       // UpdatePath is used to generate the URI for an account update
-	BlocksPath       = "blocks"        // BlocksPath is used to generate the URI for a block
-	MovesPath        = "moves"         // MovesPath is used to generate the URI for a move
-	ReportsPath      = "reports"       // ReportsPath is used to generate the URI for a report/flag
-	ConfirmEmailPath = "confirm_email" // ConfirmEmailPath is used to generate the URI for an email confirmation link
-	FileserverPath   = "fileserver"    // FileserverPath is a path component for serving attachments + media
-	EmojiPath        = "emoji"         // EmojiPath represents the activitypub emoji location
-	TagsPath         = "tags"          // TagsPath represents the activitypub tags location
-	AcceptsPath      = "accepts"       // AcceptsPath represents the activitypub Accept's location
-	RejectsPath      = "rejects"       // RejectsPath represents the activitypub Reject's location
+	UsersPath          = "users"          // UsersPath is for serving users info
+	StatusesPath       = "statuses"       // StatusesPath is for serving statuses
+	InboxPath          = "inbox"          // InboxPath represents the activitypub inbox location
+	OutboxPath         = "outbox"         // OutboxPath represents the activitypub outbox location
+	FollowersPath      = "followers"      // FollowersPath represents the activitypub followers location
+	FollowingPath      = "following"      // FollowingPath represents the activitypub following location
+	LikedPath          = "liked"          // LikedPath represents the activitypub liked location
+	CollectionsPath    = "collections"    // CollectionsPath represents the activitypub collections location
+	FeaturedPath       = "featured"       // FeaturedPath represents the activitypub featured location
+	PublicKeyPath      = "main-key"       // PublicKeyPath is for serving an account's public key
+	FollowPath         = "follow"         // FollowPath used to generate the URI for an individual follow or follow request
+	UpdatePath         = "updates"        // UpdatePath is used to generate the URI for an account update
+	BlocksPath         = "blocks"         // BlocksPath is used to generate the URI for a block
+	MovesPath          = "moves"          // MovesPath is used to generate the URI for a move
+	ReportsPath        = "reports"        // ReportsPath is used to generate the URI for a report/flag
+	ConfirmEmailPath   = "confirm_email"  // ConfirmEmailPath is used to generate the URI for an email confirmation link
+	FileserverPath     = "fileserver"     // FileserverPath is a path component for serving attachments + media
+	EmojiPath          = "emoji"          // EmojiPath represents the activitypub emoji location
+	TagsPath           = "tags"           // TagsPath represents the activitypub tags location
+	AcceptsPath        = "accepts"        // AcceptsPath represents the activitypub Accept's location
+	AuthorizationsPath = "authorizations" // AuthorizationsPath represents the location of an Authorization type such as LikeAuthorization, ReplyAuthorization, etc.
+	RejectsPath        = "rejects"        // RejectsPath represents the activitypub Reject's location
 )
 
 // UserURIs contains a bunch of UserURIs
@@ -207,6 +208,21 @@ func GenerateURIForAccept(username string, thisAcceptID string) string {
 		username,
 		AcceptsPath,
 		thisAcceptID,
+	)
+}
+
+// GenerateURIForAuthorization returns the AP URI for a new Authorization object,
+// ie., LikeAuthorization, ReplyAuthorization, or AnnounceAuthorization.
+// Eg., https://example.org/users/whatever_user/authorizations/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForAuthorization(username string, id string) string {
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		AuthorizationsPath,
+		id,
 	)
 }
 

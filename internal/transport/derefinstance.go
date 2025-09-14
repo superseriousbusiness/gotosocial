@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -77,13 +76,8 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 
 	// we couldn't dereference the instance using any of the known methods, so just return a minimal representation
 	log.Debugf(ctx, "returning minimal representation of instance %s", iri.Host)
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, fmt.Errorf("error creating new id for instance %s: %s", iri.Host, err)
-	}
-
 	return &gtsmodel.Instance{
-		ID:     id,
+		ID:     id.NewRandomULID(),
 		Domain: iri.Host,
 		URI:    iri.String(),
 	}, nil
@@ -166,13 +160,8 @@ func (t *transport) dereferenceByAPIV1Instance(
 		contactUsername = apiResp.ContactAccount.Username
 	}
 
-	ulid, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
 	i := &gtsmodel.Instance{
-		ID:                     ulid,
+		ID:                     id.NewRandomULID(),
 		Domain:                 iri.Host,
 		Title:                  apiResp.Title,
 		URI:                    iri.Scheme + "://" + iri.Host,
@@ -207,13 +196,8 @@ func (t *transport) dereferenceByNodeInfo(
 	//
 	// Start building out the bare minimum
 	// instance model, we'll add to it if we can.
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, gtserror.Newf("error creating new id for instance %s: %w", iri.Host, err)
-	}
-
 	i := &gtsmodel.Instance{
-		ID:     id,
+		ID:     id.NewRandomULID(),
 		Domain: iri.Host,
 		URI:    iri.String(),
 	}

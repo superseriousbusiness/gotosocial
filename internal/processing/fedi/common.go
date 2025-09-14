@@ -20,6 +20,7 @@ package fedi
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -80,4 +81,53 @@ func (p *Processor) authenticate(ctx context.Context, requestedUser string) (*co
 		requestingAcct: requester,
 		receivingAcct:  receiver,
 	}, nil
+}
+
+// validateIntReqRequest is a shortcut function
+// for returning an accepted interaction request
+// targeting `requestedUser`.
+func (p *Processor) validateIntReqRequest(
+	ctx context.Context,
+	requestedUser string,
+	intReqID string,
+) (*gtsmodel.InteractionRequest, gtserror.WithCode) {
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if auth.handshakingURI != nil {
+		// We're currently handshaking, which means we don't know
+		// this account yet. This should be a very rare race condition.
+		err := gtserror.Newf("network race handshaking %s", auth.handshakingURI)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Fetch interaction request with the given ID.
+	req, err := p.state.DB.GetInteractionRequestByID(ctx, intReqID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting interaction request %s: %w", intReqID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure that this is an existing
+	// and *accepted* interaction request.
+	if req == nil || !req.IsAccepted() {
+		const text = "interaction request not found"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
+	// Ensure interaction request was accepted
+	// by the account in the request path.
+	if req.TargetAccountID != auth.receivingAcct.ID {
+		text := fmt.Sprintf(
+			"account %s is not targeted by interaction request %s and therefore can't accept it",
+			requestedUser, intReqID,
+		)
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
+	// All fine.
+	return req, nil
 }

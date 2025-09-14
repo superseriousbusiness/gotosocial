@@ -46,7 +46,7 @@ func (f *DB) Like(ctx context.Context, likeable vocab.ActivityStreamsLike) error
 	requesting := activityContext.requestingAcct
 	receiving := activityContext.receivingAcct
 
-	if receiving.IsMoving() {
+	if requesting.IsMoving() {
 		// A Moving account
 		// can't do this.
 		return nil

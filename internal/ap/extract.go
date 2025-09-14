@@ -36,7 +36,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
-// ExtractObjects will extract object vocab.Types from given implementing interface.
+// ExtractObjects will extract object TypeOrIRIs from given implementing interface.
 func ExtractObjects(with WithObject) []TypeOrIRI {
 	// Extract the attached object (if any).
 	objProp := with.GetActivityStreamsObject()
@@ -56,6 +56,28 @@ func ExtractObjects(with WithObject) []TypeOrIRI {
 	}
 
 	return objs
+}
+
+// ExtractInstrument will extract instrument TypeOrIRIs from given implementing interface.
+func ExtractInstruments(with WithInstrument) []TypeOrIRI {
+	// Extract the attached instrument (if any).
+	instrProp := with.GetActivityStreamsInstrument()
+	if instrProp == nil {
+		return nil
+	}
+
+	// Check for invalid len.
+	if instrProp.Len() == 0 {
+		return nil
+	}
+
+	// Accumulate all of the instruments into a slice.
+	instrs := make([]TypeOrIRI, instrProp.Len())
+	for i := range instrProp.Len() {
+		instrs[i] = instrProp.At(i)
+	}
+
+	return instrs
 }
 
 // ExtractActivityData will extract the usable data type (e.g. Note, Question, etc) and corresponding JSON, from activity.
@@ -1222,14 +1244,14 @@ func ExtractInteractionPolicy(
 	statusable Statusable,
 	owner *gtsmodel.Account,
 ) *gtsmodel.InteractionPolicy {
-	ipa, ok := statusable.(InteractionPolicyAware)
+	wip, ok := statusable.(WithInteractionPolicy)
 	if !ok {
 		// Not a type with interaction
 		// policy properties settable.
 		return nil
 	}
 
-	policyProp := ipa.GetGoToSocialInteractionPolicy()
+	policyProp := wip.GetGoToSocialInteractionPolicy()
 	if policyProp == nil || policyProp.Len() != 1 {
 		return nil
 	}
