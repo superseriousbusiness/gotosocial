@@ -3671,7 +3671,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
 	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
-	statusID := suite.testStatuses["local_account_1_status_9"].ID
+	statusID := suite.testStatuses["local_account_2_status_9"].ID
 
 	status, err := suite.state.DB.GetStatusByID(ctx, statusID)
 	suite.NoError(err)
@@ -3679,7 +3679,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
 	err = suite.state.DB.PopulateStatusEdits(ctx, status)
 	suite.NoError(err)
 
-	apiEdits, err := suite.typeconverter.StatusToAPIEdits(ctx, status)
+	apiEdits, err := suite.typeconverter.StatusToEditHistory(ctx, status)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiEdits, "", "    ")
@@ -3687,114 +3687,209 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
 
 	suite.Equal(`[
     {
-        "content": "\u003cp\u003ethis is the latest revision of the status, with a content-warning\u003c/p\u003e",
-        "spoiler_text": "edited status",
-        "sensitive": false,
-        "created_at": "2024-11-01T09:02:00.000Z",
-        "account": {
-            "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
-            "username": "the_mighty_zork",
-            "acct": "the_mighty_zork",
-            "display_name": "original zork (he/they)",
-            "locked": false,
-            "discoverable": true,
-            "bot": false,
-            "created_at": "2022-05-20T11:09:18.000Z",
-            "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
-            "url": "http://localhost:8080/@the_mighty_zork",
-            "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-            "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
-            "avatar_description": "a green goblin looking nasty",
-            "avatar_media_id": "01F8MH58A357CV5K7R7TJMSH6S",
-            "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-            "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
-            "header_description": "A very old-school screenshot of the original team fortress mod for quake",
-            "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
-            "followers_count": 2,
-            "following_count": 2,
-            "statuses_count": 9,
-            "last_status_at": "2024-11-01",
-            "emojis": [],
-            "fields": [],
-            "enable_rss": true,
-            "group": false
-        },
-        "poll": null,
-        "media_attachments": [],
-        "emojis": []
-    },
-    {
-        "content": "\u003cp\u003ethis is the first status edit! now with content-warning\u003c/p\u003e",
-        "spoiler_text": "edited status",
-        "sensitive": false,
-        "created_at": "2024-11-01T09:01:00.000Z",
-        "account": {
-            "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
-            "username": "the_mighty_zork",
-            "acct": "the_mighty_zork",
-            "display_name": "original zork (he/they)",
-            "locked": false,
-            "discoverable": true,
-            "bot": false,
-            "created_at": "2022-05-20T11:09:18.000Z",
-            "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
-            "url": "http://localhost:8080/@the_mighty_zork",
-            "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-            "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
-            "avatar_description": "a green goblin looking nasty",
-            "avatar_media_id": "01F8MH58A357CV5K7R7TJMSH6S",
-            "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-            "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
-            "header_description": "A very old-school screenshot of the original team fortress mod for quake",
-            "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
-            "followers_count": 2,
-            "following_count": 2,
-            "statuses_count": 9,
-            "last_status_at": "2024-11-01",
-            "emojis": [],
-            "fields": [],
-            "enable_rss": true,
-            "group": false
-        },
-        "poll": null,
-        "media_attachments": [],
-        "emojis": []
-    },
-    {
         "content": "\u003cp\u003ethis is the original status\u003c/p\u003e",
         "spoiler_text": "",
         "sensitive": false,
-        "created_at": "2024-11-01T09:00:00.000Z",
+        "created_at": "2024-11-01T08:00:00.000Z",
         "account": {
-            "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
-            "username": "the_mighty_zork",
-            "acct": "the_mighty_zork",
-            "display_name": "original zork (he/they)",
-            "locked": false,
-            "discoverable": true,
+            "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+            "username": "1happyturtle",
+            "acct": "1happyturtle",
+            "display_name": "happy little turtle :3",
+            "locked": true,
+            "discoverable": false,
             "bot": false,
-            "created_at": "2022-05-20T11:09:18.000Z",
-            "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
-            "url": "http://localhost:8080/@the_mighty_zork",
-            "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-            "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
-            "avatar_description": "a green goblin looking nasty",
-            "avatar_media_id": "01F8MH58A357CV5K7R7TJMSH6S",
-            "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-            "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
-            "header_description": "A very old-school screenshot of the original team fortress mod for quake",
-            "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
-            "followers_count": 2,
-            "following_count": 2,
+            "created_at": "2022-06-04T13:12:00.000Z",
+            "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+            "url": "http://localhost:8080/@1happyturtle",
+            "avatar": "",
+            "avatar_static": "",
+            "header": "http://localhost:8080/assets/default_header.webp",
+            "header_static": "http://localhost:8080/assets/default_header.webp",
+            "header_description": "Flat gray background (default header).",
+            "followers_count": 1,
+            "following_count": 1,
             "statuses_count": 9,
             "last_status_at": "2024-11-01",
             "emojis": [],
-            "fields": [],
-            "enable_rss": true,
+            "fields": [
+                {
+                    "name": "should you follow me?",
+                    "value": "maybe!",
+                    "verified_at": null
+                },
+                {
+                    "name": "age",
+                    "value": "120",
+                    "verified_at": null
+                }
+            ],
+            "hide_collections": true,
             "group": false
         },
         "poll": null,
         "media_attachments": [],
+        "emojis": []
+    },
+    {
+        "content": "\u003cp\u003enow edited to have some media!\u003c/p\u003e",
+        "spoiler_text": "edit with media attachments",
+        "sensitive": true,
+        "created_at": "2024-11-01T08:01:00.000Z",
+        "account": {
+            "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+            "username": "1happyturtle",
+            "acct": "1happyturtle",
+            "display_name": "happy little turtle :3",
+            "locked": true,
+            "discoverable": false,
+            "bot": false,
+            "created_at": "2022-06-04T13:12:00.000Z",
+            "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+            "url": "http://localhost:8080/@1happyturtle",
+            "avatar": "",
+            "avatar_static": "",
+            "header": "http://localhost:8080/assets/default_header.webp",
+            "header_static": "http://localhost:8080/assets/default_header.webp",
+            "header_description": "Flat gray background (default header).",
+            "followers_count": 1,
+            "following_count": 1,
+            "statuses_count": 9,
+            "last_status_at": "2024-11-01",
+            "emojis": [],
+            "fields": [
+                {
+                    "name": "should you follow me?",
+                    "value": "maybe!",
+                    "verified_at": null
+                },
+                {
+                    "name": "age",
+                    "value": "120",
+                    "verified_at": null
+                }
+            ],
+            "hide_collections": true,
+            "group": false
+        },
+        "poll": null,
+        "media_attachments": [
+            {
+                "id": "01JDQ164HM08SGJ7ZEK9003Z4B",
+                "type": "unknown",
+                "url": null,
+                "text_url": null,
+                "preview_url": null,
+                "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
+                "preview_remote_url": null,
+                "meta": null,
+                "description": "Jolly salsa song, public domain.",
+                "blurhash": null
+            }
+        ],
+        "emojis": []
+    },
+    {
+        "content": "\u003cp\u003enow edited to remove the media\u003c/p\u003e",
+        "spoiler_text": "edit missing previous media attachments",
+        "sensitive": false,
+        "created_at": "2024-11-01T08:02:00.000Z",
+        "account": {
+            "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+            "username": "1happyturtle",
+            "acct": "1happyturtle",
+            "display_name": "happy little turtle :3",
+            "locked": true,
+            "discoverable": false,
+            "bot": false,
+            "created_at": "2022-06-04T13:12:00.000Z",
+            "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+            "url": "http://localhost:8080/@1happyturtle",
+            "avatar": "",
+            "avatar_static": "",
+            "header": "http://localhost:8080/assets/default_header.webp",
+            "header_static": "http://localhost:8080/assets/default_header.webp",
+            "header_description": "Flat gray background (default header).",
+            "followers_count": 1,
+            "following_count": 1,
+            "statuses_count": 9,
+            "last_status_at": "2024-11-01",
+            "emojis": [],
+            "fields": [
+                {
+                    "name": "should you follow me?",
+                    "value": "maybe!",
+                    "verified_at": null
+                },
+                {
+                    "name": "age",
+                    "value": "120",
+                    "verified_at": null
+                }
+            ],
+            "hide_collections": true,
+            "group": false
+        },
+        "poll": null,
+        "media_attachments": [],
+        "emojis": []
+    },
+    {
+        "content": "\u003cp\u003enow edited to bring back the previous edit's media!\u003c/p\u003e",
+        "spoiler_text": "edit with media attachments",
+        "sensitive": false,
+        "created_at": "2024-11-01T08:03:00.000Z",
+        "account": {
+            "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+            "username": "1happyturtle",
+            "acct": "1happyturtle",
+            "display_name": "happy little turtle :3",
+            "locked": true,
+            "discoverable": false,
+            "bot": false,
+            "created_at": "2022-06-04T13:12:00.000Z",
+            "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+            "url": "http://localhost:8080/@1happyturtle",
+            "avatar": "",
+            "avatar_static": "",
+            "header": "http://localhost:8080/assets/default_header.webp",
+            "header_static": "http://localhost:8080/assets/default_header.webp",
+            "header_description": "Flat gray background (default header).",
+            "followers_count": 1,
+            "following_count": 1,
+            "statuses_count": 9,
+            "last_status_at": "2024-11-01",
+            "emojis": [],
+            "fields": [
+                {
+                    "name": "should you follow me?",
+                    "value": "maybe!",
+                    "verified_at": null
+                },
+                {
+                    "name": "age",
+                    "value": "120",
+                    "verified_at": null
+                }
+            ],
+            "hide_collections": true,
+            "group": false
+        },
+        "poll": null,
+        "media_attachments": [
+            {
+                "id": "01JDQ164HM08SGJ7ZEK9003Z4B",
+                "type": "unknown",
+                "url": null,
+                "text_url": null,
+                "preview_url": null,
+                "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
+                "preview_remote_url": null,
+                "meta": null,
+                "description": "Jolly salsa song, public domain.",
+                "blurhash": null
+            }
+        ],
         "emojis": []
     }
 ]`, string(b))

@@ -375,13 +375,13 @@ func (p *Processor) HistoryGet(ctx context.Context, requester *gtsmodel.Account,
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	edits, err := p.converter.StatusToAPIEdits(ctx, target)
+	editHistory, err := p.converter.StatusToEditHistory(ctx, target)
 	if err != nil {
 		err := gtserror.Newf("error converting status edits: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return edits, nil
+	return editHistory, nil
 }
 
 func (p *Processor) processMediaEdits(

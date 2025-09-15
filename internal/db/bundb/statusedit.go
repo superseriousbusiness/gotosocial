@@ -96,8 +96,8 @@ func (s *statusEditDB) GetStatusEditsByIDs(ctx context.Context, ids []string) ([
 		return nil, err
 	}
 
-	// Reorder the edits by their
-	// IDs to ensure in correct order.
+	// Reorder the edits by their IDs to ensure in correct
+	// order (ID ascending, ie., latest to oldest edit).
 	getID := func(e *gtsmodel.StatusEdit) string { return e.ID }
 	xslices.OrderBy(edits, ids, getID)
 

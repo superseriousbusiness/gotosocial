@@ -58,8 +58,8 @@ type Status struct {
 	BoostOf                  *Status            `bun:"-"`                                                                 // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                                    // account that corresponds to boostOfAccountID
 	ThreadID                 string             `bun:"type:CHAR(26),nullzero,notnull,default:00000000000000000000000000"` // id of the thread to which this status belongs
-	EditIDs                  []string           `bun:"edits,array"`                                                       //
-	Edits                    []*StatusEdit      `bun:"-"`                                                                 //
+	EditIDs                  []string           `bun:"edits,array"`                                                       // IDs of status edits for this status, ordered from smallest (oldest) -> largest (newest) ID.
+	Edits                    []*StatusEdit      `bun:"-"`                                                                 // Edits of this status, ordered from oldest -> newest edit.
 	PollID                   string             `bun:"type:CHAR(26),nullzero"`                                            //
 	Poll                     *Poll              `bun:"-"`                                                                 //
 	ContentWarning           string             `bun:",nullzero"`                                                         // Content warning HTML for this status.

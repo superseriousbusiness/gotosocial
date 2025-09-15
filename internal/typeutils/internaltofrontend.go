@@ -1061,14 +1061,17 @@ func (c *Converter) StatusToWebStatus(
 			)
 		}
 
-		// Make sure to include latest revision.
+		// End with latest revision.
 		webStatus.EditTimeline = append(
 			webStatus.EditTimeline,
 			*webStatus.EditedAt,
 		)
 
-		// Sort the slice so it goes from
-		// newest -> oldest, like a timeline.
+		// Reverse the slice so that instead of going
+		// from oldest (original status) to newest
+		// (latest revision), it goes from newest
+		// to oldest, like a timeline, to make
+		// things easier when web templating.
 		//
 		// It'll look something like:
 		//
@@ -1344,8 +1347,13 @@ func (c *Converter) baseStatusToFrontend(
 	return apiStatus, nil
 }
 
-// StatusToAPIEdits converts a status and its historical edits (if any) to a slice of API model status edits.
-func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Status) ([]*apimodel.StatusEdit, error) {
+// StatusToEditHistory converts a status and its historical edits
+// (if any) to a slice of API model status edits, ordered from original
+// status at index 0 to latest revision at index len(slice)-1.
+func (c *Converter) StatusToEditHistory(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) ([]*apimodel.StatusEdit, error) {
 	var media map[string]*gtsmodel.MediaAttachment
 
 	// Gather attachments of status AND edits.
@@ -1397,8 +1405,11 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		}
 	}
 
-	// Append status itself to final slot in the edits
-	// so we can add its revision using the below loop.
+	// Append *current* version of the status to last slot
+	// in the edits so we can add it at the bottom as latest
+	// revision using the below loop. Note: a new slice is
+	// created here with the append, to avoid modifying
+	// Edits on the status pointer.
 	edits := append(status.Edits, &gtsmodel.StatusEdit{ //nolint:gocritic
 		Content:                status.Content,
 		ContentWarning:         status.ContentWarning,
@@ -1410,10 +1421,13 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		CreatedAt:              status.UpdatedAt(), // falls back to creation
 	})
 
-	// Iterate through status edits, starting at newest.
-	apiEdits := make([]*apimodel.StatusEdit, 0, len(edits))
-	for i := len(edits) - 1; i >= 0; i-- {
-		edit := edits[i]
+	// Iterate through status revisions, starting at original
+	// status when it was created (ie., oldest revision).
+	//
+	// This creates a slice of revisions that goes from
+	// oldest (original status) to newest (latest revision).
+	editHistory := make([]*apimodel.StatusEdit, 0, len(edits))
+	for _, edit := range edits {
 
 		// Iterate through edit attachment IDs, getting model from 'media' lookup.
 		apiAttachments := make([]*apimodel.Attachment, 0, len(edit.AttachmentIDs))
@@ -1472,7 +1486,7 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		}
 
 		// Append this status edit to the return slice.
-		apiEdits = append(apiEdits, &apimodel.StatusEdit{
+		editHistory = append(editHistory, &apimodel.StatusEdit{
 			CreatedAt:        util.FormatISO8601(edit.CreatedAt),
 			Content:          edit.Content,
 			SpoilerText:      edit.ContentWarning,
@@ -1484,7 +1498,7 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		})
 	}
 
-	return apiEdits, nil
+	return editHistory, nil
 }
 
 // VisToAPIVis converts a gts visibility into its api equivalent
