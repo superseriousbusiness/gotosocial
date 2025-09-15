@@ -11291,8 +11291,6 @@ paths:
                     description: unprocessable content
                 "500":
                     description: internal server error
-                "501":
-                    description: scheduled_at was set, but this feature is not yet implemented
             security:
                 - OAuth2 Bearer:
                     - write:statuses

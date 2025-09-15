@@ -467,7 +467,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 }`, out)
 }
 
-func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
+func (suite *StatusCreateTestSuite) TestPostNewScheduledStatusRFC3339() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {"this is a brand new status! #helloworld"},
 		"spoiler_text": {"hello hello"},
@@ -494,6 +494,56 @@ func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
     "visibility": "private"
   },
   "scheduled_at": "2080-10-04T15:32:02.018Z"
+}`, out)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewScheduledStatusISO8601Offset() {
+	out, recorder := suite.postStatus(map[string][]string{
+		"status":       {"this is a brand new status! #helloworld"},
+		"spoiler_text": {"hello hello"},
+		"sensitive":    {"true"},
+		"visibility":   {string(apimodel.VisibilityMutualsOnly)},
+		"scheduled_at": {"2080-09-05T19:38:00+0400"},
+	}, "")
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// A scheduled status with scheduled_at and status params should be returned.
+	suite.Equal(`{
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "media_attachments": [],
+  "params": {
+    "application_id": "01F8MGY43H3N2C8EWPR2FPYEXG",
+    "language": "",
+    "scheduled_at": null,
+    "sensitive": true,
+    "spoiler_text": "hello hello",
+    "text": "this is a brand new status! #helloworld",
+    "visibility": "private"
+  },
+  "scheduled_at": "2080-09-05T15:38:00.000Z"
+}`, out)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewScheduledStatusNonsenseTime() {
+	out, recorder := suite.postStatus(map[string][]string{
+		"status":       {"this is a brand new status! #helloworld"},
+		"spoiler_text": {"hello hello"},
+		"sensitive":    {"true"},
+		"visibility":   {string(apimodel.VisibilityMutualsOnly)},
+		"scheduled_at": {"pee pee poo poo"},
+	}, "")
+
+	// We should have 400 from
+	// our call to the function.
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	// We should have a helpful error
+	// message telling us how we screwed up.
+	suite.Equal(`{
+  "error": "Bad Request: could not parse scheduled_at value pee pee poo poo as ISO8601 time"
 }`, out)
 }
 

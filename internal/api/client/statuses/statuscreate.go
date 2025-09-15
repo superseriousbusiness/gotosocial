@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
@@ -259,8 +260,6 @@ import (
 //			description: unprocessable content
 //		'500':
 //			description: internal server error
-//		'501':
-//			description: scheduled_at was set, but this feature is not yet implemented
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	authed, errWithCode := apiutil.TokenAuth(c,
 		true, true, true, true,
@@ -412,6 +411,31 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		form.Poll.ExpiresIn = util.PtrOrZero(expiresIn)
+	}
+
+	// Parse scheduled_at if given.
+	if form.ScheduledAtRaw != "" {
+		// Try RFC3339 initially, which
+		// is a stricter UTC subset of ISO8601.
+		scheduledAt, err := time.Parse(
+			time.RFC3339, form.ScheduledAtRaw,
+		)
+		if err != nil {
+			// Try ISO8601 with offset
+			// (many clients use this).
+			scheduledAt, err = time.Parse(
+				util.ISO8601Offset, form.ScheduledAtRaw,
+			)
+		}
+
+		// If we still have an error
+		// we can't use this time.
+		if err != nil {
+			text := "could not parse scheduled_at value " + form.ScheduledAtRaw + " as ISO8601 time"
+			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
+		form.ScheduledAt = &scheduledAt
 	}
 
 	return form, nil

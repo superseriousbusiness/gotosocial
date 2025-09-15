@@ -20,9 +20,10 @@ package util
 import "time"
 
 const (
-	ISO8601     = "2006-01-02T15:04:05.000Z"
-	ISO8601Date = "2006-01-02"
-	RFC2822     = "Mon, 02 Jan 2006 15:04:05 -0700"
+	ISO8601       = "2006-01-02T15:04:05.000Z"
+	ISO8601Offset = "2006-01-02T15:04:05-0700"
+	ISO8601Date   = "2006-01-02"
+	RFC2822       = "Mon, 02 Jan 2006 15:04:05 -0700"
 )
 
 // FormatISO8601 converts the given time to UTC and then formats it

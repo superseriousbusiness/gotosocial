@@ -248,14 +248,18 @@ type StatusCreateRequest struct {
 	// Deprecated: Only used if LocalOnly is not set.
 	Federated *bool `form:"federated" json:"federated"`
 
-	// ISO 8601 Datetime at which to schedule a status.
+	// ISO8601 datetime string at which to schedule a status.
 	//
-	// Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
-	// Must be at least 5 minutes in the future.
+	// Providing this parameter with a *future* time will cause ScheduledStatus
+	// to be returned instead of Status (must be at least 5 minutes in the future).
 	//
 	// Providing this parameter with a *past* time will cause the status to be backdated,
 	// and will not push it to the user's followers. This is intended for importing old statuses.
-	ScheduledAt *time.Time `form:"scheduled_at" json:"scheduled_at"`
+	ScheduledAtRaw string `form:"scheduled_at" json:"scheduled_at"`
+
+	// ScheduledAtParsed is the parsed version
+	// of scheduled_at, if scheduled_at was set.
+	ScheduledAt *time.Time `form:"-" json:"-"`
 
 	// ISO 639 language code for this status.
 	Language string `form:"language" json:"language"`
