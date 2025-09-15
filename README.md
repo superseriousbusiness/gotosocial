@@ -292,9 +292,9 @@ Don't like GtS but still want to use the fediverse? Like GtS but prefer not to u
 
 ## Known Issues
 
-Since GoToSocial is still in beta, there are plenty of bugs. We use [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
+Since GoToSocial is still in beta, there are plenty of bugs. We use [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?labels=378161) to track these.
 
-Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://codeberg.org/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
+Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [with the federation label](https://codeberg.org/superseriousbusiness/gotosocial/issues?labels=378188). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 
 ---
 

@@ -38,4 +38,4 @@ GoToSocial 默认配置了基于 IP 的[限流规则](./api/ratelimiting.md)，�
 
 ## 为什么还在 Beta 阶段？
 
-查看[当前 bug 列表](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug)和[路线图](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/ROADMAP.md)以获取更详细的信息。
+查看[当前 bug 列表](https://codeberg.org/superseriousbusiness/gotosocial/issues?labels=378161)和[路线图](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/ROADMAP.md)以获取更详细的信息。

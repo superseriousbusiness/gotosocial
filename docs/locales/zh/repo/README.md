@@ -272,9 +272,9 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 ## 已知问题
 
-由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) 跟踪这些问题。
+由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?labels=378161) 跟踪这些问题。
 
-由于每个 ActivityPub 服务端实现对协议的解释略有不同，有些服务端尚未与 GoToSocial 正常联合。我们在 [这个项目](https://codeberg.org/superseriousbusiness/gotosocial/projects/4) 中跟踪这些问题。最终，我们希望确保任何可以与 Mastodon 正确联合的 ActivityPub 实现也能够与 GoToSocial 联合。
+由于每个 ActivityPub 服务端实现对协议的解释略有不同，有些服务端尚未与 GoToSocial 正常联合。我们在 [这个项目](https://codeberg.org/superseriousbusiness/gotosocial/issues?labels=378188) 中跟踪这些问题。最终，我们希望确保任何可以与 Mastodon 正确联合的 ActivityPub 实现也能够与 GoToSocial 联合。
 
 ---
 
