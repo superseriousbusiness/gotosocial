@@ -12115,6 +12115,32 @@ paths:
             summary: Initiate a websocket connection for live streaming of statuses and notifications.
             tags:
                 - streaming
+    /api/v1/suggestions:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: getSuggestions
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+            security:
+                - OAuth2 Bearer:
+                    - read
+            summary: Accounts that are promoted by staff, or that the user has had past positive interactions with, but is not yet following.
+            tags:
+                - suggestions
     /api/v1/tags/{tag_name}:
         get:
             description: If the tag does not exist, this method will not create it in the database.
@@ -12567,6 +12593,63 @@ paths:
             summary: Invalidate the target token, removing it from the database and making it unusable.
             tags:
                 - tokens
+    /api/v1/trends/links:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: getTrendingLinks
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "406":
+                    description: not acceptable
+            summary: Links that have been shared more than others.
+            tags:
+                - trends
+    /api/v1/trends/statuses:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: getTrendingStatuses
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "406":
+                    description: not acceptable
+            summary: Statuses that have been interacted with more than others.
+            tags:
+                - trends
+    /api/v1/trends/tags:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: getTrendingTags
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "406":
+                    description: not acceptable
+            summary: View hashtags that are currently being used more frequently than usual.
+            tags:
+                - trends
     /api/v1/user:
         get:
             operationId: getUser

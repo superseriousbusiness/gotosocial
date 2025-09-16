@@ -52,9 +52,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/search"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/statuses"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/streaming"
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/suggestions"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/tags"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/timelines"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/tokens"
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/trends"
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/user"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/middleware"
@@ -100,9 +102,11 @@ type Client struct {
 	search              *search.Module              // api/v1/search, api/v2/search
 	statuses            *statuses.Module            // api/v1/statuses
 	streaming           *streaming.Module           // api/v1/streaming
+	suggestions         *suggestions.Module         // api/v2/suggestions
 	tags                *tags.Module                // api/v1/tags
 	timelines           *timelines.Module           // api/v1/timelines
 	tokens              *tokens.Module              // api/v1/tokens
+	trends              *trends.Module              // api/v1/trends
 	user                *user.Module                // api/v1/user
 }
 
@@ -155,9 +159,11 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
+	c.suggestions.Route(h)
 	c.tags.Route(h)
 	c.timelines.Route(h)
 	c.tokens.Route(h)
+	c.trends.Route(h)
 	c.user.Route(h)
 }
 
@@ -198,9 +204,11 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		search:              search.New(p),
 		statuses:            statuses.New(p),
 		streaming:           streaming.New(p, time.Second*30, 4096),
+		suggestions:         suggestions.New(p),
 		tags:                tags.New(p),
 		timelines:           timelines.New(p),
 		tokens:              tokens.New(p),
+		trends:              trends.New(p),
 		user:                user.New(p),
 	}
 }
