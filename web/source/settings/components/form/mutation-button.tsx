@@ -27,6 +27,7 @@ export interface MutationButtonProps extends React.DetailedHTMLProps<React.Butto
 	showError?: boolean,
 	className?: string,
 	wrapperClassName?: string,
+	submit?: boolean,
 }
 
 export default function MutationButton({
@@ -36,6 +37,7 @@ export default function MutationButton({
 	showError = true,
 	className = "",
 	wrapperClassName = "",
+	submit = true,
 	...inputProps
 }: MutationButtonProps) {
 	let iconClass = "";
@@ -56,7 +58,7 @@ export default function MutationButton({
 				<Error error={result.error} reset={result.reset} />
 			}
 			<button
-				type="submit"
+				type={submit ? "submit" : "button"}
 				className={"with-icon " + className}
 				disabled={result.isLoading || disabled}
 				{...inputProps}

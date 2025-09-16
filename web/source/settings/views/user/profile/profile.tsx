@@ -184,6 +184,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 						tabIndex={0}
 						disabled={noHeader}
 						result={deleteHeaderRes}
+						submit={false}
 						onClick={(e) => {
 							e.preventDefault();
 							deleteHeader().then(res => {
@@ -215,6 +216,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 						tabIndex={0}
 						disabled={noAvatar}
 						result={deleteAvatarRes}
+						submit={false}
 						onClick={(e) => {
 							e.preventDefault();
 							deleteAvatar().then(res => {
