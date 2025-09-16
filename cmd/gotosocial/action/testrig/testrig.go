@@ -200,7 +200,7 @@ func Start(ctx context.Context) error {
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		middleware.Logger(config.GetLogClientIP()),
 		middleware.HeaderFilter(state),
-		middleware.UserAgent(),
+		middleware.UserAgentOrTeapot(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
 	}...)

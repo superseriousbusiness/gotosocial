@@ -438,7 +438,7 @@ func Start(ctx context.Context) error {
 		// the logger, otherwise won't be accessible.
 		middleware.Logger(config.GetLogClientIP()),
 		middleware.HeaderFilter(state),
-		middleware.UserAgent(),
+		middleware.UserAgentOrTeapot(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
 	}...)

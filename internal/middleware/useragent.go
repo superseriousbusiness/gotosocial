@@ -21,19 +21,49 @@ import (
 	"net/http"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/gin-gonic/gin"
 )
 
-// UserAgent returns a gin middleware which aborts requests with
-// empty user agent strings, returning code 418 - I'm a teapot.
-func UserAgent() gin.HandlerFunc {
-	// todo: make this configurable
-	var rsp = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
+// UserAgentOrTeapot returns a gin middleware
+// which aborts requests with empty user agent
+// strings, returning code 418 - I'm a teapot.
+//
+// If `instance-reject-empty-user-agents` is
+// false, it just logs a debug msg instead.
+func UserAgentOrTeapot() gin.HandlerFunc {
+
+	// Build variables outside the handler
+	// so they're not instantiated every
+	// time a request is processed.
+	var (
+		rsp         = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
+		rejectEmpty = config.GetInstanceRejectEmptyUserAgents()
+	)
+
 	return func(c *gin.Context) {
-		if ua := c.Request.UserAgent(); ua == "" {
-			apiutil.Data(c,
-				http.StatusTeapot, apiutil.AppJSON, rsp)
-			c.Abort()
+		ua := c.Request.UserAgent()
+		if ua != "" {
+			// All good.
+			return
 		}
+
+		if !rejectEmpty {
+			// No user-agent was
+			// set but that's OK.
+			log.Debugf(
+				c.Request.Context(),
+				"allowing request with empty User-Agent from client %s",
+				c.ClientIP(),
+			)
+			return
+		}
+
+		// No user-agent set and that's not ok!
+		//
+		// Give them a taste of the ol' teapot.
+		apiutil.Data(c, http.StatusTeapot, apiutil.AppJSON, rsp)
+		c.Abort()
 	}
 }

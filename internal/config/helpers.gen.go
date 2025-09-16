@@ -77,6 +77,7 @@ const (
 	InstanceSubscriptionsProcessEveryFlag          = "instance-subscriptions-process-every"
 	InstanceStatsModeFlag                          = "instance-stats-mode"
 	InstanceAllowBackdatingStatusesFlag            = "instance-allow-backdating-statuses"
+	InstanceRejectEmptyUserAgentsFlag              = "instance-reject-empty-user-agents"
 	AccountsRegistrationOpenFlag                   = "accounts-registration-open"
 	AccountsReasonRequiredFlag                     = "accounts-reason-required"
 	AccountsRegistrationDailyLimitFlag             = "accounts-registration-daily-limit"
@@ -277,6 +278,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Duration("instance-subscriptions-process-every", cfg.InstanceSubscriptionsProcessEvery, "Period to elapse between instance subscriptions processing jobs, starting from instance-subscriptions-process-from.")
 	flags.String("instance-stats-mode", cfg.InstanceStatsMode, "Allows you to customize the way stats are served to crawlers: one of '', 'serve', 'zero', 'baffle'. Home page stats remain unchanged.")
 	flags.Bool("instance-allow-backdating-statuses", cfg.InstanceAllowBackdatingStatuses, "Allow local accounts to backdate statuses using the scheduled_at param to /api/v1/statuses")
+	flags.Bool("instance-reject-empty-user-agents", cfg.InstanceRejectEmptyUserAgents, "Reject all incoming HTTP requests that do not have a User-Agent header set")
 	flags.Bool("accounts-registration-open", cfg.AccountsRegistrationOpen, "Allow anyone to submit an account signup request. If false, server will be invite-only.")
 	flags.Bool("accounts-reason-required", cfg.AccountsReasonRequired, "Do new account signups require a reason to be submitted on registration?")
 	flags.Int("accounts-registration-daily-limit", cfg.AccountsRegistrationDailyLimit, "Limit amount of approved account sign-ups allowed per 24hrs before registration is closed. 0 or less = no limit.")
@@ -420,7 +422,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 197)
+	cfgmap := make(map[string]any, 198)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-format"] = cfg.LogFormat
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
@@ -469,6 +471,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["instance-subscriptions-process-every"] = cfg.InstanceSubscriptionsProcessEvery
 	cfgmap["instance-stats-mode"] = cfg.InstanceStatsMode
 	cfgmap["instance-allow-backdating-statuses"] = cfg.InstanceAllowBackdatingStatuses
+	cfgmap["instance-reject-empty-user-agents"] = cfg.InstanceRejectEmptyUserAgents
 	cfgmap["accounts-registration-open"] = cfg.AccountsRegistrationOpen
 	cfgmap["accounts-reason-required"] = cfg.AccountsReasonRequired
 	cfgmap["accounts-registration-daily-limit"] = cfg.AccountsRegistrationDailyLimit
@@ -1016,6 +1019,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.InstanceAllowBackdatingStatuses, err = cast.ToBoolE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> bool for 'instance-allow-backdating-statuses': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["instance-reject-empty-user-agents"]; ok {
+		var err error
+		cfg.InstanceRejectEmptyUserAgents, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'instance-reject-empty-user-agents': %w", ival, err)
 		}
 	}
 
@@ -3301,6 +3312,28 @@ func GetInstanceAllowBackdatingStatuses() bool { return global.GetInstanceAllowB
 
 // SetInstanceAllowBackdatingStatuses safely sets the value for global configuration 'InstanceAllowBackdatingStatuses' field
 func SetInstanceAllowBackdatingStatuses(v bool) { global.SetInstanceAllowBackdatingStatuses(v) }
+
+// GetInstanceRejectEmptyUserAgents safely fetches the Configuration value for state's 'InstanceRejectEmptyUserAgents' field
+func (st *ConfigState) GetInstanceRejectEmptyUserAgents() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceRejectEmptyUserAgents
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceRejectEmptyUserAgents safely sets the Configuration value for state's 'InstanceRejectEmptyUserAgents' field
+func (st *ConfigState) SetInstanceRejectEmptyUserAgents(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceRejectEmptyUserAgents = v
+	st.reloadToViper()
+}
+
+// GetInstanceRejectEmptyUserAgents safely fetches the value for global configuration 'InstanceRejectEmptyUserAgents' field
+func GetInstanceRejectEmptyUserAgents() bool { return global.GetInstanceRejectEmptyUserAgents() }
+
+// SetInstanceRejectEmptyUserAgents safely sets the value for global configuration 'InstanceRejectEmptyUserAgents' field
+func SetInstanceRejectEmptyUserAgents(v bool) { global.SetInstanceRejectEmptyUserAgents(v) }
 
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
