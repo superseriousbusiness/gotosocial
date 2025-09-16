@@ -271,6 +271,10 @@
 	}
 }
 
+/*
+	Style the "open post" link in the top
+	right corner of the photoswipe lightbox.
+*/
 .pswp__button--open-post-link {
 	display: flex;
 	align-items: center;
@@ -283,6 +287,10 @@
 	}
 }
 
+/*
+	Style the plyr video thingy both in
+	and out of the photoswipe lightbox.
+*/
 .plyr--video {
 	flex-direction: column-reverse;
 
@@ -366,4 +374,28 @@
 	> .plyr--paused .plyr__controls {
 		display: flex;
 	}
+}
+
+/*
+	Preserve whitespace in
+	photoswipe captions.
+*/
+.pswp__dynamic-caption {
+  white-space: pre-wrap;
+}
+
+.pswp__dynamic-caption--aside {
+	/*
+		Remove unnecessary padding
+		in "normal" width when caption
+		is rendered on the right side.
+	*/
+	padding: 0;
+
+	/*
+		Let it have a bit more width if it
+		wants, to increase the chance of user
+		being able to see the whole caption.
+	*/
+	max-width: 30rem;
 }

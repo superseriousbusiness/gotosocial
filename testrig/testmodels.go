@@ -1014,7 +1014,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 				},
 			},
 			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
-			Description:       "This is a track from Nine Inch Nail's \"Ghosts I-V\" album. This is the third track from \"Ghosts II\".",
+			Description:       "This is a track from Nine Inch Nails' \"Ghosts I-V\" album.\n\nThis is the third track from \"Ghosts II\".",
 			ScheduledStatusID: "",
 			Blurhash:          "LZDJO?ayIUof01j[xuayxuayayj[",
 			Processing:        2,
