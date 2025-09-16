@@ -112,6 +112,7 @@ EXPECT=$(cat << "EOF"
     "http-client-timeout": 30000000000,
     "http-client-tls-insecure-skip-verify": false,
     "instance-allow-backdating-statuses": true,
+    "instance-allow-empty-user-agents": true,
     "instance-deliver-to-shared-inboxes": false,
     "instance-expose-allowlist": true,
     "instance-expose-allowlist-web": true,
@@ -127,7 +128,6 @@ EXPECT=$(cat << "EOF"
         "nl",
         "en-GB"
     ],
-    "instance-reject-empty-user-agents": false,
     "instance-stats-mode": "baffle",
     "instance-subscriptions-process-every": 86400000000000,
     "instance-subscriptions-process-from": "23:00",
@@ -253,6 +253,7 @@ GTS_TLS_MODE='' \
 GTS_DB_TLS_CA_CERT='' \
 GTS_WEB_TEMPLATE_BASE_DIR='/root' \
 GTS_WEB_ASSET_BASE_DIR='/root' \
+GTS_INSTANCE_ALLOW_EMPTY_USER_AGENTS="true" \
 GTS_INSTANCE_EXPOSE_PEERS=true \
 GTS_INSTANCE_EXPOSE_BLOCKLIST=true \
 GTS_INSTANCE_EXPOSE_BLOCKLIST_WEB=true \
@@ -265,7 +266,6 @@ GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
 GTS_INSTANCE_LANGUAGES="nl,en-gb" \
-GTS_INSTANCE_REJECT_EMPTY_USER_AGENTS="false" \
 GTS_INSTANCE_STATS_MODE="baffle" \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \

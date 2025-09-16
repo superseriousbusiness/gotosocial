@@ -230,14 +230,14 @@ instance-stats-mode: ""
 # Default: true
 instance-allow-backdating-statuses: true
 
-# Bool. If set to true, then any HTTP requests coming into the instance,
-# whether by client, web browser, or server-to-server requests, will be
-# rejected if they do not identify themselves by setting a value on the
-# request's User-Agent header. Since almost all HTTP clients provide
-# *something* as a User-Agent value, leaving this set to "true" will
-# likely not cause issues, but you can turn it off if necessary.
+# Bool. If set to false (default), then any HTTP requests coming into the
+# instance, whether by client, web browser, or server-to-server requests,
+# will be rejected if they do not identify themselves by setting a value
+# in the User-Agent header. Since almost all HTTP clients provide *something*
+# as a User-Agent value, leaving this set to false will likely not cause
+# issues, but you can set it to true if it's necessary for some clients.
 #
 # Options: [true, false]
-# Default: true
-instance-reject-empty-user-agents: true
+# Default: false
+instance-allow-empty-user-agents: false
 ```

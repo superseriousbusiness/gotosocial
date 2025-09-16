@@ -30,8 +30,8 @@ import (
 // which aborts requests with empty user agent
 // strings, returning code 418 - I'm a teapot.
 //
-// If `instance-reject-empty-user-agents` is
-// false, it just logs a debug msg instead.
+// If `instance-allow-empty-user-agents` is
+// true, it logs a debug msg instead of aborting.
 func UserAgentOrTeapot() gin.HandlerFunc {
 
 	// Build variables outside the handler
@@ -39,7 +39,7 @@ func UserAgentOrTeapot() gin.HandlerFunc {
 	// time a request is processed.
 	var (
 		rsp         = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
-		rejectEmpty = config.GetInstanceRejectEmptyUserAgents()
+		allowEmpty = config.GetInstanceAllowEmptyUserAgents()
 	)
 
 	return func(c *gin.Context) {
@@ -49,7 +49,7 @@ func UserAgentOrTeapot() gin.HandlerFunc {
 			return
 		}
 
-		if !rejectEmpty {
+		if allowEmpty {
 			// No user-agent was
 			// set but that's OK.
 			log.Debugf(
