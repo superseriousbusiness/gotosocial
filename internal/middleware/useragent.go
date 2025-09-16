@@ -38,7 +38,7 @@ func UserAgentOrTeapot() gin.HandlerFunc {
 	// so they're not instantiated every
 	// time a request is processed.
 	var (
-		rsp         = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
+		rsp        = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
 		allowEmpty = config.GetInstanceAllowEmptyUserAgents()
 	)
 
