@@ -101,16 +101,12 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 
 	// Handlers that serve profiles and statuses should use
 	// the SignatureCheck middleware, so that requests with
-	// content-type application/activity+json can be served,
-	// and (if enabled) the nollamas middleware, to protect
-	// against scraping by shitty LLM bullshit.
+	// content-type application/activity+json can be served.
 	profileGroup := r.AttachGroup(profileGroupPath)
 	profileGroup.Use(mi...)
 	profileGroup.Use(middleware.SignatureCheck(m.isURIBlocked), middleware.CacheControl(middleware.CacheControlConfig{
 		Directives: []string{"no-store"},
 	}))
-	nollamas := middleware.NoLLaMas(m.cookiePolicy, m.processor.InstanceGetV1)
-	profileGroup.Use(nollamas)
 	profileGroup.Handle(http.MethodGet, "", m.profileGETHandler) // use empty path here since it's the base of the group
 	profileGroup.Handle(http.MethodGet, statusPath, m.threadGETHandler)
 

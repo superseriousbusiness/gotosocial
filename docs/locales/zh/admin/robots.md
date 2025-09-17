@@ -10,6 +10,6 @@ GoToSocial 在主域名上提供一个 `robots.txt` 文件。该文件包含试�
 
 AI 爬虫来自一个[社区维护的仓库][airobots]。目前是手动保持同步的。如果你知道有任何遗漏的爬虫，请给他们提交一个 PR！
 
-众所周知，很多 AI 爬虫在 `robots.txt` 不允许其 User-Agent 的情况下，仍然会忽略对应规则并继续抓去内容。这意味着 `robots.txt` 文件并不是确保 AI 爬虫不抓取你的内容的万无一失的方法。除此以外，你可能还需要考虑通过[请求标头过滤](request_filtering_modes.md)来阻止对应 User-Agent，以及启用基于工作证明的[爬虫防护](../advanced/scraper_deterrence.md)。
+众所周知，很多 AI 爬虫在 `robots.txt` 不允许其 User-Agent 的情况下，仍然会忽略对应规则并继续抓去内容。这意味着 `robots.txt` 文件并不是确保 AI 爬虫不抓取你的内容的万无一失的方法。除此以外，你可能还需要考虑通过[请求标头过滤](request_filtering_modes.md)来阻止对应 User-Agent。
 
 [airobots]: https://github.com/ai-robots-txt/ai.robots.txt/

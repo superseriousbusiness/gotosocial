@@ -33,8 +33,7 @@ for file in $(find ./web/source | license_filter); do
 done
 
 # Copy over misc other licenses
-for file in ./LICENSE \
-            ./web/source/nollamasworker/sha256.js; do
+for file in ./LICENSE; do
     echo "----------------------------------------------------------" >> "$OUTPUT"
     echo                                                              >> "$OUTPUT"
     echo "${file}:"                                                   >> "$OUTPUT"

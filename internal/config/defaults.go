@@ -154,11 +154,6 @@ var Defaults = Configuration{
 			Multiplier: 8, // 8 open requests per CPU
 			RetryAfter: 30 * time.Second,
 		},
-
-		ScraperDeterrence: ScraperDeterrenceConfig{
-			Enabled:    false,
-			Difficulty: 100000,
-		},
 	},
 
 	Cache: CacheConfiguration{

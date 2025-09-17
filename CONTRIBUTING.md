@@ -439,7 +439,6 @@ By default the standalone testrig uses an in-memory SQLite database, which is fi
 - `GTS_DB_ADDRESS` - this is set to `:memory:` by default. You can change this to use an sqlite.db file somewhere, or set it to a Postgres address.
 - `GTS_DB_PORT`, `GTS_DB_USER`, `GTS_DB_PASSWORD`, `GTS_DB_DATABASE`, `GTS_DB_TLS_MODE`, `GTS_DB_TLS_CA_CERT` - you can set these if you change `GTS_DB_ADDRESS` to `postgres` and don't use `GTS_DB_POSTGRES_CONNECTION_STRING`.
 - `GTS_DB_POSTGRES_CONNECTION_STRING` - use this to provide a Postgres connection string if you don't want to set all the db env variables mentioned in the previous point.
-- `GTS_ADVANCED_SCRAPER_DETERRENCE_ENABLED`, `GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY` - set these if you want to try out the PoW scraper deterrence locally.
 
 Using these variables you can also (albeit awkwardly) test migrations from one schema to another.
 

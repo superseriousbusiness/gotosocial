@@ -184,11 +184,6 @@ func testDefaults() config.Configuration {
 			Throttling: config.ThrottlingConfig{
 				Multiplier: 0, // disabled
 			},
-
-			ScraperDeterrence: config.ScraperDeterrenceConfig{
-				Enabled:    envBool("GTS_ADVANCED_SCRAPER_DETERRENCE_ENABLED", false),
-				Difficulty: uint32(envInt("GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY", 100000)), //nolint
-			},
 		},
 
 		SoftwareVersion: "0.0.0-testrig",

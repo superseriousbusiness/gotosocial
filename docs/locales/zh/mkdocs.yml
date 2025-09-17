@@ -80,7 +80,6 @@ nav:
     - "advanced/tracing.md"
     - "advanced/metrics.md"
     - "advanced/replicating-sqlite.md"
-    - "advanced/scraper_deterrence.md"
     - "advanced/sqlite-networked-storage.md"
     - "适用进阶场景的构建":
       - "advanced/builds/nowasm.md"
