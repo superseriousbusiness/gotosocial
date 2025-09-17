@@ -29,6 +29,8 @@ import MutationButton from "../../../components/form/mutation-button";
 import { useAliasAccountMutation, useMoveAccountMutation } from "../../../lib/query/user";
 import { FormContext, useWithFormContext } from "../../../lib/form/context";
 import { store } from "../../../redux/store";
+import { useInstanceV1Query } from "../../../lib/query/gts-api";
+import Loading from "../../../components/loading";
 
 export default function Migration() {
 	return (
@@ -142,9 +144,7 @@ function AlsoKnownAsURI({ index, data }) {
 }
 
 function MoveForm({ data: profile }) {
-	let urlStr = store.getState().login.instanceUrl ?? "";
-	let url = new URL(urlStr);
-	
+	const instanceURL = store.getState().login.instanceUrl ?? "";
 	const form = {
 		movedToURI: useTextInput("moved_to_uri", {
 			source: profile,
@@ -153,9 +153,22 @@ function MoveForm({ data: profile }) {
 		password: useTextInput("password"),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, useMoveAccountMutation(), {
-		changedOnly: false,
-	});
+	const [submitForm, result] = useFormSubmit(
+		form,
+		useMoveAccountMutation(),
+		{ changedOnly: false },
+	);
+	
+	// Load instance data to know the correct
+	// account domain to provide in form below.
+	const {
+		data: instance,
+		isFetching: isFetchingInstance,
+		isLoading: isLoadingInstance
+	} = useInstanceV1Query();
+	if (isFetchingInstance || isLoadingInstance) {
+		return <Loading />;
+	}
 	
 	return (
 		<form className="user-migration-move" onSubmit={submitForm}>
@@ -170,11 +183,11 @@ function MoveForm({ data: profile }) {
 				<dl className="migration-details">
 					<div>
 						<dt>Account handle/username:</dt>
-						<dd>@{profile.acct}@{url.host}</dd>
+						<dd>@{profile.acct}@{instance?.account_domain}</dd>
 					</div>
 					<div>
 						<dt>Account URI:</dt>
-						<dd>{urlStr}/users/{profile.username}</dd>
+						<dd>{instanceURL}/users/{profile.username}</dd>
 					</div>
 				</dl>
 				<br/>
