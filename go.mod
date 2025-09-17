@@ -6,7 +6,7 @@ go 1.24.6
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.32.3-gts-go1.23-fix
 
 // Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
-replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.2-concurrency-workaround
+replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.39.0-concurrency-workaround
 
 require (
 	code.superseriousbusiness.org/activity v1.17.0
@@ -85,13 +85,13 @@ require (
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.42.0
 	golang.org/x/image v0.31.0
-	golang.org/x/net v0.43.0
+	golang.org/x/net v0.44.0
 	golang.org/x/oauth2 v0.31.0
 	golang.org/x/sys v0.36.0
 	golang.org/x/text v0.29.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.38.2
+	modernc.org/sqlite v1.39.0
 	mvdan.cc/xurls/v2 v2.6.0
 )
 
