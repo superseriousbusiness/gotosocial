@@ -390,7 +390,7 @@
 		in "normal" width when caption
 		is rendered on the right side.
 	*/
-	padding: 0;
+	padding: 0 0 0 1rem;
 
 	/*
 		Let it have a bit more width if it
