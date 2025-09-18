@@ -82,7 +82,7 @@ func getAssetETag(
 		return cachedETag.eTag, nil
 	}
 
-	eTag, err := generateEtag(file)
+	eTag, err := generateETag(file)
 	if err != nil {
 		return "", fmt.Errorf("error generating etag: %s", err)
 	}

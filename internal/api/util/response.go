@@ -71,6 +71,18 @@ func JSONType(c *gin.Context, code int, contentType string, data any) {
 	EncodeJSONResponse(c.Writer, c.Request, code, contentType, data)
 }
 
+// XML calls EncodeJSONResponse() using gin.Context{}, with content-type = AppXML,
+// This function handles the case of XML unmarshal errors and pools read buffers.
+func XML(c *gin.Context, code int, data any) {
+	EncodeXMLResponse(c.Writer, c.Request, code, AppXML, data)
+}
+
+// XML calls EncodeXMLResponse() using gin.Context{}, with given content-type.
+// This function handles the case of XML unmarshal errors and pools read buffers.
+func XMLType(c *gin.Context, code int, contentType string, data any) {
+	EncodeXMLResponse(c.Writer, c.Request, code, contentType, data)
+}
+
 // Data calls WriteResponseBytes() using gin.Context{}, with given content-type.
 func Data(c *gin.Context, code int, contentType string, data []byte) {
 	WriteResponseBytes(c.Writer, c.Request, code, contentType, data)
@@ -230,6 +242,7 @@ func EncodeCSVResponse(
 
 	// Write all the records to the buffer.
 	if err := csvWriter.WriteAll(records); err == nil {
+
 		// Respond with the now-known
 		// size byte slice within buf.
 		WriteResponseBytes(rw, r,

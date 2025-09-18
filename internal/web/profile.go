@@ -27,6 +27,7 @@ import (
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
 )
 
@@ -122,14 +123,15 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 
 	// Check if paging.
 	maxStatusID := apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
-	paging := maxStatusID != ""
+	doPaging := (maxStatusID != "")
 
-	// If not paging, load pinned statuses.
 	var (
 		mediaOnly      = account.WebLayout == "gallery"
 		pinnedStatuses []*apimodel.WebStatus
 	)
-	if !paging {
+
+	if !doPaging {
+		// If not paging, load pinned statuses.
 		var errWithCode gtserror.WithCode
 		pinnedStatuses, errWithCode = m.processor.Account().WebStatusesGetPinned(
 			ctx,
@@ -156,9 +158,8 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 	statusResp, errWithCode := m.processor.Account().WebStatusesGet(
 		ctx,
 		account.ID,
+		&paging.Page{Max: paging.MaxID(maxStatusID), Limit: limit},
 		mediaOnly,
-		limit,
-		maxStatusID,
 	)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
@@ -172,7 +173,7 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 		robotsMeta:     robotsMeta,
 		pinnedStatuses: pinnedStatuses,
 		statusResp:     statusResp,
-		paging:         paging,
+		paging:         doPaging,
 	}
 }
 

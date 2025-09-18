@@ -12,4 +12,8 @@ When enabled, the RSS feed for your account will be available at `https://[your-
 
 ## Which posts are shared via RSS?
 
-Only your latest 20 Public posts are shared via RSS. Replies and reblogs/boosts are not included. Unlisted posts are not included. In other words, the only posts visible via RSS will be the same ones that are visible when you open your profile in a browser.
+Only your latest 20 Public posts are shared via RSS by default. Replies and reblogs/boosts are not included. Unlisted posts are not included. In other words, the only posts visible via RSS will be the same ones that are visible when you open your profile in a browser.
+
+If you want to see more posts, you can provide our standard set of timeline paging parameters ([as per our swagger documentation](https://docs.gotosocial.org/en/latest/api/swagger)) to see beyond the first page.
+
+You can also access Atom and JSON feeds from this same endpoint, but providing the appropriate request content-type header. i.e. `application/atom+xml` for an Atom feed, or `application/feed+json` for a JSON feed.

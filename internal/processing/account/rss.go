@@ -20,21 +20,19 @@ package account
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gorilla/feeds"
 )
 
-const (
-	rssFeedLength = 20
-)
+var never time.Time
 
-type GetRSSFeed func() (string, gtserror.WithCode)
+type GetRSSFeed func() (*feeds.Feed, gtserror.WithCode)
 
 // GetRSSFeedForUsername returns a function to return the RSS feed of a local account
 // with the given username, and the last-modified time (time that the account last
@@ -45,33 +43,30 @@ type GetRSSFeed func() (string, gtserror.WithCode)
 //
 // If the account has not yet posted an RSS-eligible status, the returned last-modified
 // time will be zero, and the GetRSSFeed func will return a valid RSS xml with no items.
-func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) (GetRSSFeed, time.Time, gtserror.WithCode) {
-	var (
-		never = time.Time{}
-	)
+func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string, page *paging.Page) (GetRSSFeed, time.Time, gtserror.WithCode) {
 
+	// Fetch local (i.e. empty domain) account from database by username.
 	account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// Simply no account with this username.
-			err = gtserror.New("account not found")
-			return nil, never, gtserror.NewErrorNotFound(err)
-		}
-
-		// Real db error.
-		err = gtserror.Newf("db error getting account %s: %w", username, err)
+		err := gtserror.Newf("db error getting account %s: %w", username, err)
 		return nil, never, gtserror.NewErrorInternalError(err)
+	}
+
+	// Check if exists.
+	if account == nil {
+		err := gtserror.New("account not found")
+		return nil, never, gtserror.NewErrorNotFound(err)
 	}
 
 	// Ensure account has rss feed enabled.
 	if !*account.Settings.EnableRSS {
-		err = gtserror.New("account RSS feed not enabled")
+		err := gtserror.New("account RSS feed not enabled")
 		return nil, never, gtserror.NewErrorNotFound(err)
 	}
 
-	// Ensure account stats populated.
+	// Ensure account stats populated for last status fetch information.
 	if err := p.state.DB.PopulateAccountStats(ctx, account); err != nil {
-		err = gtserror.Newf("db error getting account stats %s: %w", username, err)
+		err := gtserror.Newf("db error getting account stats %s: %w", username, err)
 		return nil, never, gtserror.NewErrorInternalError(err)
 	}
 
@@ -80,14 +75,14 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 	// eligible to appear in the RSS feed; that's fine.
 	lastPostAt := account.Stats.LastStatusAt
 
-	return func() (string, gtserror.WithCode) {
+	return func() (*feeds.Feed, gtserror.WithCode) {
 		// Assemble author namestring once only.
 		author := "@" + account.Username + "@" + config.GetAccountDomain()
 
-		// Derive image/thumbnail for this account (may be nil).
+		// Derive image/thumbnail for this account (may be nil if no media).
 		image, errWithCode := p.rssImageForAccount(ctx, account, author)
 		if errWithCode != nil {
-			return "", errWithCode
+			return nil, errWithCode
 		}
 
 		feed := &feeds.Feed{
@@ -106,7 +101,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		// since we already know there's no eligible statuses.
 		if lastPostAt.IsZero() {
 			feed.Updated = account.CreatedAt
-			return stringifyFeed(feed)
+			return feed, nil
 		}
 
 		// Account has posted at least one status that's
@@ -120,32 +115,30 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		//
 		// Take into account whether the user wants
 		// their web view laid out in gallery mode.
-		mediaOnly := account.Settings != nil &&
-			account.Settings.WebLayout == gtsmodel.WebLayoutGallery
+		mediaOnly := (account.Settings != nil &&
+			account.Settings.WebLayout == gtsmodel.WebLayoutGallery)
 		statuses, err := p.state.DB.GetAccountWebStatuses(
 			ctx,
 			account,
+			page,
 			mediaOnly,
-			rssFeedLength,
-			"", // Latest posts from the top.
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("db error getting account web statuses: %w", err)
-			return "", gtserror.NewErrorInternalError(err)
+			err := gtserror.Newf("db error getting account web statuses: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		// Add each status to the rss feed.
 		for _, status := range statuses {
 			item, err := p.converter.StatusToRSSItem(ctx, status)
 			if err != nil {
-				err = gtserror.Newf("error converting status to feed item: %w", err)
-				return "", gtserror.NewErrorInternalError(err)
+				err := gtserror.Newf("error converting status to feed item: %w", err)
+				return nil, gtserror.NewErrorInternalError(err)
 			}
-
 			feed.Add(item)
 		}
 
-		return stringifyFeed(feed)
+		return feed, nil
 	}, lastPostAt, nil
 }
 
@@ -176,16 +169,4 @@ func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Ac
 		Title: "Avatar for " + author,
 		Link:  account.URL,
 	}, nil
-}
-
-func stringifyFeed(feed *feeds.Feed) (string, gtserror.WithCode) {
-	// Stringify the feed. Even with no statuses,
-	// this will still produce valid rss xml.
-	rss, err := feed.ToRss()
-	if err != nil {
-		err := gtserror.Newf("error converting feed to rss string: %w", err)
-		return "", gtserror.NewErrorInternalError(err)
-	}
-
-	return rss, nil
 }

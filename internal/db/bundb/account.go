@@ -900,7 +900,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	return *faves, nil
 }
 
-func qMediaOnly(q *bun.SelectQuery) *bun.SelectQuery {
+func selectOnlyWithMedia(q *bun.SelectQuery) *bun.SelectQuery {
 	// Attachments are stored as a json object; this
 	// implementation differs between SQLite and Postgres,
 	// so we have to be thorough to cover all eventualities
@@ -908,14 +908,14 @@ func qMediaOnly(q *bun.SelectQuery) *bun.SelectQuery {
 		switch d := q.Dialect().Name(); d {
 		case dialect.PG:
 			return q.
-				Where("? IS NOT NULL", bun.Ident("status.attachments")).
-				Where("? != '{}'", bun.Ident("status.attachments"))
+				Where("? IS NOT NULL", bun.Ident("attachments")).
+				Where("? != '{}'", bun.Ident("attachments"))
 
 		case dialect.SQLite:
 			return q.
-				Where("? IS NOT NULL", bun.Ident("status.attachments")).
-				Where("? != 'null'", bun.Ident("status.attachments")).
-				Where("? != '[]'", bun.Ident("status.attachments"))
+				Where("? IS NOT NULL", bun.Ident("attachments")).
+				Where("? != 'null'", bun.Ident("attachments")).
+				Where("? != '[]'", bun.Ident("attachments"))
 
 		default:
 			panic("dialect " + d.String() + " was neither pg nor sqlite")
@@ -963,9 +963,9 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
 	}
 
-	// Respect media-only preference.
 	if mediaOnly {
-		q = qMediaOnly(q)
+		// Respect mediaOnly pref.
+		q = selectOnlyWithMedia(q)
 	}
 
 	if publicOnly {
@@ -1041,12 +1041,16 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
 }
 
+var webStatusVisibilities = bun.In([]gtsmodel.Visibility{
+	gtsmodel.VisibilityPublic,
+	gtsmodel.VisibilityUnlocked,
+})
+
 func (a *accountDB) GetAccountWebStatuses(
 	ctx context.Context,
 	account *gtsmodel.Account,
+	page *paging.Page,
 	mediaOnly bool,
-	limit int,
-	maxID string,
 ) ([]*gtsmodel.Status, error) {
 	if account.Username == config.GetHost() {
 		// Instance account
@@ -1071,74 +1075,35 @@ func (a *accountDB) GetAccountWebStatuses(
 		return nil, nil
 	}
 
-	// Ensure reasonable
-	if limit < 0 {
-		limit = 0
-	}
+	return loadStatusTimelinePage(ctx, a.db, a.state,
 
-	// Make educated guess for slice size
-	statusIDs := make([]string, 0, limit)
+		// Paging
+		// params.
+		page,
 
-	q := a.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		// Select only IDs from table
-		Column("status.id").
-		Where("? = ?", bun.Ident("status.account_id"), account.ID)
+		// The actual meat of the account web statuses query.
+		func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+			q = q.Where("? = ?", bun.Ident("account_id"), account.ID)
 
-	// Select statuses according to
-	// account's web visibility prefs.
-	if publicOnly {
-		// Only Public statuses.
-		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
-	} else {
-		// Public or Unlocked.
-		visis := []gtsmodel.Visibility{
-			gtsmodel.VisibilityPublic,
-			gtsmodel.VisibilityUnlocked,
-		}
-		q = q.Where("? IN (?)", bun.Ident("status.visibility"), bun.In(visis))
-	}
+			if publicOnly {
+				q = q.Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityPublic)
+			} else {
+				q = q.Where("? IN (?)", bun.Ident("visibility"), webStatusVisibilities)
+			}
 
-	// Don't show replies, boosts, or
-	// local-only statuses on the web view.
-	q = q.
-		Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
-		Where("? IS NULL", bun.Ident("status.boost_of_id")).
-		Where("? = ?", bun.Ident("status.federated"), true)
+			// Don't show replies, boosts, or local-only in web view.
+			q = q.Where("? IS NULL", bun.Ident("in_reply_to_uri")).
+				Where("? IS NULL", bun.Ident("boost_of_id")).
+				Where("? = ?", bun.Ident("federated"), true)
 
-	// Respect media-only preference.
-	if mediaOnly {
-		q = qMediaOnly(q)
-	}
+			if mediaOnly {
+				// Respect mediaOnly pref.
+				q = selectOnlyWithMedia(q)
+			}
 
-	// Return only statuses LOWER (ie., older) than maxID
-	if maxID == "" {
-		maxID = id.Highest
-	}
-	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
-
-	if limit > 0 {
-		// limit amount of statuses returned
-		q = q.Limit(limit)
-	}
-
-	if limit > 0 {
-		// limit amount of statuses returned
-		q = q.Limit(limit)
-	}
-
-	q = q.Order("status.id DESC")
-
-	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, err
-	}
-
-	if len(statusIDs) == 0 {
-		return nil, db.ErrNoEntries
-	}
-
-	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
+			return q, nil
+		},
+	)
 }
 
 func (a *accountDB) GetAccountSettings(

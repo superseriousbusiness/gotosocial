@@ -49,7 +49,7 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountWebStatusesMediaOnly() {
-	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["local_account_3"], true, 20, "")
+	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["local_account_3"], &paging.Page{Limit: 20}, true)
 	suite.NoError(err)
 	suite.Len(statuses, 2)
 }

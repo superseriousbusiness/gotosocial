@@ -27,6 +27,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 
 	"codeberg.org/gruf/go-cache/v3"
+	"codeberg.org/gruf/go-fastcopy"
 )
 
 type withETagCache interface {
@@ -47,13 +48,19 @@ type eTagCacheEntry struct {
 	lastModified time.Time
 }
 
-// generateEtag generates a strong (byte-for-byte) etag using
-// the entirety of the provided reader.
-func generateEtag(r io.Reader) (string, error) {
-	// nolint:gosec
-	hash := sha1.New()
+// generateEtag generates a strong (byte-for-byte) etag
+// using the entirety of the provided reader.
+func generateETag(r io.Reader) (string, error) {
+	return generateETagFrom(func(w io.Writer) error {
+		_, err := fastcopy.Copy(w, r)
+		return err
+	})
+}
 
-	if _, err := io.Copy(hash, r); err != nil {
+func generateETagFrom(writeTo func(io.Writer) error) (string, error) {
+	hash := sha1.New() // nolint:gosec
+
+	if err := writeTo(hash); err != nil {
 		return "", err
 	}
 

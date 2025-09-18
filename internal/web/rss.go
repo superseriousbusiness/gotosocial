@@ -18,7 +18,6 @@
 package web
 
 import (
-	"bytes"
 	"net/http"
 	"strings"
 	"time"
@@ -26,13 +25,26 @@ import (
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/feeds"
 )
 
-const appRSSUTF8 = string(apiutil.AppRSSXML) + "; charset=utf-8"
+const (
+	charsetUTF8 = "; charset=utf-8"
+	appRSSUTF8  = string(apiutil.AppRSSXML) + charsetUTF8
+	appAtomUTF8 = string(apiutil.AppAtomXML) + charsetUTF8
+	appJSONUTF8 = string(apiutil.AppFeedJSON) + charsetUTF8
+)
 
 func (m *Module) rssFeedGETHandler(c *gin.Context) {
-	if _, err := apiutil.NegotiateAccept(c, apiutil.AppRSSXML); err != nil {
+	contentType, err := apiutil.NegotiateAccept(c,
+		apiutil.AppRSSXML,
+		apiutil.AppAtomXML,
+		apiutil.AppFeedJSON,
+		apiutil.AppJSON,
+	)
+	if err != nil {
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -49,21 +61,34 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	// todo: https://codeberg.org/superseriousbusiness/gotosocial/issues/1813
 	username = strings.ToLower(username)
 
-	// Retrieve the getRSSFeed function from the processor.
-	// We'll only call the function if we need to, to save db calls.
-	// lastPostAt may be a zero time if account has never posted.
-	getRSSFeed, lastPostAt, errWithCode := m.processor.Account().GetRSSFeedForUsername(c.Request.Context(), username)
+	// Parse paging parameters from request.
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		40, // max limit
+		20, // default limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	getFunc, lastPostAt, errWithCode := m.processor.Account().GetRSSFeedForUsername(
+		c.Request.Context(),
+		username,
+		page,
+	)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	var (
-		rssFeed string // Stringified rss feed.
+	var feed *feeds.Feed
 
-		cacheKey              = c.Request.URL.Path
-		cacheEntry, wasCached = m.eTagCache.Get(cacheKey)
-	)
+	// Key to use in etag cache (note content-type suffix).
+	cacheKey := c.Request.URL.Path + "#" + contentType
+
+	// Check etag cache for an existing entry under key.
+	cacheEntry, wasCached := m.eTagCache.Get(cacheKey)
 
 	if !wasCached || unixAfter(lastPostAt, cacheEntry.lastModified) {
 		// We either have no ETag cache entry for this account's feed,
@@ -72,15 +97,16 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		//
 		// As such, we need to generate a new ETag, and for that we need
 		// the string representation of the RSS feed.
-		rssFeed, errWithCode = getRSSFeed()
+		feed, errWithCode = getFunc()
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
-		eTag, err := generateEtag(bytes.NewBufferString(rssFeed))
+		etag, err := generateFeedETag(feed, contentType)
 		if err != nil {
-			apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+			errWithCode := gtserror.NewErrorInternalError(err)
+			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
@@ -96,7 +122,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 
 		// Store the new cache entry.
 		cacheEntry = eTagCacheEntry{
-			eTag:         eTag,
+			eTag:         etag,
 			lastModified: lastModified,
 		}
 		m.eTagCache.Set(cacheKey, cacheEntry)
@@ -149,15 +175,37 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	// If we had a cache hit earlier, we may not have called the
 	// getRSSFeed function yet; if that's the case then do call it
 	// now because we definitely need it.
-	if rssFeed == "" {
-		rssFeed, errWithCode = getRSSFeed()
+	if feed == nil {
+		feed, errWithCode = getFunc()
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 	}
 
-	c.Data(http.StatusOK, appRSSUTF8, []byte(rssFeed))
+	// Encode response.
+	switch contentType {
+	case apiutil.AppRSSXML:
+		apiutil.XMLType(c, http.StatusOK, appRSSUTF8, &feeds.Rss{feed})
+	case apiutil.AppAtomXML:
+		apiutil.XMLType(c, http.StatusOK, appAtomUTF8, &feeds.Atom{feed})
+	case apiutil.AppFeedJSON, apiutil.AppJSON:
+		apiutil.JSONType(c, http.StatusOK, appJSONUTF8, (&feeds.JSON{feed}).JSONFeed())
+	}
+}
+
+// generateFeedETag generates feed etag for appropriate content-type encoding.
+func generateFeedETag(feed *feeds.Feed, contentType string) (string, error) {
+	switch contentType {
+	case apiutil.AppRSSXML:
+		return generateETagFrom(feed.WriteRss)
+	case apiutil.AppAtomXML:
+		return generateETagFrom(feed.WriteAtom)
+	case apiutil.AppFeedJSON, apiutil.AppJSON:
+		return generateETagFrom(feed.WriteJSON)
+	default:
+		panic("unreachable")
+	}
 }
 
 // unixAfter returns true if the unix value of t1

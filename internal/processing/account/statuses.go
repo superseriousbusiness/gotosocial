@@ -27,6 +27,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -156,9 +157,8 @@ func (p *Processor) StatusesGet(
 func (p *Processor) WebStatusesGet(
 	ctx context.Context,
 	targetAccountID string,
+	page *paging.Page,
 	mediaOnly bool,
-	limit int,
-	maxID string,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	account, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
@@ -174,14 +174,13 @@ func (p *Processor) WebStatusesGet(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statuses, err := p.state.DB.GetAccountWebStatuses(
-		ctx,
+	statuses, err := p.state.DB.GetAccountWebStatuses(ctx,
 		account,
+		page,
 		mediaOnly,
-		limit,
-		maxID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

@@ -26,6 +26,8 @@ const (
 	appXMLText        = `text/xml` // AppXML is only *recommended* in RFC7303
 	AppXMLXRD         = `application/xrd+xml`
 	AppRSSXML         = `application/rss+xml`
+	AppAtomXML        = `application/atom+xml`
+	AppFeedJSON       = `application/feed+json`
 	AppActivityJSON   = `application/activity+json`
 	appActivityLDJSON = `application/ld+json` // without profile
 	AppActivityLDJSON = appActivityLDJSON + `; profile="https://www.w3.org/ns/activitystreams"`
