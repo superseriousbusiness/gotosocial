@@ -22,6 +22,11 @@ Restart=on-failure
 # Whatever you do, make sure the dir exists and that the gotosocial user has permission to write + read from it.
 #Environment="GTS_WAZERO_COMPILATION_CACHE=/gotosocial/.cache"
 
+# If you have set `metrics-enabled` to `true` in your GoToSocial config file, and you want
+# to expose Prometheus metrics at localhost:9464/metrics, uncomment the following two lines:
+#Environment="OTEL_METRICS_EXPORTER=prometheus"
+#Environment="OTEL_METRICS_PRODUCERS=prometheus"
+
 # change if your path to the GoToSocial binary is different
 ExecStart=/gotosocial/gotosocial --config-path config.yaml server start
 WorkingDirectory=/gotosocial

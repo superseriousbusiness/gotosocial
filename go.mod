@@ -13,7 +13,6 @@ require (
 	code.superseriousbusiness.org/exif-terminator v0.11.0
 	code.superseriousbusiness.org/httpsig v1.4.0
 	code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384
-	codeberg.org/gruf/go-bitutil v1.1.0
 	codeberg.org/gruf/go-bytesize v1.0.4
 	codeberg.org/gruf/go-byteutil v1.3.0
 	codeberg.org/gruf/go-cache/v3 v3.6.1
@@ -64,7 +63,6 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.3
-	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tomnomnom/linkheader v0.0.0-20250811210735-e5fe3b51442e

@@ -16,7 +16,7 @@ tracing-insecure-transport: true
 ```
 
 [otel]: https://opentelemetry.io/
-[obs]: ../configuration/observability.md
+[obs]: ../configuration/observability_and_metrics.md
 [tempo]: https://grafana.com/oss/tempo/
 [grafana]: https://grafana.com/oss/grafana/
 [ext]: https://codeberg.org/superseriousbusiness/gotosocial/tree/main/example/tracing

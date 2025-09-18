@@ -113,7 +113,7 @@ nav:
       - "configuration/syslog.md"
       - "configuration/httpclient.md"
       - "configuration/advanced.md"
-      - "configuration/observability.md"
+      - "configuration/observability_and_metrics.md"
   - "Advanced":
     - "Overview": "advanced/index.md"
     - "advanced/host-account-domain.md"

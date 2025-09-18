@@ -27,7 +27,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 
 	"github.com/gin-gonic/gin"
-	"github.com/technologize/otel-go-contrib/otelginmetrics"
 	"go.opentelemetry.io/contrib/exporters/autoexport"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
@@ -266,5 +265,5 @@ func InitializeMetrics(ctx context.Context, state *state.State) error {
 }
 
 func MetricsMiddleware() gin.HandlerFunc {
-	return otelginmetrics.Middleware(serviceName)
+	return ginMiddleware()
 }

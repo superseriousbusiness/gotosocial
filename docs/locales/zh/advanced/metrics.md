@@ -54,4 +54,4 @@ location /metrics {
 
 [otel]: https://opentelemetry.io/
 [prom]: https://prometheus.io/docs/instrumenting/exposition_formats/
-[obs]: ../configuration/observability.md
+[obs]: ../configuration/observability_and_metrics.md
