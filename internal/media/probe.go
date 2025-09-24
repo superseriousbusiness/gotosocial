@@ -38,8 +38,9 @@ const (
 // probe will first attempt to probe the file at path using native Go code
 // (for performance), but falls back to using ffprobe to retrieve media details.
 func probe(ctx context.Context, filepath string) (*result, error) {
+
 	// Open input file at given path.
-	file, err := os.Open(filepath)
+	file, err := openRead(filepath)
 	if err != nil {
 		return nil, gtserror.Newf("error opening file %s: %w", filepath, err)
 	}
@@ -80,6 +81,7 @@ func probe(ctx context.Context, filepath string) (*result, error) {
 // probeJPEG decodes the given file as JPEG and determines
 // image details from the decoded JPEG using native Go code.
 func probeJPEG(file *os.File) (*result, error) {
+
 	// Attempt to decode JPEG, adding back hdr magic.
 	cfg, err := jpeg.DecodeConfig(io.MultiReader(
 		strings.NewReader(magicJPEG),

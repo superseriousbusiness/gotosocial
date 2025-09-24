@@ -328,7 +328,7 @@ This is the current status of support offered by GoToSocial for different platfo
 
 Notes on 64-bit CPU feature requirements:
 
-- x86_64 requires the SSE4.1 instruction set. (CPUs manufactured after ~2010)
+- x86_64 requires the [x86-64-v2](https://en.wikipedia.org/wiki/X86-64-v2) level instruction sets. (CPUs manufactured after ~2010)
 
 - ARM64 requires no specific features, ARMv8 CPUs (and later) have all required features.
 

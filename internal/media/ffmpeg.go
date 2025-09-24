@@ -21,8 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
-	"path"
 	"strconv"
 	"strings"
 
@@ -158,34 +156,20 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
 			fscfg := wazero.NewFSConfig()
 
-			// Needs read-only access to
-			// /dev/urandom for some types.
-			urandom := &allowFiles{
-				{
-					abs:  "/dev/urandom",
-					flag: os.O_RDONLY,
-					perm: 0,
-				},
-			}
-			fscfg = fscfg.WithFSMount(urandom, "/dev")
+			// Needs read-only access /dev/urandom,
+			// required by some ffmpeg operations.
+			fscfg = fscfg.WithFSMount(&allowFiles{
+				allowRead("/dev/urandom"),
+			}, "/dev")
 
 			// In+out dirs are always the same (tmp),
 			// so we can share one file system for
 			// both + grant different perms to inpath
 			// (read only) and outpath (read+write).
-			shared := &allowFiles{
-				{
-					abs:  inpath,
-					flag: os.O_RDONLY,
-					perm: 0,
-				},
-				{
-					abs:  outpath,
-					flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
-					perm: 0666,
-				},
-			}
-			fscfg = fscfg.WithFSMount(shared, path.Dir(inpath))
+			fscfg = fscfg.WithFSMount(&allowFiles{
+				allowCreate(outpath),
+				allowRead(inpath),
+			}, tmpdir)
 
 			// Set anonymous module name.
 			modcfg = modcfg.WithName("")
@@ -246,16 +230,10 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
 			fscfg := wazero.NewFSConfig()
 
-			// Needs read-only access
-			// to file being probed.
-			in := &allowFiles{
-				{
-					abs:  filepath,
-					flag: os.O_RDONLY,
-					perm: 0,
-				},
-			}
-			fscfg = fscfg.WithFSMount(in, path.Dir(filepath))
+			// Needs read-only access to probed file.
+			fscfg = fscfg.WithFSMount(&allowFiles{
+				allowRead(filepath),
+			}, tmpdir)
 
 			// Set anonymous module name.
 			modcfg = modcfg.WithName("")

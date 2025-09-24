@@ -24,7 +24,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"os"
 	"strings"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
@@ -89,8 +88,8 @@ func generateThumb(
 	// Default type is webp.
 	mimeType = "image/webp"
 
-	// Generate thumb output path REPLACING extension.
-	if i := strings.IndexByte(filepath, '.'); i != -1 {
+	// Generate thumb output path REPLACING file extension.
+	if i := strings.LastIndexByte(filepath, '.'); i != -1 {
 		outpath = filepath[:i] + "_thumb.webp"
 		ext = filepath[i+1:] // old extension
 	} else {
@@ -231,7 +230,7 @@ func generateNativeThumb(
 	error,
 ) {
 	// Open input file at given path.
-	infile, err := os.Open(inpath)
+	infile, err := openRead(inpath)
 	if err != nil {
 		return "", gtserror.Newf("error opening input file %s: %w", inpath, err)
 	}
@@ -272,7 +271,7 @@ func generateNativeThumb(
 	)
 
 	// Open output file at given path.
-	outfile, err := os.Create(outpath)
+	outfile, err := openWrite(outpath)
 	if err != nil {
 		return "", gtserror.Newf("error opening output file %s: %w", outpath, err)
 	}
@@ -313,8 +312,9 @@ func generateNativeThumb(
 
 // generateWebpBlurhash generates a blurhash for Webp at filepath.
 func generateWebpBlurhash(filepath string) (string, error) {
+
 	// Open the file at given path.
-	file, err := os.Open(filepath)
+	file, err := openRead(filepath)
 	if err != nil {
 		return "", gtserror.Newf("error opening input file %s: %w", filepath, err)
 	}

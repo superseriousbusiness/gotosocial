@@ -21,12 +21,12 @@ package ffmpeg
 
 import (
 	"context"
+	"errors"
 	"os"
 	"runtime"
 	"sync/atomic"
 	"unsafe"
 
-	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-ffmpreg/embed"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
 	"github.com/tetratelabs/wazero"
@@ -49,23 +49,18 @@ func initWASM(ctx context.Context) error {
 		return nil
 	}
 
-	var cfg wazero.RuntimeConfig
-
-	// Allocate new runtime config, letting
-	// wazero determine compiler / interpreter.
-	cfg = wazero.NewRuntimeConfig()
-
-	// Though still perform a check of CPU features at
-	// runtime to warn about slow interpreter performance.
-	if reason, supported := compilerSupported(); !supported {
-		log.Warn(ctx, "!!! WAZERO COMPILER MAY NOT BE AVAILABLE !!!"+
-			" Reason: "+reason+"."+
-			" Wazero will likely fall back to interpreter mode,"+
-			" resulting in poor performance for media processing (and SQLite, if in use)."+
-			" For more info and possible workarounds, please check:"+
-			" https://docs.gotosocial.org/en/latest/getting_started/releases/#supported-platforms",
-		)
+	// Check at runtime whether Wazero compiler support is available,
+	// interpreter mode is too slow for a usable gotosocial experience.
+	if reason, supported := isCompilerSupported(); !supported {
+		return errors.New("!!! WAZERO COMPILER SUPPORT NOT AVAILABLE !!!" +
+			" Reason: " + reason + "." +
+			" Wazero in interpreter mode is too slow to use ffmpeg" +
+			" (this will also affect SQLite if in use)." +
+			" For more info and possible workarounds, please check: https://docs.gotosocial.org/en/latest/getting_started/releases/#supported-platforms")
 	}
+
+	// Allocate new runtime compiler config.
+	cfg := wazero.NewRuntimeConfigCompiler()
 
 	if dir := os.Getenv("GTS_WAZERO_COMPILATION_CACHE"); dir != "" {
 		// Use on-filesystem compilation cache given by env.
@@ -128,7 +123,7 @@ func initWASM(ctx context.Context) error {
 	return nil
 }
 
-func compilerSupported() (string, bool) {
+func isCompilerSupported() (string, bool) {
 	switch runtime.GOOS {
 	case "linux", "android",
 		"windows", "darwin",
@@ -141,10 +136,11 @@ func compilerSupported() (string, bool) {
 	switch runtime.GOARCH {
 	case "amd64":
 		// NOTE: wazero in the future may decouple the
-		// requirement of simd (sse4_1) from requirements
+		// requirement of simd (sse4_1+2) from requirements
 		// for compiler support in the future, but even
 		// still our module go-ffmpreg makes use of them.
-		return "amd64 SSE4.1 required", cpu.X86.HasSSE41
+		return "amd64 x86-64-v2 required (see: https://en.wikipedia.org/wiki/X86-64-v2)",
+			cpu.Initialized && cpu.X86.HasSSE3 && cpu.X86.HasSSE41 && cpu.X86.HasSSE42
 	case "arm64":
 		// NOTE: this particular check may change if we
 		// later update go-ffmpreg to a version that makes

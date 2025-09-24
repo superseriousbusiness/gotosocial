@@ -74,20 +74,28 @@ func clearMetadata(ctx context.Context, filepath string) error {
 
 // terminateExif cleans exif data from file at input path, into file
 // at output path, using given file extension to determine cleaning type.
-func terminateExif(outpath, inpath string, ext string) error {
+func terminateExif(outpath, inpath string, ext string) (err error) {
+	var inFile *os.File
+	var outFile *os.File
+
+	// Ensure handles
+	// closed on return.
+	defer func() {
+		outFile.Close()
+		inFile.Close()
+	}()
+
 	// Open input file at given path.
-	inFile, err := os.Open(inpath)
+	inFile, err = openRead(inpath)
 	if err != nil {
 		return gtserror.Newf("error opening input file %s: %w", inpath, err)
 	}
-	defer inFile.Close()
 
-	// Open output file at given path.
-	outFile, err := os.Create(outpath)
+	// Create output file at given path.
+	outFile, err = openWrite(outpath)
 	if err != nil {
 		return gtserror.Newf("error opening output file %s: %w", outpath, err)
 	}
-	defer outFile.Close()
 
 	// Terminate EXIF data from 'inFile' -> 'outFile'.
 	err = terminator.TerminateInto(outFile, inFile, ext)

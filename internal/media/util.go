@@ -30,12 +30,39 @@ import (
 	"codeberg.org/gruf/go-iotools"
 )
 
+// media processing tmpdir.
+var tmpdir = os.TempDir()
+
 // file represents one file
 // with the given flag and perms.
 type file struct {
-	abs  string
+	abs  string // absolute file path, including root
+	dir  string // containing directory of abs
+	rel  string // relative to root, i.e. trim_prefix(abs, dir)
 	flag int
 	perm os.FileMode
+}
+
+// allowRead returns a new file{} for filepath permitted only to read.
+func allowRead(filepath string) file {
+	return newFile(filepath, os.O_RDONLY, 0)
+}
+
+// allowCreate returns a new file{} for filepath permitted to read / write / create.
+func allowCreate(filepath string) file {
+	return newFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+}
+
+// newFile returns a new instance of file{} for given path and open args.
+func newFile(filepath string, flag int, perms os.FileMode) file {
+	dir, rel := path.Split(filepath)
+	return file{
+		abs:  filepath,
+		rel:  rel,
+		dir:  dir,
+		flag: flag,
+		perm: perms,
+	}
 }
 
 // allowFiles implements fs.FS to allow
@@ -45,34 +72,30 @@ type allowFiles []file
 // Open implements fs.FS.
 func (af allowFiles) Open(name string) (fs.File, error) {
 	for _, file := range af {
-		var (
-			abs  = file.abs
-			flag = file.flag
-			perm = file.perm
-		)
-
+		switch name {
 		// Allowed to open file
-		// at absolute path.
-		if name == file.abs {
-			return os.OpenFile(abs, flag, perm)
-		}
+		// at absolute path, or
+		// relative as ffmpeg likes.
+		case file.abs, file.rel:
+			return os.OpenFile(file.abs, file.flag, file.perm)
 
-		// Check for other valid reads.
-		thisDir, thisFile := path.Split(file.abs)
-
-		// Allowed to read directory itself.
-		if name == thisDir || name == "." {
-			return os.OpenFile(thisDir, flag, perm)
-		}
-
-		// Allowed to read file
-		// itself (at relative path).
-		if name == thisFile {
-			return os.OpenFile(abs, flag, perm)
+		// Ffmpeg likes to read containing
+		// dir as '.'. Allow RO access here.
+		case ".":
+			return openRead(file.dir)
 		}
 	}
-
 	return nil, os.ErrPermission
+}
+
+// openRead opens the existing file at path for reads only.
+func openRead(path string) (*os.File, error) {
+	return os.OpenFile(path, os.O_RDONLY, 0)
+}
+
+// openWrite opens the (new!) file at path for read / writes.
+func openWrite(path string) (*os.File, error) {
+	return os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 }
 
 // getExtension splits file extension from path.
@@ -93,17 +116,24 @@ func getExtension(path string) string {
 // chance that Linux's sendfile syscall can be utilised for optimal
 // draining of data source to temporary file storage.
 func drainToTmp(rc io.ReadCloser) (string, error) {
-	defer rc.Close()
+	var tmp *os.File
+	var err error
+
+	// Close handles
+	// on func return.
+	defer func() {
+		tmp.Close()
+		rc.Close()
+	}()
 
 	// Open new temporary file.
-	tmp, err := os.CreateTemp(
-		os.TempDir(),
+	tmp, err = os.CreateTemp(
+		tmpdir,
 		"gotosocial-*",
 	)
 	if err != nil {
 		return "", err
 	}
-	defer tmp.Close()
 
 	// Extract file path.
 	path := tmp.Name()
