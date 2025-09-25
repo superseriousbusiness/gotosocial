@@ -21,7 +21,7 @@ require (
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0
-	codeberg.org/gruf/go-ffmpreg v0.6.11
+	codeberg.org/gruf/go-ffmpreg v0.6.12
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f

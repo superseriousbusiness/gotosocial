@@ -1,39 +1,46 @@
 package embed
 
 import (
-	"bytes"
 	"compress/gzip"
 	_ "embed"
 	"io"
-	"os"
+	"strings"
 )
 
 func init() {
 	var err error
 
-	if path := os.Getenv("FFMPREG_WASM"); path != "" {
-		// Read file into memory.
-		B, err = os.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	// Wrap bytes in reader.
-	b := bytes.NewReader(B)
+	r := strings.NewReader(s)
 
 	// Create unzipper from reader.
-	gz, err := gzip.NewReader(b)
+	gz, err := gzip.NewReader(r)
 	if err != nil {
 		panic(err)
 	}
 
 	// Extract gzipped binary.
-	B, err = io.ReadAll(gz)
+	b, err := io.ReadAll(gz)
 	if err != nil {
 		panic(err)
 	}
+
+	// Set binary.
+	s = string(b)
 }
 
+// B returns a copy of
+// embedded binary data.
+func B() []byte {
+	if s == "" {
+		panic("binary already dropped from memory")
+	}
+	return []byte(s)
+}
+
+// Free will drop embedded
+// binary from runtime mem.
+func Free() { s = "" }
+
 //go:embed ffmpreg.wasm.gz
-var B []byte
+var s string

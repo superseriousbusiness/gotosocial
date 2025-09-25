@@ -53,6 +53,7 @@ func Run(
 	modcfg = modcfg.WithStdin(args.Stdin)
 	modcfg = modcfg.WithStdout(args.Stdout)
 	modcfg = modcfg.WithStderr(args.Stderr)
+	modcfg = modcfg.WithName("")
 
 	if args.Config != nil {
 		// Pass through config fn.

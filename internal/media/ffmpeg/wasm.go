@@ -83,7 +83,7 @@ func initWASM(ctx context.Context) error {
 	defer func() {
 		if err == nil && set {
 			// Drop binary.
-			embed.B = nil
+			embed.Free()
 			return
 		}
 
@@ -105,7 +105,7 @@ func initWASM(ctx context.Context) error {
 	}
 
 	// Compile ffmpreg WebAssembly into memory.
-	mod, err = run.CompileModule(ctx, embed.B)
+	mod, err = run.CompileModule(ctx, embed.B())
 	if err != nil {
 		return err
 	}

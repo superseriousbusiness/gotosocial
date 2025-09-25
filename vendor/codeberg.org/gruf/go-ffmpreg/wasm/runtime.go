@@ -28,6 +28,7 @@ func NewRuntime(ctx context.Context, cfg wazero.RuntimeConfig) (wazero.Runtime, 
 
 	// Set core features ffmpeg compiled with.
 	cfg = cfg.WithCoreFeatures(CoreFeatures)
+	cfg = cfg.WithDebugInfoEnabled(false)
 
 	// Instantiate runtime with prepared config.
 	rt := wazero.NewRuntimeWithConfig(ctx, cfg)
