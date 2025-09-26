@@ -338,8 +338,6 @@ func (sr *statusRethreader) rethreadStatus(ctx context.Context, tx bun.Tx, statu
 			return 0, gtserror.Newf("error getting children: %w", err)
 		}
 
-		// Dedupe thread IDs.
-
 		// Check for newly picked-up threads
 		// to find stragglers for below. Else
 		// we've reached end of what we can do.
