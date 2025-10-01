@@ -269,7 +269,7 @@ ol {
 blockquote {
 	padding: 0.5rem;
 	border-left: 0.2rem solid $border-accent;
-	margin: 0;
+	margin-inline: 0;
 	font-style: normal;
 
 	/*
