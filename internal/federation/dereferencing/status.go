@@ -277,24 +277,29 @@ func (d *Dereferencer) enrichStatusSafely(
 ) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	uriStr := status.URI
 
-	var isNew bool
-
-	// Check if this is a new status (to us).
-	if isNew = (status.ID == ""); !isNew {
-
-		// This is an existing status, first try to populate it. This
-		// is required by the checks below for existing tags, media etc.
-		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
-			log.Errorf(ctx, "error populating existing status %s: %v", uriStr, err)
-		}
-	}
-
 	// Acquire per-URI deref lock, wraping unlock
 	// to safely defer in case of panic, while still
 	// performing more granular unlocks when needed.
 	unlock := d.state.FedLocks.Lock(uriStr)
 	unlock = util.DoOnce(unlock)
 	defer unlock()
+
+	var err error
+	var isNew bool
+
+	// Check if this is a new status (to us).
+	if isNew = (status.ID == ""); !isNew {
+
+		// We reload the existing status, just to ensure we have the
+		// latest version of it. e.g. another racing thread might have
+		// just input a change but we still have an old status copy.
+		//
+		// Note: returned status will be fully populated, required below.
+		status, err = d.state.DB.GetStatusByID(ctx, status.ID)
+		if err != nil {
+			return nil, nil, false, gtserror.Newf("error getting up-to-date existing status: %w", err)
+		}
+	}
 
 	// Perform status enrichment with passed vars.
 	latest, statusable, err := d.enrichStatus(ctx,
@@ -479,12 +484,10 @@ func (d *Dereferencer) enrichStatus(
 
 	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
-	matches, err := util.URIMatches(uri,
-		append(
-			ap.GetURL(statusable),      // status URL(s)
-			ap.GetJSONLDId(statusable), // status URI
-		)...,
-	)
+	matches, err := util.URIMatches(uri, append(
+		ap.GetURL(statusable),      // status URL(s)
+		ap.GetJSONLDId(statusable), // status URI
+	)...)
 	if err != nil {
 		return nil, nil, gtserror.Newf(
 			"error checking dereferenced status uri %s: %w",

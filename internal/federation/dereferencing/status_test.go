@@ -18,7 +18,6 @@
 package dereferencing_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -237,9 +236,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
 }
 
 func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
-	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(suite.T().Context())
-	defer cncl()
+	ctx := suite.T().Context()
 
 	// The local account we will be fetching statuses as.
 	fetchingAccount := suite.testAccounts["local_account_1"]
@@ -341,6 +338,104 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 			},
 		)
 	}
+}
+
+func (suite *StatusTestSuite) TestDereferencerRefreshStatusRace() {
+	ctx := suite.T().Context()
+
+	// The local account we will be fetching statuses as.
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	// The test status in question that we will be dereferencing from "remote".
+	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
+	testURI := testrig.URLMustParse(testURIStr)
+	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
+
+	// Fetch the remote status first to load it into instance.
+	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.NotNil(statusable)
+	suite.NoError(err)
+
+	// Take a snapshot of current
+	// state of the test status.
+	beforeEdit := copyStatus(testStatus)
+
+	// Edit the "remote" statusable obj.
+	suite.editStatusable(testStatusable,
+		"updated status content!",
+		"CW: edited status content",
+		beforeEdit.Language,        // no change
+		*beforeEdit.Sensitive,      // no change
+		beforeEdit.AttachmentIDs,   // no change
+		getPollOptions(beforeEdit), // no change
+		getPollVotes(beforeEdit),   // no change
+		time.Now(),
+	)
+
+	// Refresh with a given statusable to updated to edited copy.
+	afterEdit, statusable, err := suite.dereferencer.RefreshStatus(ctx,
+		fetchingAccount.Username,
+		testStatus,
+		testStatusable,
+		instantFreshness,
+	)
+	suite.NotNil(statusable)
+	suite.NoError(err)
+
+	// verify updated status details.
+	suite.verifyEditedStatusUpdate(
+
+		// the original status
+		// before any changes.
+		beforeEdit,
+
+		// latest status
+		// being tested.
+		afterEdit,
+
+		// expected current state.
+		&gtsmodel.StatusEdit{
+			Content:        "updated status content!",
+			ContentWarning: "CW: edited status content",
+			Language:       beforeEdit.Language,
+			Sensitive:      beforeEdit.Sensitive,
+			AttachmentIDs:  beforeEdit.AttachmentIDs,
+			PollOptions:    getPollOptions(beforeEdit),
+			PollVotes:      getPollVotes(beforeEdit),
+			// createdAt never changes
+		},
+
+		// expected historic edit.
+		&gtsmodel.StatusEdit{
+			Content:        beforeEdit.Content,
+			ContentWarning: beforeEdit.ContentWarning,
+			Language:       beforeEdit.Language,
+			Sensitive:      beforeEdit.Sensitive,
+			AttachmentIDs:  beforeEdit.AttachmentIDs,
+			PollOptions:    getPollOptions(beforeEdit),
+			PollVotes:      getPollVotes(beforeEdit),
+			CreatedAt:      beforeEdit.UpdatedAt(),
+		},
+	)
+
+	// Now make another attempt to refresh, using the old copy of the
+	// status. This should still successfully update based on our passed
+	// freshness window, but it *should* refetch the provided status to
+	// check for race shenanigans and realize that no edit has occurred.
+	afterBodge, statusable, err := suite.dereferencer.RefreshStatus(ctx,
+		fetchingAccount.Username,
+		beforeEdit,
+		testStatusable,
+		instantFreshness,
+	)
+	suite.NotNil(statusable)
+	suite.NoError(err)
+
+	// Check that no further edit occurred on status.
+	suite.Equal(afterEdit.EditIDs, afterBodge.EditIDs)
 }
 
 // editStatusable updates the given statusable attributes.
