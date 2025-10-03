@@ -33,6 +33,8 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [Federation](#federation)
   - [Updating Swagger docs](#updating-swagger-docs)
   - [CI/CD configuration](#ci-cd-configuration)
+- [Other Useful Stuff](#other-useful-stuff)
+  - [Running migrations on a Postgres DB backup locally](#running-migrations-on-a-postgres-db-backup-locally)
 
 ## Introduction
 
@@ -525,3 +527,38 @@ The `woodpecker` pipeline files are in the `.woodpecker` directory of this repos
 The Woodpecker instance for GoToSocial is [here](https://woodpecker.superseriousbusiness.org/repos/2).
 
 Documentation for Woodpecker is [here](https://woodpecker-ci.org/docs/intro).
+
+## Other Useful Stuff
+
+Various bits and bobs.
+
+### Running migrations on a Postgres DB backup locally
+
+It may be useful when testing or debugging migrations to be able to run them against a copy of a real instance's Postgres database locally.
+
+Basic steps for this:
+
+First dump the Postgres database on the remote machine, and copy the dump over to your development machine.
+
+Now create a local Postgres container and mount the dump into it with, for example:
+
+```bash
+docker run -it --name postgres --network host -e POSTGRES_PASSWORD=postgres -v /path/to/db_dump:/db_dump postgres
+```
+
+In a separate terminal window, execute a command inside the running container to load the dump into the "postgres" database:
+
+```bash
+docker exec -it --user postgres postgres psql -X -f /db_dump postgres
+```
+
+With the Postgres container still running, run GoToSocial and point it towards the container. Use the appropriate `GTS_HOST` (and `GTS_ACCOUNT_DOMAIN`) values for the instance you dumped:
+  
+  ```bash
+  GTS_HOST=example.org \
+  GTS_DB_TYPE=postgres \
+  GTS_DB_POSTGRES_CONNECTION_STRING=postgres://postgres:postgres@localhost:5432/postgres \
+  ./gotosocial migrations run
+  ```
+
+When you're done messing around, don't forget to remove any containers that you started up, and remove any lingering volumes with `docker volume prune`, else you might end up filling your disk with unused temporary volumes.

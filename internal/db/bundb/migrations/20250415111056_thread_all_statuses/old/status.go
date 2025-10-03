@@ -21,7 +21,10 @@ import (
 	"time"
 )
 
-// Status represents a user-created 'post' or 'status' in the database, either remote or local
+// Status represents a user-created 'post' or 'status' in the database, either remote or local.
+//
+// Note: this model differs from an exact representation of the old model at the time of migration,
+// as it includes the intermediate field "ThreadIDNew", which is only used during the migration.
 type Status struct {
 	ID                       string            `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt                time.Time         `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
@@ -60,6 +63,9 @@ type Status struct {
 	PendingApproval          *bool             `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
 	PreApproved              bool              `bun:"-"`                                                           // If true, then status is a reply to or boost wrapper of a status on our instance, has permission to do the interaction, and an Accept should be sent out for it immediately. Field not stored in the DB.
 	ApprovedByURI            string            `bun:",nullzero"`                                                   // URI of an Accept Activity that approves the Announce or Create Activity that this status was/will be attached to.
+
+	// This field is *only* used during the migration, it was not on the original status model.
+	ThreadIDNew string `bun:"type:CHAR(26),nullzero,notnull,default:'00000000000000000000000000'"`
 }
 
 // enumType is the type we (at least, should) use
