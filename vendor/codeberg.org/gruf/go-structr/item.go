@@ -2,8 +2,9 @@ package structr
 
 import (
 	"os"
-	"sync"
 	"unsafe"
+
+	"codeberg.org/gruf/go-mempool"
 )
 
 type indexed_item struct {
@@ -19,17 +20,15 @@ type indexed_item struct {
 	indexed []*index_entry
 }
 
-var indexed_item_pool sync.Pool
+var indexed_item_pool mempool.UnsafePool
 
 // new_indexed_item returns a new prepared indexed_item.
 func new_indexed_item() *indexed_item {
-	v := indexed_item_pool.Get()
-	if v == nil {
-		i := new(indexed_item)
-		i.elem.data = unsafe.Pointer(i)
-		v = i
+	if ptr := indexed_item_pool.Get(); ptr != nil {
+		return (*indexed_item)(ptr)
 	}
-	item := v.(*indexed_item)
+	item := new(indexed_item)
+	item.elem.data = unsafe.Pointer(item)
 	return item
 }
 
@@ -43,7 +42,8 @@ func free_indexed_item(item *indexed_item) {
 		return
 	}
 	item.data = nil
-	indexed_item_pool.Put(item)
+	ptr := unsafe.Pointer(item)
+	indexed_item_pool.Put(ptr)
 }
 
 // drop_index will drop the given index entry from item's indexed.

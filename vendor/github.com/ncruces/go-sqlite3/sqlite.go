@@ -5,6 +5,7 @@ import (
 	"context"
 	"math/bits"
 	"os"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -128,11 +129,10 @@ func (sqlt *sqlite) error(rc res_t, handle ptr_t, sql ...string) error {
 		var msg, query string
 		if ptr := ptr_t(sqlt.call("sqlite3_errmsg", stk_t(handle))); ptr != 0 {
 			msg = util.ReadString(sqlt.mod, ptr, _MAX_LENGTH)
-			switch {
-			case msg == "not an error":
+			if msg == "not an error" {
 				msg = ""
-			case msg == util.ErrorCodeString(uint32(rc))[len("sqlite3: "):]:
-				msg = ""
+			} else {
+				msg = strings.TrimPrefix(msg, util.ErrorCodeString(uint32(rc))[len("sqlite3: "):])
 			}
 		}
 

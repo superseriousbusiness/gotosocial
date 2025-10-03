@@ -444,20 +444,27 @@ func (c *Conn) Status(op DBStatus, reset bool) (current, highwater int, err erro
 // https://sqlite.org/c3ref/table_column_metadata.html
 func (c *Conn) TableColumnMetadata(schema, table, column string) (declType, collSeq string, notNull, primaryKey, autoInc bool, err error) {
 	defer c.arena.mark()()
-
-	var schemaPtr, columnPtr ptr_t
-	declTypePtr := c.arena.new(ptrlen)
-	collSeqPtr := c.arena.new(ptrlen)
-	notNullPtr := c.arena.new(ptrlen)
-	autoIncPtr := c.arena.new(ptrlen)
-	primaryKeyPtr := c.arena.new(ptrlen)
+	var (
+		declTypePtr   ptr_t
+		collSeqPtr    ptr_t
+		notNullPtr    ptr_t
+		primaryKeyPtr ptr_t
+		autoIncPtr    ptr_t
+		columnPtr     ptr_t
+		schemaPtr     ptr_t
+	)
+	if column != "" {
+		declTypePtr = c.arena.new(ptrlen)
+		collSeqPtr = c.arena.new(ptrlen)
+		notNullPtr = c.arena.new(ptrlen)
+		primaryKeyPtr = c.arena.new(ptrlen)
+		autoIncPtr = c.arena.new(ptrlen)
+		columnPtr = c.arena.string(column)
+	}
 	if schema != "" {
 		schemaPtr = c.arena.string(schema)
 	}
 	tablePtr := c.arena.string(table)
-	if column != "" {
-		columnPtr = c.arena.string(column)
-	}
 
 	rc := res_t(c.call("sqlite3_table_column_metadata", stk_t(c.handle),
 		stk_t(schemaPtr), stk_t(tablePtr), stk_t(columnPtr),

@@ -1,9 +1,9 @@
-//go:build !goexperiment.jsonv2
+//go:build goexperiment.jsonv2
 
 package util
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"math"
 	"strconv"
 	"time"

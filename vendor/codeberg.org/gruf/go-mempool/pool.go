@@ -1,17 +1,17 @@
 package mempool
 
 import (
+	"sync"
+	"sync/atomic"
 	"unsafe"
+
+	"golang.org/x/sys/cpu"
 )
 
-const DefaultDirtyFactor = 128
-
-// Pool provides a type-safe form
-// of UnsafePool using generics.
-//
-// Note it is NOT safe for concurrent
-// use, you must protect it yourself!
+// Pool provides a form of SimplePool
+// with the addition of concurrency safety.
 type Pool[T any] struct {
+	UnsafePool
 
 	// New is an optionally provided
 	// allocator used when no value
@@ -21,79 +21,119 @@ type Pool[T any] struct {
 	// Reset is an optionally provided
 	// value resetting function called
 	// on passed value to Put().
-	Reset func(T)
+	Reset func(T) bool
+}
 
-	UnsafePool
+func NewPool[T any](new func() T, reset func(T) bool, check func(current, victim int) bool) Pool[T] {
+	return Pool[T]{
+		New:        new,
+		Reset:      reset,
+		UnsafePool: NewUnsafePool(check),
+	}
 }
 
 func (p *Pool[T]) Get() T {
 	if ptr := p.UnsafePool.Get(); ptr != nil {
 		return *(*T)(ptr)
-	} else if p.New != nil {
-		return p.New()
 	}
-	var z T
-	return z
+	var t T
+	if p.New != nil {
+		t = p.New()
+	}
+	return t
 }
 
 func (p *Pool[T]) Put(t T) {
-	if p.Reset != nil {
-		p.Reset(t)
+	if p.Reset != nil && !p.Reset(t) {
+		return
 	}
 	ptr := unsafe.Pointer(&t)
 	p.UnsafePool.Put(ptr)
 }
 
-// UnsafePool provides an incredibly
-// simple memory pool implementation
-// that stores ptrs to memory values,
-// and regularly flushes internal pool
-// structures according to DirtyFactor.
-//
-// Note it is NOT safe for concurrent
-// use, you must protect it yourself!
+// UnsafePool provides a form of UnsafeSimplePool
+// with the addition of concurrency safety.
 type UnsafePool struct {
-
-	// DirtyFactor determines the max
-	// number of $dirty count before
-	// pool is garbage collected. Where:
-	// $dirty = len(current) - len(victim)
-	DirtyFactor int
-
-	current []unsafe.Pointer
-	victim  []unsafe.Pointer
+	internal
+	_ [cache_line_size - unsafe.Sizeof(internal{})%cache_line_size]byte
 }
 
-func (p *UnsafePool) Get() unsafe.Pointer {
-	// First try current list.
-	if len(p.current) > 0 {
-		ptr := p.current[len(p.current)-1]
-		p.current = p.current[:len(p.current)-1]
-		return ptr
-	}
-
-	// Fallback to victim.
-	if len(p.victim) > 0 {
-		ptr := p.victim[len(p.victim)-1]
-		p.victim = p.victim[:len(p.victim)-1]
-		return ptr
-	}
-
-	return nil
+func NewUnsafePool(check func(current, victim int) bool) UnsafePool {
+	return UnsafePool{internal: internal{
+		pool: UnsafeSimplePool{Check: check},
+	}}
 }
 
-func (p *UnsafePool) Put(ptr unsafe.Pointer) {
-	p.current = append(p.current, ptr)
+const (
+	// current platform integer size.
+	int_size = 32 << (^uint(0) >> 63)
 
-	// Get dirty factor.
-	df := p.DirtyFactor
-	if df == 0 {
-		df = DefaultDirtyFactor
-	}
+	// platform CPU cache line size to avoid false sharing.
+	cache_line_size = unsafe.Sizeof(cpu.CacheLinePad{})
+)
 
-	if len(p.current)-len(p.victim) > df {
-		// Garbage collection!
-		p.victim = p.current
-		p.current = nil
+type internal struct {
+	// fast-access ring-buffer of
+	// pointers accessible by index.
+	//
+	// if Go ever exposes goroutine IDs
+	// to us we can make this a lot faster.
+	ring  [int_size / 4]unsafe.Pointer
+	index atomic.Uint64
+
+	// underlying pool and
+	// slow mutex protection.
+	pool  UnsafeSimplePool
+	mutex sync.Mutex
+}
+
+func (p *internal) Check(fn func(current, victim int) bool) func(current, victim int) bool {
+	p.mutex.Lock()
+	if fn == nil {
+		if p.pool.Check == nil {
+			fn = defaultCheck
+		} else {
+			fn = p.pool.Check
+		}
+	} else {
+		p.pool.Check = fn
 	}
+	p.mutex.Unlock()
+	return fn
+}
+
+func (p *internal) Get() unsafe.Pointer {
+	if ptr := atomic.SwapPointer(&p.ring[p.index.Load()%uint64(cap(p.ring))], nil); ptr != nil {
+		p.index.Add(^uint64(0)) // i.e. -1
+		return ptr
+	}
+	p.mutex.Lock()
+	ptr := p.pool.Get()
+	p.mutex.Unlock()
+	return ptr
+}
+
+func (p *internal) Put(ptr unsafe.Pointer) {
+	if atomic.CompareAndSwapPointer(&p.ring[p.index.Add(1)%uint64(cap(p.ring))], nil, ptr) {
+		return
+	}
+	p.mutex.Lock()
+	p.pool.Put(ptr)
+	p.mutex.Unlock()
+}
+
+func (p *internal) GC() {
+	for i := range p.ring {
+		atomic.StorePointer(&p.ring[i], nil)
+	}
+	p.mutex.Lock()
+	p.pool.GC()
+	p.mutex.Unlock()
+}
+
+func (p *internal) Size() int {
+	p.mutex.Lock()
+	sz := p.pool.Size()
+	p.mutex.Unlock()
+	return sz
 }

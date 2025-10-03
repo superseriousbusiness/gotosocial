@@ -1,9 +1,7 @@
 package sqlite3
 
 import (
-	"encoding/json"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
@@ -362,16 +360,6 @@ func (s *Stmt) BindPointer(param int, ptr any) error {
 	return s.c.error(rc)
 }
 
-// BindJSON binds the JSON encoding of value to the prepared statement.
-// The leftmost SQL parameter has an index of 1.
-//
-// https://sqlite.org/c3ref/bind_blob.html
-func (s *Stmt) BindJSON(param int, value any) error {
-	return json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		return 0, s.BindRawText(param, p[:len(p)-1]) // remove the newline
-	})).Encode(value)
-}
-
 // BindValue binds a copy of value to the prepared statement.
 // The leftmost SQL parameter has an index of 1.
 //
@@ -598,30 +586,6 @@ func (s *Stmt) columnRawBytes(col int, ptr ptr_t, nul int32) []byte {
 	return util.View(s.c.mod, ptr, int64(n+nul))[:n]
 }
 
-// ColumnJSON parses the JSON-encoded value of the result column
-// and stores it in the value pointed to by ptr.
-// The leftmost column of the result set has the index 0.
-//
-// https://sqlite.org/c3ref/column_blob.html
-func (s *Stmt) ColumnJSON(col int, ptr any) error {
-	var data []byte
-	switch s.ColumnType(col) {
-	case NULL:
-		data = []byte("null")
-	case TEXT:
-		data = s.ColumnRawText(col)
-	case BLOB:
-		data = s.ColumnRawBlob(col)
-	case INTEGER:
-		data = strconv.AppendInt(nil, s.ColumnInt64(col), 10)
-	case FLOAT:
-		data = util.AppendNumber(nil, s.ColumnFloat(col))
-	default:
-		panic(util.AssertErr())
-	}
-	return json.Unmarshal(data, ptr)
-}
-
 // ColumnValue returns the unprotected value of the result column.
 // The leftmost column of the result set has the index 0.
 //
@@ -748,7 +712,3 @@ func (s *Stmt) columns(count int64) ([]byte, ptr_t, error) {
 
 	return util.View(s.c.mod, typePtr, count), dataPtr, nil
 }
-
-type callbackWriter func(p []byte) (int, error)
-
-func (fn callbackWriter) Write(p []byte) (int, error) { return fn(p) }

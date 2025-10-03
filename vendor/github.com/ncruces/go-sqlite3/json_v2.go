@@ -1,9 +1,9 @@
-//go:build !goexperiment.jsonv2
+//go:build goexperiment.jsonv2
 
 package sqlite3
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"strconv"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
@@ -22,15 +22,14 @@ func JSON(value any) any {
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultJSON(value any) {
-	err := json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		ctx.ResultRawText(p[:len(p)-1]) // remove the newline
-		return 0, nil
-	})).Encode(value)
-
-	if err != nil {
+	w := bytesWriter{sqlite: ctx.c.sqlite}
+	if err := json.MarshalWrite(&w, value); err != nil {
+		ctx.c.free(w.ptr)
 		ctx.ResultError(err)
 		return // notest
 	}
+	ctx.c.call("sqlite3_result_text_go",
+		stk_t(ctx.handle), stk_t(w.ptr), stk_t(len(w.buf)))
 }
 
 // BindJSON binds the JSON encoding of value to the prepared statement.
@@ -38,9 +37,15 @@ func (ctx Context) ResultJSON(value any) {
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindJSON(param int, value any) error {
-	return json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		return 0, s.BindRawText(param, p[:len(p)-1]) // remove the newline
-	})).Encode(value)
+	w := bytesWriter{sqlite: s.c.sqlite}
+	if err := json.MarshalWrite(&w, value); err != nil {
+		s.c.free(w.ptr)
+		return err
+	}
+	rc := res_t(s.c.call("sqlite3_bind_text_go",
+		stk_t(s.handle), stk_t(param),
+		stk_t(w.ptr), stk_t(len(w.buf))))
+	return s.c.error(rc)
 }
 
 // ColumnJSON parses the JSON-encoded value of the result column
@@ -88,6 +93,21 @@ func (v Value) JSON(ptr any) error {
 	return json.Unmarshal(data, ptr)
 }
 
-type callbackWriter func(p []byte) (int, error)
+type bytesWriter struct {
+	*sqlite
+	buf []byte
+	ptr ptr_t
+}
 
-func (fn callbackWriter) Write(p []byte) (int, error) { return fn(p) }
+func (b *bytesWriter) Write(p []byte) (n int, err error) {
+	if len(p) > cap(b.buf)-len(b.buf) {
+		want := int64(len(b.buf)) + int64(len(p))
+		grow := int64(cap(b.buf))
+		grow += grow >> 1
+		want = max(want, grow)
+		b.ptr = b.realloc(b.ptr, want)
+		b.buf = util.View(b.mod, b.ptr, want)[:len(b.buf)]
+	}
+	b.buf = append(b.buf, p...)
+	return len(p), nil
+}

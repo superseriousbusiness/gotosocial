@@ -25,13 +25,13 @@ require (
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
-	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
-	codeberg.org/gruf/go-mutexes v1.5.3
+	codeberg.org/gruf/go-mempool v0.0.0-20251003110531-b54adae66253
+	codeberg.org/gruf/go-mutexes v1.5.8
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-split v1.2.0
 	codeberg.org/gruf/go-storage v0.3.1
-	codeberg.org/gruf/go-structr v0.9.9
+	codeberg.org/gruf/go-structr v0.9.12
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.4
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -53,7 +53,7 @@ require (
 	github.com/miekg/dns v1.1.68
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ncruces/go-sqlite3 v0.29.0
+	github.com/ncruces/go-sqlite3 v0.29.1
 	github.com/oklog/ulid v1.3.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rivo/uniseg v0.4.7

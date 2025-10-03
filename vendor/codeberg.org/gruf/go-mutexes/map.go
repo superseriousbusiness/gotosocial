@@ -26,14 +26,13 @@ const (
 type MutexMap struct {
 	mapmu  sync.Mutex
 	mumap  hashmap
-	mupool mempool.UnsafePool
+	mupool mempool.UnsafeSimplePool
 }
 
 // checkInit ensures MutexMap is initialized (UNSAFE).
 func (mm *MutexMap) checkInit() {
 	if mm.mumap.m == nil {
 		mm.mumap.init(0)
-		mm.mupool.DirtyFactor = 256
 	}
 }
 
@@ -175,13 +174,9 @@ func (mu *rwmutex) Lock(lt uint8) bool {
 // sleeping goroutines waiting on this mutex.
 func (mu *rwmutex) Unlock() bool {
 	switch mu.l--; {
-	case mu.l > 0 && mu.t == lockTypeWrite:
-		panic("BUG: multiple writer locks")
-	case mu.l < 0:
-		panic("BUG: negative lock count")
-
 	case mu.l == 0:
-		// Fully unlocked.
+		// Fully
+		// unlock.
 		mu.t = 0
 
 		// Awake all blocked goroutines and check
@@ -197,11 +192,15 @@ func (mu *rwmutex) Unlock() bool {
 		// (before == after) => (waiters = 0)
 		return (before == after)
 
-	default:
-		// i.e. mutex still
-		// locked by others.
-		return false
+	case mu.l < 0:
+		panic("BUG: negative lock count")
+	case mu.t == lockTypeWrite:
+		panic("BUG: multiple write locks")
 	}
+
+	// i.e. mutex still
+	// locked by others.
+	return false
 }
 
 // WaitRelock expects a mutex to be passed in, already in the

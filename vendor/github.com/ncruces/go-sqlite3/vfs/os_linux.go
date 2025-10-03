@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func osSync(file *os.File, _ /*fullsync*/, _ /*dataonly*/ bool) error {
+func osSync(file *os.File, _ OpenFlag, _ SyncFlag) error {
 	// SQLite trusts Linux's fdatasync for all fsync's.
 	for {
 		err := unix.Fdatasync(int(file.Fd()))

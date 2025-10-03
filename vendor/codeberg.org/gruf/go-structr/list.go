@@ -2,8 +2,9 @@ package structr
 
 import (
 	"os"
-	"sync"
 	"unsafe"
+
+	"codeberg.org/gruf/go-mempool"
 )
 
 // elem represents an elem
@@ -27,16 +28,14 @@ type list struct {
 	len  int
 }
 
-var list_pool sync.Pool
+var list_pool mempool.UnsafePool
 
 // new_list returns a new prepared list.
 func new_list() *list {
-	v := list_pool.Get()
-	if v == nil {
-		v = new(list)
+	if ptr := list_pool.Get(); ptr != nil {
+		return (*list)(ptr)
 	}
-	list := v.(*list)
-	return list
+	return new(list)
 }
 
 // free_list releases the list.
@@ -48,11 +47,13 @@ func free_list(list *list) {
 		os.Stderr.WriteString(msg + "\n")
 		return
 	}
-	list_pool.Put(list)
+	ptr := unsafe.Pointer(list)
+	list_pool.Put(ptr)
 }
 
 // push_front will push the given elem to front (head) of list.
 func (l *list) push_front(elem *list_elem) {
+
 	// Set new head.
 	oldHead := l.head
 	l.head = elem
@@ -66,12 +67,14 @@ func (l *list) push_front(elem *list_elem) {
 		l.tail = elem
 	}
 
-	// Incr count
+	// Incr
+	// count
 	l.len++
 }
 
 // push_back will push the given elem to back (tail) of list.
 func (l *list) push_back(elem *list_elem) {
+
 	// Set new tail.
 	oldTail := l.tail
 	l.tail = elem
@@ -85,7 +88,8 @@ func (l *list) push_back(elem *list_elem) {
 		l.head = elem
 	}
 
-	// Incr count
+	// Incr
+	// count
 	l.len++
 }
 
@@ -131,7 +135,8 @@ func (l *list) insert(elem *list_elem, at *list_elem) {
 		elem.next = oldNext
 	}
 
-	// Incr count
+	// Incr
+	// count
 	l.len++
 }
 
@@ -174,6 +179,7 @@ func (l *list) remove(elem *list_elem) {
 		prev.next = next
 	}
 
-	// Decr count
+	// Decr
+	// count
 	l.len--
 }

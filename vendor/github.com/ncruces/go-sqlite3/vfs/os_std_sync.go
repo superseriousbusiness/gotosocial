@@ -4,6 +4,6 @@ package vfs
 
 import "os"
 
-func osSync(file *os.File, _ /*fullsync*/, _ /*dataonly*/ bool) error {
+func osSync(file *os.File, _ OpenFlag, _ SyncFlag) error {
 	return file.Sync()
 }

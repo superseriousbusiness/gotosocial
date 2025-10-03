@@ -31,7 +31,7 @@ import (
 // elements to reduce overall memory usage.
 type SimpleQueue[T any] struct {
 	l list.List[T]
-	p mempool.UnsafePool
+	p mempool.UnsafeSimplePool
 	w chan struct{}
 	m sync.Mutex
 }

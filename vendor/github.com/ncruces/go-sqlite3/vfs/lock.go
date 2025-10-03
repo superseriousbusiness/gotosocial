@@ -41,7 +41,7 @@ func (f *vfsFile) Lock(lock LockLevel) error {
 	}
 
 	// Do not allow any kind of write-lock on a read-only database.
-	if f.readOnly && lock >= LOCK_RESERVED {
+	if lock >= LOCK_RESERVED && f.flags&OPEN_READONLY != 0 {
 		return _IOERR_LOCK
 	}
 

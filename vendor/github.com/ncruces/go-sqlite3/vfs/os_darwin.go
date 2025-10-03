@@ -23,12 +23,26 @@ type flocktimeout_t struct {
 	timeout unix.Timespec
 }
 
-func osSync(file *os.File, fullsync, _ /*dataonly*/ bool) error {
-	if fullsync {
-		return file.Sync()
+func osSync(file *os.File, open OpenFlag, sync SyncFlag) error {
+	var cmd int
+	if sync&SYNC_FULL == SYNC_FULL {
+		// For rollback journals all we really need is a barrier.
+		if open&OPEN_MAIN_JOURNAL != 0 {
+			cmd = unix.F_BARRIERFSYNC
+		} else {
+			cmd = unix.F_FULLFSYNC
+		}
 	}
+
+	fd := file.Fd()
 	for {
-		err := unix.Fsync(int(file.Fd()))
+		err := error(unix.ENOTSUP)
+		if cmd != 0 {
+			_, err = unix.FcntlInt(fd, cmd, 0)
+		}
+		if err == unix.ENOTSUP {
+			err = unix.Fsync(int(fd))
+		}
 		if err != unix.EINTR {
 			return err
 		}

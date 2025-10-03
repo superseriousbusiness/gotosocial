@@ -51,7 +51,7 @@ func (vfsOS) Delete(path string, syncDir bool) error {
 			return _OK
 		}
 		defer f.Close()
-		err = osSync(f, false, false)
+		err = osSync(f, 0, SYNC_FULL)
 		if err != nil {
 			return _IOERR_DIR_FSYNC
 		}
@@ -131,27 +131,24 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 	}
 
 	file := vfsFile{
-		File:     f,
-		psow:     true,
-		atomic:   osBatchAtomic(f),
-		readOnly: flags&OPEN_READONLY != 0,
-		syncDir:  isUnix && isCreate && isJournl,
-		delete:   !isUnix && flags&OPEN_DELETEONCLOSE != 0,
-		shm:      NewSharedMemory(name.String()+"-shm", flags),
+		File:  f,
+		flags: flags | _FLAG_PSOW,
+		shm:   NewSharedMemory(name.String()+"-shm", flags),
+	}
+	if osBatchAtomic(f) {
+		file.flags |= _FLAG_ATOMIC
+	}
+	if isUnix && isCreate && isJournl {
+		file.flags |= _FLAG_SYNC_DIR
 	}
 	return &file, flags, nil
 }
 
 type vfsFile struct {
 	*os.File
-	shm      SharedMemory
-	lock     LockLevel
-	readOnly bool
-	keepWAL  bool
-	syncDir  bool
-	atomic   bool
-	delete   bool
-	psow     bool
+	shm   SharedMemory
+	lock  LockLevel
+	flags OpenFlag
 }
 
 var (
@@ -164,7 +161,7 @@ var (
 )
 
 func (f *vfsFile) Close() error {
-	if f.delete {
+	if !isUnix && f.flags&OPEN_DELETEONCLOSE != 0 {
 		defer os.Remove(f.Name())
 	}
 	if f.shm != nil {
@@ -183,21 +180,18 @@ func (f *vfsFile) WriteAt(p []byte, off int64) (n int, err error) {
 }
 
 func (f *vfsFile) Sync(flags SyncFlag) error {
-	dataonly := (flags & SYNC_DATAONLY) != 0
-	fullsync := (flags & 0x0f) == SYNC_FULL
-
-	err := osSync(f.File, fullsync, dataonly)
+	err := osSync(f.File, f.flags, flags)
 	if err != nil {
 		return err
 	}
-	if isUnix && f.syncDir {
-		f.syncDir = false
+	if isUnix && f.flags&_FLAG_SYNC_DIR != 0 {
+		f.flags ^= _FLAG_SYNC_DIR
 		d, err := os.Open(filepath.Dir(f.File.Name()))
 		if err != nil {
 			return nil
 		}
 		defer d.Close()
-		err = osSync(d, false, false)
+		err = osSync(f.File, f.flags, flags)
 		if err != nil {
 			return _IOERR_DIR_FSYNC
 		}
@@ -215,10 +209,10 @@ func (f *vfsFile) SectorSize() int {
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
 	ret := IOCAP_SUBPAGE_READ
-	if f.atomic {
+	if f.flags&_FLAG_ATOMIC != 0 {
 		ret |= IOCAP_BATCH_ATOMIC
 	}
-	if f.psow {
+	if f.flags&_FLAG_PSOW != 0 {
 		ret |= IOCAP_POWERSAFE_OVERWRITE
 	}
 	if runtime.GOOS == "windows" {
@@ -249,8 +243,20 @@ func (f *vfsFile) HasMoved() (bool, error) {
 	return !os.SameFile(fi, pi), nil
 }
 
-func (f *vfsFile) LockState() LockLevel            { return f.lock }
-func (f *vfsFile) PowersafeOverwrite() bool        { return f.psow }
-func (f *vfsFile) PersistWAL() bool                { return f.keepWAL }
-func (f *vfsFile) SetPowersafeOverwrite(psow bool) { f.psow = psow }
-func (f *vfsFile) SetPersistWAL(keepWAL bool)      { f.keepWAL = keepWAL }
+func (f *vfsFile) LockState() LockLevel     { return f.lock }
+func (f *vfsFile) PowersafeOverwrite() bool { return f.flags&_FLAG_PSOW != 0 }
+func (f *vfsFile) PersistWAL() bool         { return f.flags&_FLAG_KEEP_WAL != 0 }
+
+func (f *vfsFile) SetPowersafeOverwrite(psow bool) {
+	f.flags &^= _FLAG_PSOW
+	if psow {
+		f.flags |= _FLAG_PSOW
+	}
+}
+
+func (f *vfsFile) SetPersistWAL(keepWAL bool) {
+	f.flags &^= _FLAG_KEEP_WAL
+	if keepWAL {
+		f.flags |= _FLAG_KEEP_WAL
+	}
+}

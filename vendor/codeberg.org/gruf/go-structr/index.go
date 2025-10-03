@@ -4,10 +4,10 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"unsafe"
 
 	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-mempool"
 	"codeberg.org/gruf/go-xunsafe"
 )
 
@@ -371,17 +371,15 @@ type index_entry struct {
 	key string
 }
 
-var index_entry_pool sync.Pool
+var index_entry_pool mempool.UnsafePool
 
 // new_index_entry returns a new prepared index_entry.
 func new_index_entry() *index_entry {
-	v := index_entry_pool.Get()
-	if v == nil {
-		e := new(index_entry)
-		e.elem.data = unsafe.Pointer(e)
-		v = e
+	if ptr := index_entry_pool.Get(); ptr != nil {
+		return (*index_entry)(ptr)
 	}
-	entry := v.(*index_entry)
+	entry := new(index_entry)
+	entry.elem.data = unsafe.Pointer(entry)
 	return entry
 }
 
@@ -396,7 +394,8 @@ func free_index_entry(entry *index_entry) {
 	entry.key = ""
 	entry.index = nil
 	entry.item = nil
-	index_entry_pool.Put(entry)
+	ptr := unsafe.Pointer(entry)
+	index_entry_pool.Put(ptr)
 }
 
 func is_unique(f uint8) bool {

@@ -94,6 +94,10 @@ const (
 	OPEN_PRIVATECACHE  OpenFlag = 0x00040000 /* Ok for sqlite3_open_v2() */
 	OPEN_WAL           OpenFlag = 0x00080000 /* VFS only */
 	OPEN_NOFOLLOW      OpenFlag = 0x01000000 /* Ok for sqlite3_open_v2() */
+	_FLAG_ATOMIC       OpenFlag = 0x10000000
+	_FLAG_KEEP_WAL     OpenFlag = 0x20000000
+	_FLAG_PSOW         OpenFlag = 0x40000000
+	_FLAG_SYNC_DIR     OpenFlag = 0x80000000
 )
 
 // AccessFlag is a flag for the [VFS] Access method.

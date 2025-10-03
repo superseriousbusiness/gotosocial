@@ -10,6 +10,7 @@
 package memdb
 
 import (
+	"crypto/rand"
 	"fmt"
 	"net/url"
 	"sync"
@@ -74,11 +75,27 @@ func Delete(name string) {
 
 // TestDB creates an empty shared memory database for the test to use.
 // The database is automatically deleted when the test and all its subtests complete.
+// Returns a URI filename appropriate to call Open with.
 // Each subsequent call to TestDB returns a unique database.
+//
+//	func Test_something(t *testing.T) {
+//		t.Parallel()
+//		dsn := memdb.TestDB(t, url.Values{
+//			"_pragma": {"busy_timeout(1000)"},
+//		})
+//
+//		db, err := sql.Open("sqlite3", dsn)
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//		defer db.Close()
+//
+//		// ...
+//	}
 func TestDB(tb testing.TB, params ...url.Values) string {
 	tb.Helper()
 
-	name := fmt.Sprintf("%s_%p", tb.Name(), tb)
+	name := fmt.Sprintf("%s_%s", tb.Name(), rand.Text())
 	tb.Cleanup(func() { Delete(name) })
 	Create(name, nil)
 

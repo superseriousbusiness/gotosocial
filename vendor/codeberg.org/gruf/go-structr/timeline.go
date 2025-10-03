@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"unsafe"
+
+	"codeberg.org/gruf/go-mempool"
 )
 
 // Direction defines a direction
@@ -1133,18 +1135,16 @@ func to_timeline_item(item *indexed_item) *timeline_item {
 	return to
 }
 
-var timeline_item_pool sync.Pool
+var timeline_item_pool mempool.UnsafePool
 
 // new_timeline_item returns a new prepared timeline_item.
 func new_timeline_item() *timeline_item {
-	v := timeline_item_pool.Get()
-	if v == nil {
-		i := new(timeline_item)
-		i.elem.data = unsafe.Pointer(i)
-		i.ck = ^uint(0)
-		v = i
+	if ptr := timeline_item_pool.Get(); ptr != nil {
+		return (*timeline_item)(ptr)
 	}
-	item := v.(*timeline_item)
+	item := new(timeline_item)
+	item.elem.data = unsafe.Pointer(item)
+	item.ck = ^uint(0)
 	return item
 }
 
@@ -1159,5 +1159,6 @@ func free_timeline_item(item *timeline_item) {
 	}
 	item.data = nil
 	item.pk = nil
-	timeline_item_pool.Put(item)
+	ptr := unsafe.Pointer(item)
+	timeline_item_pool.Put(ptr)
 }

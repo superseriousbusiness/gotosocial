@@ -1,7 +1,6 @@
 package sqlite3
 
 import (
-	"encoding/json"
 	"errors"
 	"math"
 	"time"
@@ -171,21 +170,6 @@ func (ctx Context) ResultPointer(ptr any) {
 	valPtr := util.AddHandle(ctx.c.ctx, ptr)
 	ctx.c.call("sqlite3_result_pointer_go",
 		stk_t(ctx.handle), stk_t(valPtr))
-}
-
-// ResultJSON sets the result of the function to the JSON encoding of value.
-//
-// https://sqlite.org/c3ref/result_blob.html
-func (ctx Context) ResultJSON(value any) {
-	err := json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		ctx.ResultRawText(p[:len(p)-1]) // remove the newline
-		return 0, nil
-	})).Encode(value)
-
-	if err != nil {
-		ctx.ResultError(err)
-		return // notest
-	}
 }
 
 // ResultValue sets the result of the function to a copy of [Value].

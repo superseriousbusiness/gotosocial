@@ -146,7 +146,7 @@ func find_field(t xunsafe.TypeIter, names []string) (sfield struct_field, ftype 
 	sfield.mangle = mangler.Get(t)
 
 	// Calculate zero value string.
-	zptr := zero_value_field(o, sfield.offsets)
+	zptr := zero_value_ptr(o, sfield.offsets)
 	zstr := string(sfield.mangle(nil, zptr))
 	sfield.zerostr = zstr
 	sfield.zero = zptr
@@ -154,7 +154,9 @@ func find_field(t xunsafe.TypeIter, names []string) (sfield struct_field, ftype 
 	return
 }
 
-// zero_value ...
+// zero_value iterates the type contained in TypeIter{} along the given
+// next_offset{} values, creating new ptrs where necessary, returning the
+// zero reflect.Value{} after fully iterating the next_offset{} slice.
 func zero_value(t xunsafe.TypeIter, offsets []next_offset) reflect.Value {
 	v := reflect.New(t.Type).Elem()
 	for _, offset := range offsets {
@@ -175,8 +177,8 @@ func zero_value(t xunsafe.TypeIter, offsets []next_offset) reflect.Value {
 	return v
 }
 
-// zero_value_field ...
-func zero_value_field(t xunsafe.TypeIter, offsets []next_offset) unsafe.Pointer {
+// zero_value_ptr returns the unsafe pointer address of the result of zero_value().
+func zero_value_ptr(t xunsafe.TypeIter, offsets []next_offset) unsafe.Pointer {
 	return zero_value(t, offsets).Addr().UnsafePointer()
 }
 
